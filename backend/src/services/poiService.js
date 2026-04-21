@@ -1,121 +1,121 @@
-// POI 服务（高德地图封装）
+// POI 服务（高德地图 API 封装）
 import axios from 'axios';
-import crypto from 'crypto';
-import mysql from 'mysql2/promise';
+import { getDb } from '../db/database.js';
 import { config } from '../config/index.js';
-import { AppError } from '../middleware/errorHandler.js';
 
-// 高德 API 签名
-function signAMap(params, secret) {
-  const str = Object.keys(params).sort().map(k => `${k}${params[k]}`).join('') + secret;
-  return crypto.createHash('md5').update(str).digest('hex');
-}
+const AMAP_BASE = 'https://restapi.amap.com/v3';
+
+// 高德 type -> 我们内部 type 的映射
+const TYPE_MAP = {
+  spot: '风景名胜',
+  food: '餐饮服务',
+  hotel: '住宿服务'
+};
 
 class PoiService {
-  // 调用高德 POI 搜索
-  async searchAmap({ keyword, type, city, offset = 0, limit = 20 }) {
-    const params = {
-      key: config.amap.key,
-      keywords: keyword,
-      types: this.amapTypeMap[type] || type,
-      city,
-      offset,
-      limit,
-      output: 'json'
-    };
+  get db() {
+    return getDb();
+  }
 
-    // 有 secret 的话做签名（Web服务 API）
-    if (config.amap.secret) {
-      params.sig = signAMap(params, config.amap.secret);
-    }
-
+  // 搜索 POI
+  async search({ keyword, type = 'spot', city, limit = 10 }) {
     try {
-      const res = await axios.get('https://restapi.amap.com/v3/place/text', { params, timeout: 5000 });
-      const data = res.data;
+      const res = await axios.get(`${AMAP_BASE}/place/text`, {
+        params: {
+          key: config.amap.key,
+          keywords: keyword,
+          city: city || keyword,
+          types: TYPE_MAP[type] || TYPE_MAP.spot,
+          citylimit: city ? true : false,
+          offset: limit,
+          page: 1,
+          output: 'json'
+        },
+        timeout: 8000
+      });
 
-      if (data.status !== '1') {
-        throw AppError.AMAP_ERROR(`高德API错误: ${data.info} (${data.infocode})`);
+      if (res.data.status !== '1' || !res.data.pois) {
+        console.error('高德 API 错误:', res.data.info);
+        return [];
       }
 
-      return (data.pois || []).map(poi => this.normalizePoi(poi, type));
+      return res.data.pois.map(p => ({
+        gaode_id: p.id,
+        name: p.name,
+        address: p.address || '',
+        type,
+        city: p.cityname || city || '',
+        latitude: p.location ? parseFloat(p.location.split(',')[1]) : null,
+        longitude: p.location ? parseFloat(p.location.split(',')[0]) : null,
+        rating: p.biz_ext?.rating ? parseFloat(p.biz_ext.rating) : null,
+        price: p.biz_ext?.cost ? parseFloat(p.biz_ext.cost) : null,
+        photos: p.photos ? p.photos.map(ph => ph.url) : [],
+        tags: p.type ? p.type.split(';') : []
+      }));
     } catch (err) {
-      if (err instanceof AppError) throw err;
-      throw AppError.AMAP_ERROR('高德API调用失败: ' + err.message);
+      console.error('POI 搜索失败:', err.message);
+      return [];
     }
   }
 
-  // 统一 POI 数据格式
-  normalizePoi(poi, type) {
-    return {
-      poi_id: poi.id,
-      name: poi.name,
-      address: poi.address || '',
-      location: poi.location ? {
-        lng: parseFloat(poi.location.split(',')[0]),
-        lat: parseFloat(poi.location.split(',')[1])
-      } : null,
-      tel: poi.tel || '',
-      tag: poi.tag || '',
-      rating: poi.biz_ext?.rating ? parseFloat(poi.biz_ext.rating) : null,
-      open_time: poi.opening_time || '',
-      price: poi.biz_ext?.cost ? parseFloat(poi.biz_ext.cost) : null
-    };
-  }
+  // 获取POI详情
+  async getDetail(gaodeId) {
+    try {
+      const res = await axios.get(`${AMAP_BASE}/place/detail`, {
+        params: {
+          key: config.amap.key,
+          id: gaodeId,
+          output: 'json'
+        },
+        timeout: 8000
+      });
 
-  // 高德 POI 类型映射
-  amapTypeMap = {
-    spot: '风景名胜|公园|博物馆|文物古迹',
-    food: '餐饮服务|美食',
-    hotel: '住宿服务|酒店'
-  };
+      if (res.data.status !== '1' || !res.data.pois?.[0]) {
+        return null;
+      }
 
-  // 缓存 key
-  cacheKey(destination, keyword, type) {
-    return `poi:${destination}:${keyword}:${type}`;
-  }
-
-  // 带缓存的搜索
-  async search({ keyword, type, city, limit = 10 }) {
-    const cachePool = mysql.createPool(config.db);
-
-    // 先查缓存
-    const [cached] = await cachePool.query(
-      `SELECT data FROM poi_cache WHERE destination = ? AND name LIKE ? AND type = ? AND expires_at > NOW() LIMIT ?`,
-      [city, `%${keyword}%`, type, limit]
-    );
-
-    if (cached.length > 0) {
-      await cachePool.end();
-      return cached.map(row => typeof row.data === 'string' ? JSON.parse(row.data) : row.data);
+      return res.data.pois[0];
+    } catch (err) {
+      console.error('POI 详情获取失败:', err.message);
+      return null;
     }
-
-    await cachePool.end();
-
-    // 调用高德
-    const pois = await this.searchAmap({ keyword, type, city, limit });
-
-    // 写入缓存（异步，不阻塞返回）
-    this.writeCache(city, keyword, type, pois).catch(console.error);
-
-    return pois;
   }
 
-  // 写缓存
-  async writeCache(destination, keyword, type, pois) {
-    const pool = mysql.createPool(config.db);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + (type === 'hotel' ? 1 : type === 'food' ? 3 : 7));
+  // 缓存 POI 到数据库
+  cachePois(pois) {
+    if (!pois || pois.length === 0) return;
 
-    for (const poi of pois) {
-      await pool.query(
-        `INSERT INTO poi_cache (poi_id, destination, name, type, data, expires_at)
-         VALUES (?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE data = VALUES(data), cached_at = NOW(), expires_at = VALUES(expires_at)`,
-        [poi.poi_id, destination, poi.name, type, JSON.stringify(poi), expiresAt]
-      );
-    }
+    const upsert = this.db.prepare(`
+      INSERT INTO poi (gaode_id, name, address, type, city, latitude, longitude, rating, price, photos, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(gaode_id) DO UPDATE SET
+        name = excluded.name,
+        address = excluded.address,
+        rating = COALESCE(excluded.rating, rating),
+        price = COALESCE(excluded.price, price)
+    `);
 
-    await pool.end();
+    const insertMany = this.db.transaction((items) => {
+      for (const p of items) {
+        upsert.run(
+          p.gaode_id, p.name, p.address || '', p.type, p.city,
+          p.latitude, p.longitude, p.rating, p.price,
+          JSON.stringify(p.photos || []), JSON.stringify(p.tags || [])
+        );
+      }
+    });
+
+    insertMany(pois);
+  }
+
+  // 从缓存查 POI
+  getCachedPois(city, type, limit = 20) {
+    const stmt = this.db.prepare(`
+      SELECT * FROM poi WHERE city = ? AND type = ?
+      ORDER BY rating DESC, id DESC
+      LIMIT ?
+    `);
+    return stmt.all(city, type, limit);
   }
 }
 

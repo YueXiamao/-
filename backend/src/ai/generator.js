@@ -1,38 +1,36 @@
-// AI 生成器
+// AI 生成器 - 支持 Claude / OpenAI(兼容) / MiniMax
 import { config } from '../config/index.js';
 import { AppError } from '../middleware/errorHandler.js';
 
-// 根据配置选择 AI Provider
+// 通用调用
 async function callAI(prompt, systemPrompt) {
   if (config.ai.provider === 'claude') {
     return callClaude(prompt, systemPrompt);
-  } else if (config.ai.provider === 'openai') {
-    return callOpenAI(prompt, systemPrompt);
   } else {
-    throw AppError.AI_ERROR('未配置的 AI Provider: ' + config.ai.provider);
+    return callOpenAICompatible(prompt, systemPrompt);
   }
 }
 
-// Claude API 调用
+// Claude
 async function callClaude(prompt, systemPrompt) {
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
   const client = new Anthropic({ apiKey: config.ai.apiKey });
-
   const response = await client.messages.create({
     model: config.ai.model,
     max_tokens: 2048,
     system: systemPrompt,
     messages: [{ role: 'user', content: prompt }]
   });
-
   return response.content[0].text;
 }
 
-// OpenAI API 调用
-async function callOpenAI(prompt, systemPrompt) {
+// OpenAI 兼容格式 (MiniMax / 硅基流动 / etc)
+async function callOpenAICompatible(prompt, systemPrompt) {
   const { default: OpenAI } = await import('openai');
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
+  const client = new OpenAI({
+    apiKey: config.ai.apiKey,
+    baseURL: config.ai.baseUrl
+  });
   const response = await client.chat.completions.create({
     model: config.ai.model,
     max_tokens: 2048,
@@ -41,47 +39,38 @@ async function callOpenAI(prompt, systemPrompt) {
       { role: 'user', content: prompt }
     ]
   });
-
   return response.choices[0].message.content;
 }
 
-// 行程生成 Prompt
-const TRIP_SYSTEM_PROMPT = `你是一名资深旅游规划师，拥有丰富的中国旅游知识。你根据用户的需求，生成贴心、实用、不流水账的旅游行程。
+// System prompts
+const TRIP_SYSTEM = `你是一名资深中国旅游规划师。只推荐真实存在、口碑好的景点、餐厅和酒店，不输出任何广告或推广内容。
 
 要求：
-1. 只推荐真实存在、口碑好的地方，不输出广告
+1. 只推荐真实存在、有具体名称和地址的地方
 2. 每天2-4个景点、1-2家餐厅、1家酒店
-3. 景点之间给出交通提示（步行X分钟/打车X分钟）
-4. 每个景点给出游览时长
-5. 餐厅给出推荐菜和人均消费
-6. 住宿给出推荐理由
-7. 总字数精简，每日报程控制在300字以内
-8. 输出纯JSON数组，不要markdown代码块`;
+3. 景点之间给出交通提示（步行X分钟/打车X分钟）和游览时长
+4. 餐厅给出推荐菜和人均消费
+5. 住宿给出推荐理由
+6. 总字数精简，每日报程控制在300字以内
+7. 输出纯JSON数组，不要任何markdown格式`;
 
 function buildTripPrompt({ destinations, start_date, days, preferences, extra_notes, pois }) {
   const destNames = destinations.map(d => typeof d === 'string' ? d : d.name).join('、');
 
-  const poiText = `
-景点POI：
-${pois.spots.map(s => `- ${s.name} (${s.address}) 评分:${s.rating || '无'} 标签:${s.tag || '无'}`).join('\n')}
+  const poiText = `景点：${pois.spots.map(s => `- ${s.name}(${s.address}) 评分:${s.rating || '无'}`).join('\n')}
+餐厅：${pois.foods.map(f => `- ${f.name}(${f.address}) 人均:${f.price ? f.price + '元' : '无'}`).join('\n')}
+酒店：${pois.hotels.map(h => `- ${h.name}(${h.address})`).join('\n')}`;
 
-餐厅POI：
-${pois.foods.map(f => `- ${f.name} (${f.address}) 人均:${f.price ? f.price + '元' : '无'}`).join('\n')}
-
-酒店POI：
-${pois.hotels.map(h => `- ${h.name} (${h.address})`).join('\n')}
-`;
-
-  const prompt = `目的地：${destNames}
+  return `目的地：${destNames}
 出发日期：${start_date}
 游玩天数：${days}天
-游玩方式：${preferences.join('、')}
-补充说明：${extra_notes || '无'}
+游玩方式：${(preferences || []).join('、')}
+补充：${extra_notes || '无'}
 
-可用POI数据：
+可用POI：
 ${poiText}
 
-按日期生成${days}天的行程计划。返回JSON数组，格式如下：
+按日期生成${days}天行程，返回JSON数组：
 [
   {
     "day": 1,
@@ -93,37 +82,33 @@ ${poiText}
     ]
   }
 ]`;
-
-  return prompt;
 }
 
-// 目的地推荐 Prompt
-const RECOMMEND_SYSTEM_PROMPT = `你是一名熟悉中国旅游的行程规划师，根据用户的位置、预算、天数和偏好，推荐最合适的旅游目的地。`;
+const RECOMMEND_SYSTEM = `你是一名熟悉中国旅游的行程规划师，根据用户的位置、预算、天数和偏好，推荐最合适的旅游目的地。只推荐国内目的地。`;
 
 function buildRecommendPrompt({ current_location, days, budget, preferences }) {
   const { latitude, longitude, city } = current_location;
-
   return `当前位置：${city || `${latitude},${longitude}`}
 出行天数：${days}天
 人均预算：${budget}
-偏好方式：${preferences?.join('、') || '无'}
+偏好：${(preferences || []).join('、') || '无'}
 
-从候选目的地池中选择最符合条件的前3个，输出JSON：
+推荐3个最合适的目的地，输出JSON：
 {
   "recommendations": [
     {
       "rank": 1,
       "destination": {
-        "name": "目的地图",
+        "name": "城市名",
         "province": "省份",
         "city": "城市",
-        "distance": "XXkm",
+        "distance": "XXkm或未知",
         "avg_budget": "参考消费",
-        "tags": ["标签1", "标签2"],
+        "tags": ["标签1"],
         "summary": "一句话推荐理由"
       },
       "trip_preview": {
-        "days": 适合天数,
+        "days": 天数,
         "spot_count": 预计景点数,
         "food_count": 预计餐饮数,
         "budget_range": "预算区间"
@@ -135,20 +120,13 @@ function buildRecommendPrompt({ current_location, days, budget, preferences }) {
 
 // 解析 JSON（容错）
 function parseJSON(text) {
-  // 去掉可能的 ```json 和 ``` 包裹
   const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
-
   try {
     return JSON.parse(cleaned);
   } catch (e) {
-    // 尝试提取数组
     const match = cleaned.match(/\[[\s\S]*\]/);
     if (match) {
-      try {
-        return JSON.parse(match[0]);
-      } catch (e2) {
-        throw AppError.AI_ERROR('AI返回格式解析失败');
-      }
+      try { return JSON.parse(match[0]); } catch {}
     }
     throw AppError.AI_ERROR('AI返回格式解析失败');
   }
@@ -156,10 +134,8 @@ function parseJSON(text) {
 
 // 生成行程
 async function generateTrip(params) {
-  const { destinations, start_date, days, preferences, extra_notes, pois } = params;
-
-  const prompt = buildTripPrompt({ destinations, start_date, days, preferences, extra_notes, pois });
-  const text = await callAI(prompt, TRIP_SYSTEM_PROMPT);
+  const prompt = buildTripPrompt(params);
+  const text = await callAI(prompt, TRIP_SYSTEM);
 
   let itinerary;
   try {
@@ -169,14 +145,11 @@ async function generateTrip(params) {
   }
 
   // 填充日期
-  const startDateObj = new Date(start_date);
+  const startDateObj = new Date(params.start_date);
   itinerary = itinerary.map((day, index) => {
-    const date = new Date(startDateObj);
-    date.setDate(date.getDate() + index);
-    return {
-      ...day,
-      date: date.toISOString().split('T')[0]
-    };
+    const d = new Date(startDateObj);
+    d.setDate(d.getDate() + index);
+    return { ...day, date: d.toISOString().split('T')[0] };
   });
 
   return itinerary;
@@ -185,8 +158,7 @@ async function generateTrip(params) {
 // 生成推荐
 async function generateRecommendations(params) {
   const prompt = buildRecommendPrompt(params);
-  const text = await callAI(prompt, RECOMMEND_SYSTEM_PROMPT);
-
+  const text = await callAI(prompt, RECOMMEND_SYSTEM);
   try {
     return parseJSON(text);
   } catch (err) {
@@ -194,9 +166,4 @@ async function generateRecommendations(params) {
   }
 }
 
-export const aiGenerator = {
-  generateTrip,
-  generateRecommendations,
-  callAI,
-  parseJSON
-};
+export const aiGenerator = { generateTrip, generateRecommendations, callAI, parseJSON };

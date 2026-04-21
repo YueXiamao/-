@@ -1,28 +1,22 @@
-// 后端服务入口文件
+// Fastify 服务入口
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { config } from './config/index.js';
-import destinationsRouter from './routes/destinations.js';
-import poisRouter from './routes/pois.js';
-import tripRouter from './routes/trip.js';
-import discoverRouter from './routes/discover.js';
-import authRouter from './routes/auth.js';
-import userRouter from './routes/user.js';
+import { initDatabase } from './db/database.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
-// 创建 Fastify 实例
-const fastify = Fastify({
-  logger: {
-    level: 'info',
-    transport: {
-      target: 'pino-pretty',
-      options: { translateTime: 'HH:MM:ss Z', ignore: 'pid,hostname' }
-    }
-  }
-});
+// 路由
+import authRoutes from './routes/auth.js';
+import destinationRoutes from './routes/destinations.js';
+import poiRoutes from './routes/pois.js';
+import tripRoutes from './routes/trip.js';
+import discoverRoutes from './routes/discover.js';
+import userRoutes from './routes/user.js';
 
-// 注册中间件
+const fastify = Fastify({ logger: true });
+
+// 注册插件
 await fastify.register(cors, {
   origin: true,
   credentials: true
@@ -30,29 +24,31 @@ await fastify.register(cors, {
 
 await fastify.register(rateLimit, {
   max: 100,
-  timeWindow: '1 minute',
-  message: { code: 429, message: '请求过于频繁，请稍后再试' }
+  timeWindow: '1 minute'
 });
 
-// 注册路由
-await fastify.register(destinationsRouter, { prefix: '/api/destinations' });
-await fastify.register(poisRouter, { prefix: '/api/pois' });
-await fastify.register(tripRouter, { prefix: '/api/trip' });
-await fastify.register(discoverRouter, { prefix: '/api/discover' });
-await fastify.register(authRouter, { prefix: '/api/auth' });
-await fastify.register(userRouter, { prefix: '/api/user' });
+// 初始化数据库
+initDatabase();
 
-// 错误处理
+// 注册错误处理器
 fastify.setErrorHandler(errorHandler);
 
-// 健康检查
-fastify.get('/health', async () => ({ status: 'ok', timestamp: new Date().toISOString() }));
+// 注册路由
+fastify.register(authRoutes, { prefix: '/api/auth' });
+fastify.register(destinationRoutes, { prefix: '/api/destinations' });
+fastify.register(poiRoutes, { prefix: '/api/pois' });
+fastify.register(tripRoutes, { prefix: '/api/trip' });
+fastify.register(discoverRoutes, { prefix: '/api/discover' });
+fastify.register(userRoutes, { prefix: '/api/user' });
 
-// 启动服务
+// 健康检查
+fastify.get('/health', async () => ({ status: 'ok', ts: Date.now() }));
+
+// 启动
 const start = async () => {
   try {
     await fastify.listen({ port: config.port, host: '0.0.0.0' });
-    console.log(`✅ Server running at http://localhost:${config.port}`);
+    console.log(`🚀 服务已启动: http://localhost:${config.port}`);
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
