@@ -1,0 +1,111 @@
+/* pages/index/index.wxss */
+.container {
+  padding: var(--space-lg) var(--space-base);
+  min-height: 100vh;
+  background-color: var(--color-bg);
+}
+
+.header {
+  text-align: center;
+  padding: var(--space-xl) 0 var(--space-xl);
+}
+
+.title {
+  display: block;
+  font-size: var(--font-xxl);
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.subtitle {
+  display: block;
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
+}
+
+/* 卡片 */
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.card {
+  background-color: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s ease;
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card-icon {
+  font-size: 64rpx;
+  margin-right: var(--space-base);
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+}
+
+.card-title {
+  display: block;
+  font-size: var(--font-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-xs);
+}
+
+.card-desc {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.card-arrow {
+  font-size: 48rpx;
+  color: var(--color-text-hint);
+  flex-shrink: 0;
+  padding-left: var(--space-sm);
+}
+
+.card-plan {
+  border-left: 6rpx solid var(--color-primary);
+}
+
+.card-discover {
+  border-left: 6rpx solid var(--color-secondary);
+}
+
+/* 功能特点 */
+.features {
+  display: flex;
+  justify-content: space-around;
+  margin-top: var(--space-xl);
+  padding: var(--space-lg) 0;
+}
+
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.feature-icon {
+  font-size: 40rpx;
+}
+
+.feature-text {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}

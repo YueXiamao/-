@@ -1,0 +1,47 @@
+<!-- pages/index/index.wxml -->
+<view class="container">
+  <!-- 顶部欢迎 -->
+  <view class="header">
+    <text class="title">旅行规划</text>
+    <text class="subtitle">智能行程规划，让旅行更简单</text>
+  </view>
+
+  <!-- 入口卡片 -->
+  <view class="cards">
+    <!-- 行程规划卡片 -->
+    <view class="card card-plan" bindtap="goToPlan">
+      <view class="card-icon">🗺</view>
+      <view class="card-content">
+        <text class="card-title">行程规划</text>
+        <text class="card-desc">已确定目的地？\n帮您安排每日行程</text>
+      </view>
+      <view class="card-arrow">›</view>
+    </view>
+
+    <!-- 随机玩卡片 -->
+    <view class="card card-discover" bindtap="goToDiscover">
+      <view class="card-icon">🎲</view>
+      <view class="card-content">
+        <text class="card-title">随机玩</text>
+        <text class="card-desc">不确定去哪玩？\n根据您的位置推荐目的地</text>
+      </view>
+      <view class="card-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- 功能特点 -->
+  <view class="features">
+    <view class="feature-item">
+      <text class="feature-icon">📍</text>
+      <text class="feature-text">真实景点推荐</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">🍜</text>
+      <text class="feature-text">本地美食攻略</text>
+    </view>
+    <view class="feature-item">
+      <text class="feature-icon">✈️</text>
+      <text class="feature-text">一键生成行程</text>
+    </view>
+  </view>
+</view>

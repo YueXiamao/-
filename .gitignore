@@ -1,0 +1,41 @@
+# 依赖
+node_modules/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 构建产物
+dist/
+build/
+*.zip
+
+# 日志
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 微信小程序
+frontend/${projectname}/
+
+# 云函数本地调试
+.scf/
+.baseDir/
+
+# 测试覆盖率
+coverage/
+
+# 数据文件（敏感）
+data/*.json
+data/*.csv
+!data/.gitkeep

@@ -1,0 +1,126 @@
+/* pages/profile/profile.wxss */
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding: var(--space-base);
+}
+
+.user-section {
+  margin-bottom: var(--space-base);
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.user-avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48rpx;
+}
+
+.user-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.user-id {
+  font-size: var(--font-base);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.user-hint {
+  font-size: var(--font-xs);
+  color: var(--color-text-hint);
+}
+
+/* 行程列表 */
+.trips-section {
+  margin-top: var(--space-base);
+}
+
+.section-title {
+  font-size: var(--font-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+.loading {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-hint);
+}
+
+.trip-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.trip-item {
+  position: relative;
+}
+
+.trip-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-xs);
+}
+
+.trip-item-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.trip-item-status {
+  font-size: var(--font-xs);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
+  padding: 2rpx 12rpx;
+  border-radius: var(--radius-full);
+}
+
+.trip-item-meta {
+  display: flex;
+  gap: var(--space-base);
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+.trip-item-dests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4rpx;
+}
+
+.dest-tag {
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  padding: 2rpx 8rpx;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-xs);
+}
+
+.trip-item-actions {
+  position: absolute;
+  top: var(--space-base);
+  right: var(--space-base);
+}
+
+.action-text {
+  font-size: var(--font-xs);
+  color: var(--color-danger);
+}

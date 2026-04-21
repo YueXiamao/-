@@ -1,0 +1,27 @@
+{
+  "name": "travel-planner-backend",
+  "version": "1.0.0",
+  "description": "旅游行程规划小程序后端服务",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js",
+    "test": "node --test",
+    "deploy": "npm run build && scf deploy",
+    "db:migrate": "node scripts/migrate.js"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@fastify/cors": "^10.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "mysql2": "^3.11.0",
+    "ioredis": "^5.4.1",
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.5",
+    "nanoid": "^5.0.7"
+  },
+  "devDependencies": {
+    "scf": "^1.0.0"
+  }
+}

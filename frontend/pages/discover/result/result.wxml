@@ -1,0 +1,93 @@
+<!-- pages/discover/result/result.wxml -->
+<view class="container">
+  <!-- 加载 -->
+  <view class="loading-state" wx:if="{{loading}}">
+    <text class="loading-icon">🎲</text>
+    <text class="loading-text">正在为你寻找目的地...</text>
+  </view>
+
+  <!-- 错误 -->
+  <view class="error-state" wx:elif="{{error}}">
+    <text class="error-icon">😢</text>
+    <text class="error-text">{{error}}</text>
+    <button class="btn-secondary" bindtap="onRetry">重试</button>
+  </view>
+
+  <!-- 无结果 -->
+  <view class="empty-state" wx:elif="{{recommendations.length === 0}}">
+    <text class="empty-icon">🌍</text>
+    <text class="empty-text">暂未找到合适的目的地</text>
+    <text class="empty-hint">试试调整预算或增加天数</text>
+    <button class="btn-secondary" bindtap="onAgain">重新推荐</button>
+  </view>
+
+  <!-- 推荐结果 -->
+  <view class="result" wx:else>
+    <view class="result-header">
+      <text class="result-title">为你推荐</text>
+      <text class="result-subtitle">{{recommendations.length}} 个目的地</text>
+    </view>
+
+    <swiper
+      class="recommend-swiper"
+      circular
+      bindchange="onSwiperChange"
+    >
+      <swiper-item wx:for="{{recommendations}}" wx:key="rank">
+        <view class="rec-card card">
+          <view class="rec-rank">TOP {{item.rank}}</view>
+          <view class="rec-name">{{item.destination.name}}</view>
+          <view class="rec-summary">{{item.destination.summary}}</view>
+
+          <view class="rec-tags">
+            <text class="rec-tag" wx:for="{{item.destination.tags}}" wx:for-item="tag">{{tag}}</text>
+          </view>
+
+          <view class="rec-meta">
+            <view class="rec-meta-item">
+              <text class="meta-icon">📍</text>
+              <text>{{item.destination.distance}}</text>
+            </view>
+            <view class="rec-meta-item">
+              <text class="meta-icon">💰</text>
+              <text>{{item.destination.avg_budget}}</text>
+            </view>
+            <view class="rec-meta-item">
+              <text class="meta-icon">📅</text>
+              <text>{{item.trip_preview.days}}天</text>
+            </view>
+          </view>
+
+          <view class="rec-preview">
+            <text class="preview-label">行程预览</text>
+            <text class="preview-text">
+              包含 {{item.trip_preview.spot_count}} 个景点 ·
+              {{item.trip_preview.food_count}} 家美食 ·
+              预算 {{item.trip_preview.budget_range}}
+            </text>
+          </view>
+
+          <button
+            class="btn-primary rec-btn"
+            bindtap="onViewDetail"
+            data-index="{{index}}"
+          >查看完整行程</button>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <!-- 分页指示 -->
+    <view class="pagination">
+      <view
+        class="dot {{currentIndex === index ? 'active' : ''}}"
+        wx:for="{{recommendations}}"
+        wx:key="index"
+      />
+    </view>
+
+    <!-- 底部 -->
+    <view class="bottom-bar">
+      <button class="btn-secondary" bindtap="onAgain">🎲 再来一次</button>
+    </view>
+  </view>
+</view>

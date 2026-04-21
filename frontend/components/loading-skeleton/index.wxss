@@ -1,0 +1,40 @@
+/* components/loading-skeleton/index.wxss */
+.skeleton-container {
+  padding: var(--space-base);
+}
+
+.skeleton-card {
+  background: var(--color-surface);
+  border-radius: var(--radius-base);
+  padding: var(--space-base);
+  margin-bottom: var(--space-base);
+}
+
+.skeleton-title {
+  height: 40rpx;
+  width: 60%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.5s infinite;
+  margin-bottom: var(--space-sm);
+}
+
+.skeleton-line {
+  height: 24rpx;
+  width: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius-sm);
+  animation: shimmer 1.5s infinite;
+  margin-bottom: var(--space-xs);
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

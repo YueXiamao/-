@@ -1,0 +1,69 @@
+<!-- pages/plan/params/params.wxml -->
+<view class="container">
+  <!-- 目的地摘要 -->
+  <view class="dest-summary">
+    <text class="dest-label">目的地</text>
+    <view class="dest-tags">
+      <text class="dest-tag" wx:for="{{destinations}}" wx:key="code">{{item.name}}</text>
+    </view>
+  </view>
+
+  <!-- 出发日期 -->
+  <view class="form-section">
+    <view class="section-title">出发日期</view>
+    <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
+      <view class="picker-value">
+        <text>{{startDate || '请选择'}}</text>
+        <text class="picker-arrow">›</text>
+      </view>
+    </picker>
+  </view>
+
+  <!-- 游玩天数 -->
+  <view class="form-section">
+    <view class="section-title">游玩天数</view>
+    <view class="days-selector">
+      <view class="days-btn minus" bindtap="onDaysChange" data-delta="-1">−</view>
+      <view class="days-value">
+        <text class="days-num">{{days}}</text>
+        <text class="days-unit">天</text>
+      </view>
+      <view class="days-btn plus" bindtap="onDaysChange" data-delta="1">+</view>
+    </view>
+  </view>
+
+  <!-- 游玩方式 -->
+  <view class="form-section">
+    <view class="section-title">游玩方式（选1-3个）</view>
+    <view class="preference-grid">
+      <view
+        class="pref-item {{preferences.includes(item.value) ? 'active' : ''}}"
+        wx:for="{{preferenceOptions}}"
+        wx:key="value"
+        bindtap="onPreferenceTap"
+        data-value="{{item.value}}"
+      >
+        <text class="pref-icon">{{item.icon}}</text>
+        <text class="pref-label">{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 补充说明 -->
+  <view class="form-section">
+    <view class="section-title">补充说明（选填）</view>
+    <textarea
+      class="notes-input"
+      placeholder="如：想看日出、不吃辣、带老人、想泡温泉..."
+      value="{{extraNotes}}"
+      bindinput="onNotesInput"
+      maxlength="200"
+    />
+    <view class="notes-hint">{{extraNotes.length || 0}}/200</view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-bar">
+    <button class="btn-primary" bindtap="onGenerate">生成行程</button>
+  </view>
+</view>

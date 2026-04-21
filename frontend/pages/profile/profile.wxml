@@ -1,0 +1,57 @@
+<!-- pages/profile/profile.wxml -->
+<view class="container">
+  <!-- 用户信息 -->
+  <view class="user-section card">
+    <view class="user-info">
+      <view class="user-avatar">👤</view>
+      <view class="user-text">
+        <text class="user-id">用户 {{openid ? openid.slice(0, 8) : '未登录'}}</text>
+        <text class="user-hint" wx:if="{{openid}}">微信授权用户</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 历史行程 -->
+  <view class="trips-section">
+    <view class="section-title">我的行程</view>
+
+    <!-- 加载中 -->
+    <view class="loading" wx:if="{{loading}}">
+      <text>加载中...</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-state" wx:elif="{{empty}}">
+      <text class="empty-icon">📋</text>
+      <text class="empty-text">还没有行程</text>
+      <text class="empty-hint">去首页创建一个吧</text>
+      <button class="btn-secondary" bindtap="goHome">去规划</button>
+    </view>
+
+    <!-- 行程列表 -->
+    <view class="trip-list" wx:else>
+      <view
+        class="trip-item card"
+        wx:for="{{tripList}}"
+        wx:key="id"
+        bindtap="onTripTap"
+        data-trip-id="{{item.id}}"
+      >
+        <view class="trip-item-header">
+          <text class="trip-item-title">{{item.title}}</text>
+          <text class="trip-item-status {{item.status}}">{{item.status === 'published' ? '已发布' : item.status}}</text>
+        </view>
+        <view class="trip-item-meta">
+          <text>{{item.start_date}} · {{item.days}}天</text>
+          <text>来源：{{item.source === 'plan' ? '行程规划' : '随机玩'}}</text>
+        </view>
+        <view class="trip-item-dests">
+          <text class="dest-tag" wx:for="{{item.destinations}}" wx:for-item="d">{{d.name}}</text>
+        </view>
+        <view class="trip-item-actions">
+          <text class="action-text" bindtap="onTripDelete" catchtap data-trip-id="{{item.id}}">删除</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

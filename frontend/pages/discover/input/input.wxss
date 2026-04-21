@@ -1,0 +1,168 @@
+/* pages/discover/input/input.wxss */
+.container {
+  min-height: 100vh;
+  background-color: var(--color-bg);
+  padding: var(--space-base);
+  padding-bottom: 160rpx;
+}
+
+.section {
+  margin-bottom: var(--space-base);
+}
+
+.section-title {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-sm);
+}
+
+/* 位置 */
+.location-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+}
+
+.location-icon {
+  font-size: 32rpx;
+}
+
+.location-text {
+  flex: 1;
+  font-size: var(--font-base);
+  color: var(--color-text);
+}
+
+.location-edit {
+  font-size: var(--font-sm);
+  color: var(--color-primary);
+}
+
+/* 天数 */
+.days-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: var(--space-sm) 0;
+}
+
+.days-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: var(--color-bg);
+  text-align: center;
+  line-height: 72rpx;
+  font-size: 40rpx;
+  color: var(--color-primary);
+  border: 2rpx solid var(--color-primary);
+}
+
+.days-value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.days-num {
+  font-size: 64rpx;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.days-unit {
+  font-size: var(--font-lg);
+  color: var(--color-text-secondary);
+}
+
+/* 预算 */
+.budget-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+}
+
+.budget-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  padding: var(--space-base);
+  border-radius: var(--radius-base);
+  background: var(--color-bg);
+  border: 2rpx solid transparent;
+}
+
+.budget-item.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.budget-label {
+  font-size: var(--font-base);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.budget-item.active .budget-label {
+  color: var(--color-primary);
+}
+
+.budget-desc {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+/* 偏好 */
+.pref-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-sm);
+}
+
+.pref-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-base);
+  border-radius: var(--radius-base);
+  background: var(--color-bg);
+  border: 2rpx solid transparent;
+}
+
+.pref-item.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+}
+
+.pref-icon {
+  font-size: 40rpx;
+}
+
+.pref-label {
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+}
+
+.pref-item.active .pref-label {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* 底部按钮 */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: var(--space-base);
+  background: var(--color-surface);
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.btn-primary {
+  background-color: var(--color-secondary);
+}
