@@ -1,7 +1,8 @@
 // API 请求封装
 
 // 根据环境切换 Base URL
-const BASE_URL = API_BASE_URL || API_TEST_URL;
+// 开发环境用 localhost，生产用真实域名
+const BASE_URL = API_TEST_URL || API_BASE_URL;
 
 class ApiService {
   constructor() {
