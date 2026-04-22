@@ -31,15 +31,17 @@ class ApiService {
         },
         success: (res) => {
           if (res.statusCode === 200) {
-            if (res.data.code === 0) {
-              resolve(res.data.data);
+            // 兼容两种格式：{ code: 0, data: [...] } 或直接返回 [...]
+            if (typeof res.data === 'object' && !Array.isArray(res.data)) {
+              if (res.data.code === 0 || res.data.code === undefined) {
+                resolve(res.data.data !== undefined ? res.data.data : res.data);
+              } else {
+                wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
+                reject(res.data);
+              }
             } else {
-              wx.showToast({
-                title: res.data.message || '请求失败',
-                icon: 'none',
-                duration: 2000
-              });
-              reject(res.data);
+              // 直接返回数组
+              resolve(res.data);
             }
           } else if (res.statusCode === 401) {
             // 未登录，清除 openid 重新登录
