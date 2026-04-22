@@ -1,19 +1,14 @@
 // pages/index/index.js
+import { api } from '../../services/api.js';
+import { authApi } from '../../services/auth.js';
+
 Page({
-  data: {
-    // 页面数据
-  },
+  data: {},
 
   onLoad() {
-    // 检查登录
     this.checkLogin();
   },
 
-  onShow() {
-    // tabBar 切换时刷新
-  },
-
-  // 检查登录状态
   async checkLogin() {
     let openid = wx.getStorageSync('openid');
     if (!openid) {
@@ -26,7 +21,6 @@ Page({
     }
   },
 
-  // 微信登录获取 code
   doWxLogin() {
     return new Promise((resolve, reject) => {
       wx.login({
@@ -39,11 +33,8 @@ Page({
     });
   },
 
-  // 调用后端登录
   async loginToServer(code) {
     try {
-      const { api } = require('../../services/api.js');
-      const { default: authApi } = require('../../services/auth.js');
       const res = await authApi.login(code);
       wx.setStorageSync('openid', res.openid);
       getApp().globalData.openid = res.openid;
@@ -52,17 +43,11 @@ Page({
     }
   },
 
-  // 跳转到行程规划
   goToPlan() {
-    wx.navigateTo({
-      url: '/pages/plan/destination/destination'
-    });
+    wx.navigateTo({ url: '/pages/plan/destination/destination' });
   },
 
-  // 跳转到随机玩
   goToDiscover() {
-    wx.navigateTo({
-      url: '/pages/discover/input/input'
-    });
+    wx.navigateTo({ url: '/pages/discover/input/input' });
   }
 });

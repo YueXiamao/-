@@ -1,4 +1,5 @@
 // API 请求封装
+import { API_BASE_URL, API_TEST_URL } from '../constants/index.js';
 
 // 根据环境切换 Base URL
 // 开发环境用 localhost，生产用真实域名
