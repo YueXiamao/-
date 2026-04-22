@@ -1,47 +1,38 @@
-// 微信登录路由
-import Fastify from 'fastify';
-import axios from 'axios';
-import { config } from '../config/index.js';
-import { userService } from '../services/userService.js';
-import { AppError } from '../middleware/errorHandler.js';
-
-const router = Fastify();
-
 // 微信登录
-router.post('/login', async (request, reply) => {
-  const { code } = request.body;
+import { userService } from '../services/userService.js';
 
-  if (!code) {
-    throw AppError.VALIDATION_ERROR('code 不能为空');
-  }
-
-  // 用 code 换取 openid
-  const wxUrl = `https://api.weixin.qq.com/sns/jscode2session?appid=${config.wechat.appid}&secret=${config.wechat.secret}&js_code=${code}&grant_type=authorization_code`;
-
-  let wxResult;
-  try {
-    const res = await axios.get(wxUrl);
-    wxResult = res.data;
-  } catch (err) {
-    throw AppError.INTERNAL_ERROR('微信服务调用失败');
-  }
-
-  if (wxResult.errcode) {
-    throw AppError.INTERNAL_ERROR(`微信登录失败: ${wxResult.errmsg}`);
-  }
-
-  const { openid, session_key } = wxResult;
-
-  // 查找或创建用户
-  const user = await userService.findOrCreateUser(openid);
-
-  return {
-    code: 0,
-    data: {
-      openid: user.openid,
-      is_new_user: user.created
+export default async function authRoutes(fastify) {
+  // 微信 code 登录
+  fastify.post('/login', async (req, reply) => {
+    const { code } = req.body || {};
+    if (!code) {
+      return reply.code(400).send({ error: '缺少 code 参数' });
     }
-  };
-});
 
-export default router;
+    // 微信接口获取 openid
+    const { config } = await import('../config/index.js');
+    const axios = (await import('axios')).default;
+
+    let openid;
+    try {
+      const wxResp = await axios.get('https://api.weixin.qq.com/sns/jscode2session', {
+        params: {
+          appid: config.wechat.appid,
+          secret: config.wechat.secret,
+          js_code: code,
+          grant_type: 'authorization_code'
+        },
+        timeout: 5000
+      });
+      openid = wxResp.data.openid;
+      if (!openid) {
+        return reply.code(401).send({ error: '微信登录失败: ' + wxResp.data.errmsg });
+      }
+    } catch (err) {
+      return reply.code(502).send({ error: '微信服务不可用' });
+    }
+
+    const userId = userService.upsertUser(openid);
+    return { user_id: userId, openid };
+  });
+}

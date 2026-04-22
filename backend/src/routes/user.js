@@ -1,31 +1,24 @@
-// 用户偏好路由
-import Fastify from 'fastify';
+// 用户路由
 import { userService } from '../services/userService.js';
-import { AppError } from '../middleware/errorHandler.js';
 
-const router = Fastify();
+export default async function userRoutes(fastify) {
+  // 获取用户信息
+  fastify.get('/info', async (req) => {
+    const openid = req.headers['x-openid'] || '';
+    const userId = await userService.getUserIdByOpenid(openid);
+    if (!userId) return null;
+    const user = userService.getByOpenid(openid);
+    const prefs = userService.getPreferences(userId);
+    return { ...user, preferences: prefs };
+  });
 
-// 上报偏好
-router.post('/preference', async (request, reply) => {
-  const openid = request.headers['x-openid'];
-  if (!openid) {
-    throw AppError.UNAUTHORIZED('需要登录');
-  }
-
-  const { destinations, preferences, extra_notes_keywords } = request.body;
-  await userService.recordPreference(openid, { destinations, preferences, extra_notes_keywords });
-  return { code: 0, message: '偏好已记录' };
-});
-
-// 获取用户偏好
-router.get('/preference', async (request, reply) => {
-  const openid = request.headers['x-openid'];
-  if (!openid) {
-    throw AppError.UNAUTHORIZED('需要登录');
-  }
-
-  const prefs = await userService.getUserPreferences(openid);
-  return { code: 0, data: prefs };
-});
-
-export default router;
+  // 更新偏好
+  fastify.post('/preferences', async (req) => {
+    const openid = req.headers['x-openid'] || '';
+    const { preferences } = req.body || [];
+    const userId = await userService.getUserIdByOpenid(openid);
+    if (!userId) throw new Error('用户不存在');
+    userService.upsertPreferences(userId, preferences);
+    return { success: true };
+  });
+}
