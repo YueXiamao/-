@@ -52,13 +52,9 @@ Page({
 
   // 逆地理编码
   async reverseGeocode(lat, lng) {
-    try {
-      const { default: destinationApi } = require('../../../services/destinations.js');
-      // 这里简化处理，实际应该调用高德逆地理编码 API
-      this.setData({ locationText: '当前位置' });
-    } catch (e) {
-      this.setData({ locationText: '当前位置' });
-    }
+    // 高德逆地理编码，实际使用时通过 API 获取城市名
+    // 这里简化处理
+    this.setData({ locationText: '当前位置' });
   },
 
   // 手动输入位置
