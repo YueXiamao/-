@@ -36,6 +36,5 @@ frontend/${projectname}/
 coverage/
 
 # 数据文件（敏感）
-data/*.json
-data/*.csv
+data/
 !data/.gitkeep
