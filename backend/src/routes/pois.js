@@ -4,7 +4,7 @@ import { poiService } from '../services/poiService.js';
 export default async function poiRoutes(fastify) {
   // 搜索 POI
   fastify.post('/search', async (req) => {
-    const { keyword, type, city, limit } = req.query;
+    const { keyword, type, city, limit } = req.body;
     const pois = await poiService.search({
       keyword: keyword || '',
       type: type || 'spot',

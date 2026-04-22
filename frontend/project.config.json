@@ -38,11 +38,19 @@
       "disablePlugins": [],
       "outputPath": ""
     },
-    "condition": false
+    "condition": false,
+    "compileWorklet": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "swc": false,
+    "disableSWC": true
   },
   "compileType": "miniprogram",
   "libVersion": "3.4.6",
   "appid": "wx68fa17e0de8990a5",
   "projectname": "travel-planner",
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
 }

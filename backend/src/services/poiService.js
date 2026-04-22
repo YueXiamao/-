@@ -7,9 +7,9 @@ const AMAP_BASE = 'https://restapi.amap.com/v3';
 
 // 高德 type -> 我们内部 type 的映射
 const TYPE_MAP = {
-  spot: '风景名胜',
+  spot: '',
   food: '餐饮服务',
-  hotel: '住宿服务'
+  hotel: '住宿'
 };
 
 class PoiService {
@@ -24,9 +24,8 @@ class PoiService {
         params: {
           key: config.amap.key,
           keywords: keyword,
-          city: city || keyword,
-          types: TYPE_MAP[type] || TYPE_MAP.spot,
-          citylimit: city ? true : false,
+          city: undefined,
+          types: TYPE_MAP[type] || undefined,
           offset: limit,
           page: 1,
           output: 'json'
