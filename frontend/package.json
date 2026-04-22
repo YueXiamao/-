@@ -1,0 +1,10 @@
+{
+  "name": "travel-planner-mini",
+  "version": "1.0.0",
+  "description": "旅游行程规划小程序",
+  "main": "app.js",
+  "scripts": {
+    "dev": "echo '使用微信开发者工具开发'"
+  },
+  "dependencies": {}
+}

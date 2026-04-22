@@ -1,44 +1,43 @@
 /* pages/index/index.wxss */
 .container {
-  padding: var(--space-lg) var(--space-base);
+  padding: 32rpx 24rpx;
   min-height: 100vh;
-  background-color: var(--color-bg);
+  background-color: #F5F5F5;
 }
 
 .header {
   text-align: center;
-  padding: var(--space-xl) 0 var(--space-xl);
+  padding: 48rpx 0 48rpx;
 }
 
 .title {
   display: block;
-  font-size: var(--font-xxl);
+  font-size: 44rpx;
   font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: var(--space-xs);
+  color: #1A1A1A;
+  margin-bottom: 8rpx;
 }
 
 .subtitle {
   display: block;
-  font-size: var(--font-base);
-  color: var(--color-text-secondary);
+  font-size: 28rpx;
+  color: #666666;
 }
 
 /* 卡片 */
 .cards {
   display: flex;
   flex-direction: column;
-  gap: var(--space-base);
+  gap: 24rpx;
 }
 
 .card {
-  background-color: var(--color-surface);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
+  background-color: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx;
   display: flex;
   align-items: center;
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.15s ease;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
 }
 
 .card:active {
@@ -47,7 +46,7 @@
 
 .card-icon {
   font-size: 64rpx;
-  margin-right: var(--space-base);
+  margin-right: 24rpx;
   flex-shrink: 0;
 }
 
@@ -57,48 +56,48 @@
 
 .card-title {
   display: block;
-  font-size: var(--font-xl);
+  font-size: 36rpx;
   font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: var(--space-xs);
+  color: #1A1A1A;
+  margin-bottom: 8rpx;
 }
 
 .card-desc {
   display: block;
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
+  font-size: 24rpx;
+  color: #666666;
   line-height: 1.6;
   white-space: pre-line;
 }
 
 .card-arrow {
   font-size: 48rpx;
-  color: var(--color-text-hint);
+  color: #999999;
   flex-shrink: 0;
-  padding-left: var(--space-sm);
+  padding-left: 16rpx;
 }
 
 .card-plan {
-  border-left: 6rpx solid var(--color-primary);
+  border-left: 6rpx solid #07C160;
 }
 
 .card-discover {
-  border-left: 6rpx solid var(--color-secondary);
+  border-left: 6rpx solid #FF9500;
 }
 
 /* 功能特点 */
 .features {
   display: flex;
   justify-content: space-around;
-  margin-top: var(--space-xl);
-  padding: var(--space-lg) 0;
+  margin-top: 48rpx;
+  padding: 32rpx 0;
 }
 
 .feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 8rpx;
 }
 
 .feature-icon {
@@ -106,6 +105,6 @@
 }
 
 .feature-text {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
+  font-size: 22rpx;
+  color: #666666;
 }
