@@ -50,7 +50,7 @@
         data-value="{{item.value}}"
       >
         <!-- 选中角标 -->
-        <view class="pref-check" wx:if="{{preferences.includes(item.value)}}">✓</view>
+        <view class="pref-check" wx:if="{{preferences.includes(item.value)}}">√</view>
         <!-- 图标区 -->
         <view class="pref-icon-wrap">
           <text class="pref-icon">{{item.icon}}</text>
