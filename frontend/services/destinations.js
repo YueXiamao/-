@@ -7,14 +7,14 @@ export default {
     return api.get('/api/destinations/provinces');
   },
 
-  // 获取地级市列表
+  // 获取地级市列表（code 作为路径参数）
   getCities(provinceCode) {
-    return api.get('/api/destinations/cities', { province_code: provinceCode });
+    return api.get(`/api/destinations/cities/${provinceCode}`);
   },
 
-  // 获取区县列表
+  // 获取区县列表（code 作为路径参数）
   getDistricts(cityCode) {
-    return api.get('/api/destinations/districts', { city_code: cityCode });
+    return api.get(`/api/destinations/districts/${cityCode}`);
   },
 
   // 搜索目的地
