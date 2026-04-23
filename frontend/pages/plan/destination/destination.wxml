@@ -8,7 +8,7 @@
       value="{{searchValue}}"
       bindinput="onSearchInput"
     />
-    <view class="search-close" bindtap="onSearchClose" wx:if="{{showSearch}}">✕</view>
+    <view class="search-close" bindtap="onSearchClose" wx:if="{{showSearch}}">×</view>
   </view>
 
   <!-- 搜索结果 -->
@@ -29,53 +29,52 @@
     </view>
   </view>
 
-  <!-- 已选目的地 -->
+  <!-- 已选目的地（灰色选中框，始终显示在顶部） -->
   <view class="selected-bar" wx:if="{{selectedDestinations.length > 0}}">
-    <text class="selected-label">已选择 ({{selectedDestinations.length}}/{{maxDestinations}})</text>
+    <text class="selected-label">已选 ({{selectedDestinations.length}}/{{maxDestinations}})</text>
     <view class="selected-tags">
       <view
         class="selected-tag"
         wx:for="{{selectedDestinations}}"
-        wx:key="code"
+        wx:key="name"
       >
         <text>{{item.name}}</text>
-        <text class="tag-remove" bindtap="onDestRemove" data-index="{{index}}">✕</text>
+        <text class="tag-remove" bindtap="onDestRemove" data-index="{{index}}">×</text>
       </view>
     </view>
   </view>
 
-  <!-- 步骤指示 -->
-  <view class="steps">
-    <text class="step {{step >= 1 ? 'active' : ''}}">① 选择省份</text>
-    <text class="step-arrow">›</text>
-    <text class="step {{step >= 2 ? 'active' : ''}}">② 选择城市</text>
-    <text class="step-arrow">›</text>
-    <text class="step {{step >= 3 ? 'active' : ''}}">③ 选择区县</text>
-  </view>
-
-  <!-- 返回按钮 -->
-  <view class="back-bar" wx:if="{{step > 1}}">
-    <text class="back-btn" bindtap="onBackStep">‹ 上一步</text>
+  <!-- 步骤指示 + 返回 -->
+  <view class="steps-bar">
+    <view class="back-btn" bindtap="onBackStep" wx:if="{{step > 1}}">‹ 返回</view>
+    <view class="steps">
+      <text class="step {{step >= 1 ? 'active' : ''}}">①省</text>
+      <text class="step-sep">›</text>
+      <text class="step {{step >= 2 ? 'active' : ''}}">②市</text>
+      <text class="step-sep">›</text>
+      <text class="step {{step >= 3 ? 'active' : ''}}">③县</text>
+    </view>
+    <view class="step-hint" wx:if="{{step === 3}}">点击添加县到已选列表</view>
   </view>
 
   <!-- 省份列表 -->
   <view class="list" wx:if="{{step === 1}}">
     <view
-      class="list-item"
+      class="list-item {{selectedProvince && item.code === selectedProvince.code ? 'selected' : ''}}"
       wx:for="{{provinces}}"
       wx:key="code"
       bindtap="onProvinceTap"
       data-code="{{item.code}}"
       data-name="{{item.name}}"
     >
-      <text>{{item.name}}</text>
+      <text class="item-name">{{item.name}}</text>
       <text class="item-arrow">›</text>
     </view>
   </view>
 
   <!-- 城市列表 -->
   <view class="list" wx:if="{{step === 2}}">
-    <view class="list-header">{{selectedProvince.name}}</view>
+    <view class="list-header">请选择{{selectedProvince.name}}的市</view>
     <view
       class="list-item"
       wx:for="{{cities}}"
@@ -84,9 +83,9 @@
       data-code="{{item.code}}"
       data-name="{{item.name}}"
     >
-      <text>{{item.name}}</text>
+      <text class="item-name">{{item.name}}</text>
       <view class="item-right">
-        <text class="item-confirm" bindtap="onCityConfirm" data-code="{{item.code}}" data-name="{{item.name}}">直接选市</text>
+        <text class="item-confirm-btn" catchtap="onCityConfirm" data-code="{{item.code}}" data-name="{{item.name}}">选市</text>
         <text class="item-arrow">›</text>
       </view>
     </view>
@@ -94,7 +93,7 @@
 
   <!-- 区县列表 -->
   <view class="list" wx:if="{{step === 3}}">
-    <view class="list-header">{{selectedCity.name}}</view>
+    <view class="list-header">请选择{{selectedCity.name}}的区县</view>
     <view
       class="list-item"
       wx:for="{{districts}}"
@@ -103,10 +102,10 @@
       data-code="{{item.code}}"
       data-name="{{item.name}}"
     >
-      <text>{{item.name}}</text>
+      <text class="item-name">{{item.name}}</text>
       <text class="item-arrow">›</text>
     </view>
-    <view class="list-tip">提示：可在此选择具体的县，也可以直接选择上面的城市</view>
+    <view class="list-tip">直接点击区县名称即可添加到已选列表，可继续选择</view>
   </view>
 
   <!-- 加载状态 -->
@@ -114,8 +113,13 @@
     <text>加载中...</text>
   </view>
 
-  <!-- 下一步按钮 -->
-  <view class="bottom-bar" wx:if="{{selectedDestinations.length > 0}}">
-    <button class="btn-primary" bindtap="onNext">下一步</button>
+  <!-- 下一步按钮（固定底部） -->
+  <view class="bottom-bar {{selectedDestinations.length === 0 ? 'disabled' : ''}}">
+    <button
+      class="btn-primary"
+      bindtap="onNext"
+      wx:if="{{selectedDestinations.length > 0}}"
+    >下一步 ({{selectedDestinations.length}}个目的地)</button>
+    <button class="btn-disabled" wx:if="{{selectedDestinations.length === 0}}">请先选择目的地</button>
   </view>
 </view>

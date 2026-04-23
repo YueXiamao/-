@@ -1,5 +1,4 @@
 // pages/plan/destination/destination.js
-const app = getApp();
 import destinationsApi from '../../../services/destinations.js';
 import { debounce } from '../../../utils/index.js';
 
@@ -8,6 +7,7 @@ Page({
     // 搜索
     searchValue: '',
     searchResults: [],
+    showSearch: false,
 
     // 已选目的地
     selectedDestinations: [],
@@ -18,22 +18,20 @@ Page({
     cities: [],
     districts: [],
 
-    // 当前选择
+    // 当前选择路径（用于显示 "四川 > 成都" 这类信息）
     selectedProvince: null,
     selectedCity: null,
-    selectedDistrict: null,
 
-    // UI 状态
-    step: 1, // 1省 2市 3区县
-    loading: false,
-    showSearch: false
+    // UI 状态：1省 2市 3区县（选了区县后保持3，不再跳回2）
+    step: 1,
+    loading: false
   },
 
   onLoad() {
     this.loadProvinces();
   },
 
-  // 加载省份
+  // ---------- 加载 ----------
   async loadProvinces() {
     this.setData({ loading: true });
     try {
@@ -45,21 +43,6 @@ Page({
     }
   },
 
-  // 选择省份
-  onProvinceTap(e) {
-    const { code, name } = e.currentTarget.dataset;
-    this.setData({
-      selectedProvince: { code, name },
-      selectedCity: null,
-      selectedDistrict: null,
-      cities: [],
-      districts: [],
-      step: 2
-    });
-    this.loadCities(code);
-  },
-
-  // 加载城市
   async loadCities(provinceCode) {
     this.setData({ loading: true });
     try {
@@ -71,19 +54,6 @@ Page({
     }
   },
 
-  // 选择城市
-  onCityTap(e) {
-    const { code, name } = e.currentTarget.dataset;
-    this.setData({
-      selectedCity: { code, name },
-      selectedDistrict: null,
-      districts: [],
-      step: 3
-    });
-    this.loadDistricts(code);
-  },
-
-  // 加载区县
   async loadDistricts(cityCode) {
     this.setData({ loading: true });
     try {
@@ -95,65 +65,74 @@ Page({
     }
   },
 
-  // 选择区县/确认城市
+  // ---------- 选择事件 ----------
+  onProvinceTap(e) {
+    const { code, name } = e.currentTarget.dataset;
+    this.setData({
+      selectedProvince: { code, name },
+      selectedCity: null,
+      districts: [],
+      step: 2
+    });
+    this.loadCities(code);
+  },
+
+  // 点城市名进入区县列表；点"直接选市"按钮只加城市
+  onCityTap(e) {
+    const { code, name } = e.currentTarget.dataset;
+    this.setData({
+      selectedCity: { code, name },
+      districts: [],
+      step: 3
+    });
+    this.loadDistricts(code);
+  },
+
+  onCityConfirm(e) {
+    // 阻止冒泡，避免触发 onCityTap
+    e.stopPropagation && e.stopPropagation();
+    const { code, name } = e.currentTarget.dataset;
+    this.addDestination({
+      name,
+      code,
+      city: name,
+      province: this.data.selectedProvince.name,
+      level: 'city'
+    });
+  },
+
   onDistrictTap(e) {
     const { code, name } = e.currentTarget.dataset;
-    const { selectedDestinations, selectedCity, selectedProvince, maxDestinations } = this.data;
+    this.addDestination({
+      name,
+      code,
+      city: this.data.selectedCity.name,
+      province: this.data.selectedProvince.name,
+      level: 'district'
+    });
+  },
+
+  // ---------- 通用添加逻辑 ----------
+  addDestination(dest) {
+    const { selectedDestinations, maxDestinations } = this.data;
 
     if (selectedDestinations.length >= maxDestinations) {
-      wx.showToast({ title: `最多选择${maxDestinations}个目的地`, icon: 'none' });
+      wx.showToast({ title: `最多选${maxDestinations}个`, icon: 'none' });
       return;
     }
-
-    // 添加目的地
-    const dest = { name, code, city: selectedCity.name, province: selectedProvince.name };
-    const exists = selectedDestinations.some(d => d.name === name);
+    const exists = selectedDestinations.some(d => d.name === dest.name);
     if (exists) {
       wx.showToast({ title: '已添加', icon: 'none' });
       return;
     }
 
     this.setData({
-      selectedDestinations: [...selectedDestinations, dest],
-      // 重置选择状态
-      selectedCity: null,
-      selectedDistrict: null,
-      districts: [],
-      step: 2
+      selectedDestinations: [...selectedDestinations, dest]
+      // 注意：step 保持 3，不跳转，用户可以继续选更多区县
     });
   },
 
-  // 直接确认城市（不加区县）
-  onCityConfirm() {
-    const { selectedDestinations, selectedCity, selectedProvince, maxDestinations } = this.data;
-    if (!selectedCity) return;
-
-    if (selectedDestinations.length >= maxDestinations) {
-      wx.showToast({ title: `最多选择${maxDestinations}个目的地`, icon: 'none' });
-      return;
-    }
-
-    const exists = selectedDestinations.some(d => d.name === selectedCity.name);
-    if (exists) {
-      wx.showToast({ title: '已添加', icon: 'none' });
-      return;
-    }
-
-    this.setData({
-      selectedDestinations: [...selectedDestinations, {
-        name: selectedCity.name,
-        code: selectedCity.code,
-        city: selectedCity.name,
-        province: selectedProvince.name
-      }],
-      selectedCity: null,
-      selectedDistrict: null,
-      districts: [],
-      step: 2
-    });
-  },
-
-  // 删除已选目的地
+  // 删除已选
   onDestRemove(e) {
     const { index } = e.currentTarget.dataset;
     const list = [...this.data.selectedDestinations];
@@ -161,18 +140,18 @@ Page({
     this.setData({ selectedDestinations: list });
   },
 
-  // 搜索相关
+  // ---------- 搜索 ----------
   onSearchInput(e) {
     const value = e.detail.value;
     this.setData({ searchValue: value });
     if (value.length >= 2) {
-      this.debounceSearch(value);
+      this._debounceSearch(value);
     } else {
       this.setData({ searchResults: [], showSearch: false });
     }
   },
 
-  debounceSearch: debounce(async function(value) {
+  _debounceSearch: debounce(async function (value) {
     try {
       const results = await destinationsApi.search(value);
       this.setData({ searchResults: results, showSearch: true });
@@ -181,57 +160,33 @@ Page({
     }
   }, 300),
 
-  // 添加搜索结果
   onSearchResultTap(e) {
     const { name, code, level, province, city } = e.currentTarget.dataset;
-    const { selectedDestinations, maxDestinations } = this.data;
-
-    if (selectedDestinations.length >= maxDestinations) {
-      wx.showToast({ title: `最多选择${maxDestinations}个目的地`, icon: 'none' });
-      return;
-    }
-
-    const exists = selectedDestinations.some(d => d.name === name);
-    if (exists) {
-      wx.showToast({ title: '已添加', icon: 'none' });
-      return;
-    }
-
-    this.setData({
-      selectedDestinations: [...selectedDestinations, { name, code, level, province, city }],
-      searchValue: '',
-      searchResults: [],
-      showSearch: false
-    });
+    this.addDestination({ name, code, level, province, city });
+    this.setData({ searchValue: '', searchResults: [], showSearch: false });
   },
 
-  // 关闭搜索
   onSearchClose() {
     this.setData({ searchValue: '', searchResults: [], showSearch: false });
   },
 
-  // 上一步
+  // ---------- 导航 ----------
   onBackStep() {
     const { step } = this.data;
     if (step === 3) {
-      this.setData({ step: 2, selectedDistrict: null });
+      this.setData({ step: 2, selectedCity: null, districts: [] });
     } else if (step === 2) {
-      this.setData({ step: 1, selectedCity: null });
+      this.setData({ step: 1, selectedProvince: null, cities: [] });
     }
   },
 
-  // 下一步
   onNext() {
     const { selectedDestinations } = this.data;
     if (selectedDestinations.length === 0) {
       wx.showToast({ title: '请至少选择一个目的地', icon: 'none' });
       return;
     }
-
-    // 存储到本地，跳转到参数页
     wx.setStorageSync('trip_destinations', selectedDestinations);
-    wx.navigateTo({
-      url: '/pages/plan/params/params'
-    });
+    wx.navigateTo({ url: '/pages/plan/params/params' });
   }
 });
