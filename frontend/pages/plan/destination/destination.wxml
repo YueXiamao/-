@@ -114,12 +114,14 @@
   </view>
 
   <!-- 下一步按钮（固定底部） -->
-  <view class="bottom-bar {{selectedDestinations.length === 0 ? 'disabled' : ''}}">
+  <view class="bottom-bar">
     <button
-      class="btn-primary"
+      class="btn-primary {{selectedDestinations.length === 0 ? 'btn-disabled' : ''}}"
       bindtap="onNext"
-      wx:if="{{selectedDestinations.length > 0}}"
-    >下一步 ({{selectedDestinations.length}}个目的地)</button>
-    <button class="btn-disabled" wx:if="{{selectedDestinations.length === 0}}">请先选择目的地</button>
+      disabled="{{selectedDestinations.length === 0}}"
+    >
+      <text class="btn-text">下一步</text>
+      <text class="btn-count" wx:if="{{selectedDestinations.length > 0}}">{{selectedDestinations.length}}个目的地</text>
+    </button>
   </view>
 </view>

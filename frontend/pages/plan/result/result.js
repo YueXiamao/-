@@ -12,7 +12,7 @@ Page({
     // UI 状态
     loading: true,
     generatingText: '正在规划行程...',
-    currentDay: 0, // 展开的 day index
+    currentDay: -1, // -1 表示全部折叠
     expandedItems: {}, // 展开的 items
 
     // 错误状态
@@ -65,6 +65,7 @@ Page({
   // 展开/收起天
   onDayTap(e) {
     const { index } = e.currentTarget.dataset;
+    // -1 = 全部折叠；点击已展开的收起来，点击折叠的展开
     this.setData({ currentDay: this.data.currentDay === index ? -1 : index });
   },
 
@@ -131,27 +132,27 @@ Page({
   },
 
   // 复制行程
-  async onExport() {
+  async onCopy() {
     const { trip } = this.data;
     if (!trip) return;
 
-    let text = `📍 ${trip.title}\n`;
-    text += `📅 ${trip.start_date} · ${trip.days}天\n`;
-    text += `🏷 ${trip.preferences?.join(' / ') || ''}\n\n`;
+    let text = `${trip.title || '旅行行程'}\n`;
+    text += `${trip.start_date} · ${trip.days}天\n`;
+    text += `${(trip.preferences || []).join(' / ')}\n\n`;
 
-    for (const day of trip.itinerary) {
-      text += `━━━ DAY ${day.day} ━━━\n`;
-      for (const item of day.items) {
+    for (const day of trip.itinerary || []) {
+      text += `=== DAY ${day.day} ===\n`;
+      for (const item of day.items || []) {
         if (item.type === 'spot') {
-          text += `📍 ${item.name}\n   ${item.address} · ${item.duration}\n`;
+          text += `[P] ${item.name}\n   ${item.address || ''} ${item.duration ? '· ' + item.duration : ''}\n`;
           if (item.description) text += `   ${item.description}\n`;
-          if (item.transport_to_next) text += `   → ${item.transport_to_next}\n`;
+          if (item.transport_to_next) text += `   -> ${item.transport_to_next}\n`;
         } else if (item.type === 'food') {
-          text += `🍜 ${item.name}\n   ${item.address}\n   ${item.recommend} · ${item.budget}\n`;
+          text += `[F] ${item.name}\n   ${item.address || ''}\n   ${item.recommend || ''} ${item.budget ? '· ' + item.budget : ''}\n`;
         } else if (item.type === 'hotel') {
-          text += `🏨 ${item.name}\n   ${item.address}\n   ${item.budget}\n`;
+          text += `[H] ${item.name}\n   ${item.address || ''}\n   ${item.budget || ''}\n`;
         }
-        if (item.notes) text += `   📝 ${item.notes}\n`;
+        if (item.notes) text += `   note: ${item.notes}\n`;
       }
       text += '\n';
     }

@@ -2,7 +2,7 @@
 <view class="container">
   <!-- 加载状态 -->
   <view class="loading-state" wx:if="{{loading}}">
-    <view class="loading-icon">✈️</view>
+    <view class="loading-icon">[*]</view>
     <text class="loading-text">{{generatingText}}</text>
     <view class="loading-dots">
       <view class="dot"></view>
@@ -13,19 +13,19 @@
 
   <!-- 错误状态 -->
   <view class="error-state" wx:elif="{{error}}">
-    <text class="error-icon">😢</text>
+    <text class="error-icon">:(</text>
     <text class="error-text">{{error}}</text>
-    <button class="btn-secondary" bindtap="onRetry">重试</button>
+    <button class="btn-secondary" bindtap="onRetry">重新生成</button>
   </view>
 
   <!-- 行程结果 -->
   <view class="result" wx:else>
     <!-- 行程头部 -->
     <view class="trip-header card">
-      <view class="trip-title">{{trip.title}}</view>
+      <view class="trip-title">{{trip.title || '行程规划'}}</view>
       <view class="trip-meta">
-        <text class="meta-item">📅 {{trip.start_date}} · {{trip.days}}天</text>
-        <text class="meta-item">🏷 {{trip.preferences.join(' / ')}}</text>
+        <text class="meta-item">{{trip.start_date}} · {{trip.days}}天</text>
+        <text class="meta-item" wx:if="{{trip.preferences && trip.preferences.length > 0}}">{{trip.preferences.join(' / ')}}</text>
       </view>
       <view class="trip-dests">
         <text class="dest-tag" wx:for="{{trip.destinations}}" wx:key="name">{{item.name}}</text>
@@ -35,15 +35,15 @@
     <!-- 操作按钮 -->
     <view class="action-bar">
       <view class="action-btn" bindtap="onSave">
-        <text>💾</text>
+        <text>[S]</text>
         <text class="action-label">保存</text>
       </view>
-      <view class="action-btn" bindtap="onExport">
-        <text>📋</text>
+      <view class="action-btn" bindtap="onCopy">
+        <text>[C]</text>
         <text class="action-label">复制</text>
       </view>
       <button class="share-btn" open-type="share">
-        <text>🔗</text>
+        <text>[SH]</text>
         <text class="action-label">分享</text>
       </button>
     </view>
@@ -63,7 +63,7 @@
         >
           <view class="day-info">
             <text class="day-num">DAY {{item.day}}</text>
-            <text class="day-date">{{formatDayDate(item.date)}}</text>
+            <text class="day-date">{{item.date}}</text>
           </view>
           <text class="day-arrow {{currentDay === index ? 'expanded' : ''}}">›</text>
         </view>
@@ -79,43 +79,37 @@
           >
             <!-- 景点 -->
             <view wx:if="{{tripItem.type === 'spot'}}" class="item-spot">
-              <view class="item-icon">📍</view>
+              <view class="item-icon">[P]</view>
               <view class="item-body">
                 <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta">{{tripItem.address}} · {{tripItem.duration}}</view>
+                <view class="item-meta" wx:if="{{tripItem.address || tripItem.duration}}">{{tripItem.address}}{{tripItem.duration ? ' · ' + tripItem.duration : ''}}</view>
                 <view class="item-desc" wx:if="{{tripItem.description}}">{{tripItem.description}}</view>
-                <view class="item-transport" wx:if="{{tripItem.transport_to_next}}">
-                  → {{tripItem.transport_to_next}}
-                </view>
-                <view class="item-note" wx:if="{{tripItem.notes}}">📝 {{tripItem.notes}}</view>
+                <view class="item-transport" wx:if="{{tripItem.transport_to_next}}">-> {{tripItem.transport_to_next}}</view>
+                <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
               </view>
               <view class="item-actions">
-                <text class="item-action" bindtap="onAddNote" data-index="{{itemIndex}}">备注</text>
-                <text class="item-action danger" bindtap="onItemDelete" data-index="{{itemIndex}}">删除</text>
+                <text class="item-action danger" catchtap="onItemDelete" data-tripday="{{item.id}}" data-index="{{itemIndex}}">删除</text>
               </view>
             </view>
 
             <!-- 美食 -->
             <view wx:elif="{{tripItem.type === 'food'}}" class="item-food">
-              <view class="item-icon">🍜</view>
+              <view class="item-icon">[F]</view>
               <view class="item-body">
                 <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta">{{tripItem.address}}</view>
-                <view class="item-rec">{{tripItem.recommend}} · {{tripItem.budget}}</view>
-              </view>
-              <view class="item-actions">
-                <text class="item-action danger" bindtap="onItemDelete" data-index="{{itemIndex}}">删除</text>
+                <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
+                <view class="item-rec" wx:if="{{tripItem.recommend || tripItem.budget}}">{{tripItem.recommend}}{{tripItem.budget ? ' · ' + tripItem.budget : ''}}</view>
               </view>
             </view>
 
             <!-- 酒店 -->
             <view wx:elif="{{tripItem.type === 'hotel'}}" class="item-hotel">
-              <view class="item-icon">🏨</view>
+              <view class="item-icon">[H]</view>
               <view class="item-body">
                 <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta">{{tripItem.address}}</view>
+                <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
                 <view class="item-reason" wx:if="{{tripItem.reason}}">{{tripItem.reason}}</view>
-                <view class="item-budget">{{tripItem.budget}}</view>
+                <view class="item-budget" wx:if="{{tripItem.budget}}">{{tripItem.budget}}</view>
               </view>
             </view>
           </view>
