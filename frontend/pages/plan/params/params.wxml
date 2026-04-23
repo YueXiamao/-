@@ -33,39 +33,29 @@
     </view>
   </view>
 
-  <!-- 游玩方式（横向滚动卡片式） -->
+  <!-- 游玩方式：3列网格 -->
   <view class="form-card">
-    <text class="form-label">游玩方式 <text class="form-label-hint">（选1-3个）</text></text>
+    <text class="form-label">游玩方式 <text class="form-label-hint">（可多选）</text></text>
 
-    <!-- 横向滚动区域 -->
-    <scroll-view class="pref-scroll" scroll-x="{{true}}">
-      <view class="pref-track">
-        <view
-          class="pref-card {{preferences.indexOf(item.value) >= 0 ? 'pref-card-on' : ''}}"
-          wx:for="{{preferenceOptions}}"
-          wx:key="value"
-          bindtap="onPreferenceTap"
-          data-value="{{item.value}}"
-        >
-          <!-- 左侧选中条 -->
-          <view class="pref-side {{preferences.indexOf(item.value) >= 0 ? 'pref-side-on' : ''}}"></view>
-          <!-- 内容 -->
-          <view class="pref-body">
-            <text class="pref-icon">{{item.icon}}</text>
-            <text class="pref-name">{{item.label}}</text>
-            <!-- 选中标记 -->
-            <view class="pref-mark" wx:if="{{preferences.indexOf(item.value) >= 0}}">
-              <text class="pref-mark-text">V</text>
-            </view>
-          </view>
+    <view class="pref-grid">
+      <view
+        class="pref-item {{preferences.indexOf(item.value) >= 0 ? 'pref-on' : ''}}"
+        wx:for="{{preferenceOptions}}"
+        wx:key="value"
+        bindtap="onPreferenceTap"
+        data-value="{{item.value}}"
+      >
+        <!-- 图标 -->
+        <view class="pref-icon-wrap">
+          <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
+        </view>
+        <!-- 标签文字 -->
+        <text class="pref-name">{{item.label}}</text>
+        <!-- 选中勾 -->
+        <view class="pref-check" wx:if="{{preferences.indexOf(item.value) >= 0}}">
+          <text class="pref-check-icon">V</text>
         </view>
       </view>
-    </scroll-view>
-
-    <!-- 已选展示行 -->
-    <view class="selected-row" wx:if="{{preferences.length > 0}}">
-      <text class="selected-label">已选：</text>
-      <text class="selected-items">{{preferences.join(' + ')}}</text>
     </view>
   </view>
 

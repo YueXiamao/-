@@ -1,6 +1,5 @@
 /* pages/plan/params/params.wxss */
 
-/* ===== 页面结构 ===== */
 .container {
   min-height: 100vh;
   background-color: #F5F5F5;
@@ -23,11 +22,7 @@
   margin-bottom: 12rpx;
 }
 
-.dest-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-}
+.dest-tags { display: flex; flex-wrap: wrap; gap: 10rpx; }
 
 .dest-tag {
   background-color: #E8F8EE;
@@ -51,7 +46,7 @@
   font-weight: 600;
   color: #1A1A1A;
   display: block;
-  margin-bottom: 20rpx;
+  margin-bottom: 24rpx;
 }
 
 .form-label-hint {
@@ -60,29 +55,18 @@
   font-weight: 400;
 }
 
-/* ===== 日期选择 ===== */
+/* ===== 日期 ===== */
 .picker-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.picker-value {
-  font-size: 30rpx;
-  color: #BBBBBB;
-}
+.picker-value { font-size: 30rpx; color: #BBBBBB; }
+.picker-value.has-value { color: #1A1A1A; font-weight: 500; }
+.picker-arrow { font-size: 36rpx; color: #CCCCCC; }
 
-.picker-value.has-value {
-  color: #1A1A1A;
-  font-weight: 500;
-}
-
-.picker-arrow {
-  font-size: 36rpx;
-  color: #CCCCCC;
-}
-
-/* ===== 天数选择 ===== */
+/* ===== 天数 ===== */
 .days-row {
   display: flex;
   align-items: center;
@@ -99,7 +83,6 @@
   line-height: 80rpx;
   font-size: 44rpx;
   color: #1A1A1A;
-  font-weight: 300;
 }
 
 .days-btn:active { background-color: #E0E0E0; }
@@ -119,139 +102,93 @@
   line-height: 1;
 }
 
-.days-unit {
-  font-size: 28rpx;
-  color: #666666;
-}
+.days-unit { font-size: 28rpx; color: #666666; }
 
-/* ===== 游玩方式：横向滚动卡片 ===== */
-.pref-scroll {
-  width: 100%;
-  white-space: nowrap;
-}
-
-.pref-track {
-  display: inline-flex;
-  gap: 16rpx;
-  padding-bottom: 8rpx;
-}
-
-/* 每个选项卡片 */
-.pref-card {
-  position: relative;
-  width: 180rpx;
-  flex-shrink: 0;
-  border-radius: 16rpx;
-  background-color: #F7F7F7;
-  overflow: hidden;
+/* ===== 游玩方式：3列网格 ===== */
+.pref-grid {
   display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  border: 2rpx solid transparent;
-  transition: border-color 0.15s, background-color 0.15s;
+  flex-wrap: wrap;
+  gap: 20rpx;
 }
 
-/* 选中状态：白底浅绿 */
-.pref-card-on {
-  background-color: #F0FFF4;
-  border-color: #07C160;
-}
-
-/* 左侧选中条 */
-.pref-side {
-  width: 6rpx;
-  background-color: transparent;
-  flex-shrink: 0;
-  transition: background-color 0.15s;
-}
-
-.pref-side-on {
-  background-color: #07C160;
-}
-
-/* 内容区 */
-.pref-body {
-  flex: 1;
+/* 每个选项 */
+.pref-item {
+  position: relative;
+  width: calc((100% - 40rpx) / 3);
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 10rpx;
+  padding: 28rpx 8rpx 22rpx;
+  border-radius: 20rpx;
+  background-color: #F7F7F7;
+  border: 2rpx solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+/* 选中状态 */
+.pref-on {
+  background-color: #E8F8EE;
+  border-color: #07C160;
+  transform: scale(1.02);
+}
+
+.pref-icon-wrap {
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 20rpx 12rpx 18rpx;
-  gap: 8rpx;
-  position: relative;
+  overflow: hidden;
+}
+
+.pref-on .pref-icon-wrap {
+  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.25);
 }
 
 .pref-icon {
-  font-size: 36rpx;
-  line-height: 1;
-  color: #555555;
-  font-weight: 700;
-}
-
-.pref-card-on .pref-icon {
-  color: #07C160;
+  width: 64rpx;
+  height: 64rpx;
 }
 
 .pref-name {
-  font-size: 26rpx;
+  font-size: 24rpx;
   color: #1A1A1A;
   font-weight: 500;
   text-align: center;
 }
 
-.pref-card-on .pref-name {
+.pref-on .pref-name {
   color: #07C160;
   font-weight: 700;
 }
 
-/* 右上角选中标记 */
-.pref-mark {
+/* 选中勾：右下角 */
+.pref-check {
   position: absolute;
-  top: 0;
-  right: 0;
+  bottom: 14rpx;
+  right: 14rpx;
   width: 36rpx;
   height: 36rpx;
   background-color: #07C160;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom-left-radius: 12rpx;
+  box-shadow: 0 4rpx 8rpx rgba(7, 193, 96, 0.3);
 }
 
-.pref-mark-text {
-  font-size: 18rpx;
+.pref-check-icon {
+  font-size: 20rpx;
   color: #FFFFFF;
   font-weight: 700;
   line-height: 1;
 }
 
-/* 点击反馈 */
-.pref-card:active {
-  opacity: 0.85;
-  transform: scale(0.97);
-}
-
-/* 已选文字行 */
-.selected-row {
-  margin-top: 16rpx;
-  padding: 12rpx 16rpx;
-  background-color: #F0FFF4;
-  border-radius: 10rpx;
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-}
-
-.selected-label {
-  font-size: 24rpx;
-  color: #999999;
-}
-
-.selected-items {
-  font-size: 24rpx;
-  color: #07C160;
-  font-weight: 600;
-}
+.pref-item:active { transform: scale(0.95); }
 
 /* ===== 补充说明 ===== */
 .notes-input {
