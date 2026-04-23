@@ -86,11 +86,6 @@ Page({
       return;
     }
 
-    if (preferences.length > 3) {
-      wx.showToast({ title: '游玩方式最多选3个', icon: 'none' });
-      return;
-    }
-
     const params = {
       destinations,
       start_date: startDate,
