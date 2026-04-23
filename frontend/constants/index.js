@@ -2,13 +2,13 @@
 
 // 游玩方式选项
 export const PREFERENCE_OPTIONS = [
-  { label: '轻松度假', value: '轻松度假', icon: '🌿' },
-  { label: '网红打卡', value: '网红打卡', icon: '📸' },
-  { label: '寻找美食', value: '寻找美食', icon: '🍜' },
-  { label: '亲子友好', value: '亲子友好', icon: '👶' },
-  { label: '文化探索', value: '文化探索', icon: '🏛' },
-  { label: '户外徒步', value: '户外徒步', icon: '🥾' },
-  { label: '购物休闲', value: '购物休闲', icon: '🛍' }
+  { label: '轻松度假', value: '轻松度假', icon: '[休]' },
+  { label: '网红打卡', value: '网红打卡', icon: '[红]' },
+  { label: '寻找美食', value: '寻找美食', icon: '[食]' },
+  { label: '亲子友好', value: '亲子友好', icon: '[童]' },
+  { label: '文化探索', value: '文化探索', icon: '[文]' },
+  { label: '户外徒步', value: '户外徒步', icon: '[徒]' },
+  { label: '购物休闲', value: '购物休闲', icon: '[购]' }
 ];
 
 // 预算选项
