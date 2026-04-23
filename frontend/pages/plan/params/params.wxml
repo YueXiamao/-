@@ -3,17 +3,15 @@
 
   <!-- 目的地摘要 -->
   <view class="dest-summary">
-    <view class="summary-row">
-      <text class="summary-label">目的地</text>
-      <view class="dest-tags">
-        <text class="dest-tag" wx:for="{{destinations}}" wx:key="name">{{item.name}}</text>
-      </view>
+    <text class="dest-summary-label">目的地</text>
+    <view class="dest-tags">
+      <text class="dest-tag" wx:for="{{destinations}}" wx:key="name">{{item.name}}</text>
     </view>
   </view>
 
   <!-- 出发日期 -->
   <view class="form-card">
-    <view class="form-label">出发日期</view>
+    <text class="form-label">出发日期</text>
     <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
       <view class="picker-row">
         <text class="picker-value {{startDate ? 'has-value' : ''}}">{{startDate || '请选择出发日期'}}</text>
@@ -24,7 +22,7 @@
 
   <!-- 游玩天数 -->
   <view class="form-card">
-    <view class="form-label">游玩天数</view>
+    <text class="form-label">游玩天数</text>
     <view class="days-row">
       <view class="days-btn" bindtap="onDaysChange" data-delta="-1">−</view>
       <view class="days-center">
@@ -35,35 +33,45 @@
     </view>
   </view>
 
-  <!-- 游玩方式 -->
+  <!-- 游玩方式（横向滚动卡片式） -->
   <view class="form-card">
-    <view class="form-label-row">
-      <text class="form-label">游玩方式</text>
-      <text class="form-hint">可选1-3个</text>
-    </view>
-    <view class="pref-grid">
-      <view
-        class="pref-item {{preferences.includes(item.value) ? 'active' : ''}}"
-        wx:for="{{preferenceOptions}}"
-        wx:key="value"
-        bindtap="onPreferenceTap"
-        data-value="{{item.value}}"
-      >
-        <!-- 选中角标 -->
-        <view class="pref-check" wx:if="{{preferences.includes(item.value)}}">√</view>
-        <!-- 图标区 -->
-        <view class="pref-icon-wrap">
-          <text class="pref-icon">{{item.icon}}</text>
+    <text class="form-label">游玩方式 <text class="form-label-hint">（选1-3个）</text></text>
+
+    <!-- 横向滚动区域 -->
+    <scroll-view class="pref-scroll" scroll-x="{{true}}">
+      <view class="pref-track">
+        <view
+          class="pref-card {{preferences.indexOf(item.value) >= 0 ? 'pref-card-on' : ''}}"
+          wx:for="{{preferenceOptions}}"
+          wx:key="value"
+          bindtap="onPreferenceTap"
+          data-value="{{item.value}}"
+        >
+          <!-- 左侧选中条 -->
+          <view class="pref-side {{preferences.indexOf(item.value) >= 0 ? 'pref-side-on' : ''}}"></view>
+          <!-- 内容 -->
+          <view class="pref-body">
+            <text class="pref-icon">{{item.icon}}</text>
+            <text class="pref-name">{{item.label}}</text>
+            <!-- 选中标记 -->
+            <view class="pref-mark" wx:if="{{preferences.indexOf(item.value) >= 0}}">
+              <text class="pref-mark-text">V</text>
+            </view>
+          </view>
         </view>
-        <!-- 文字 -->
-        <text class="pref-label">{{item.label}}</text>
       </view>
+    </scroll-view>
+
+    <!-- 已选展示行 -->
+    <view class="selected-row" wx:if="{{preferences.length > 0}}">
+      <text class="selected-label">已选：</text>
+      <text class="selected-items">{{preferences.join(' + ')}}</text>
     </view>
   </view>
 
   <!-- 补充说明 -->
   <view class="form-card">
-    <view class="form-label">补充说明 <text class="form-hint-inline">（选填）</text></view>
+    <text class="form-label">补充说明 <text class="form-label-hint">（选填）</text></text>
     <textarea
       class="notes-input"
       placeholder="如：想看日出、不吃辣、带老人、想泡温泉..."
@@ -71,18 +79,13 @@
       bindinput="onNotesInput"
       maxlength="200"
     />
-    <view class="notes-count">{{extraNotes.length || 0}}/200</view>
+    <text class="notes-count">{{extraNotes.length || 0}}/200</text>
   </view>
 
   <!-- 底部按钮 -->
   <view class="bottom-bar">
-    <button
-      class="btn-primary {{loading ? 'btn-loading' : ''}}"
-      bindtap="onGenerate"
-      disabled="{{loading}}"
-    >
-      <text wx:if="{{!loading}}">生成行程</text>
-      <text wx:if="{{loading}}">生成中...</text>
+    <button class="btn-primary" bindtap="onGenerate">
+      <text>生成行程</text>
     </button>
   </view>
 
