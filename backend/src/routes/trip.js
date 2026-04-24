@@ -3,12 +3,7 @@ import { Errors } from '../middleware/errorHandler.js';
 
 export default async function tripRoutes(fastify) {
   fastify.post('/generate', async (req) => {
-    const { destinations, start_date, days, preferences, extra_notes } = req.body || {};
-    if (!Array.isArray(destinations) || destinations.length === 0 || !start_date || !days) {
-      throw Errors.VALIDATION_ERROR('缺少必填参数');
-    }
-
-    return tripService.generate({ destinations, start_date, days, preferences, extra_notes });
+    return tripService.generate(req.body || {});
   });
 
   fastify.post('/save', async (req) => {

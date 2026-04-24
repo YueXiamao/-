@@ -2,10 +2,11 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import test from 'node:test';
+import test, { after, before, beforeEach } from 'node:test';
 import Fastify from 'fastify';
 
 const tempDirsToCleanup = new Set();
+let sharedContext;
 
 process.once('exit', () => {
   for (const tmpDir of tempDirsToCleanup) {
@@ -74,6 +75,14 @@ async function buildServer() {
         try {
           await server.close();
         } finally {
+          try {
+            const db = getDb();
+            if (db && typeof db.close === 'function' && db.open) {
+              db.close();
+            }
+          } catch {
+            // Best effort at test teardown.
+          }
           restoreEnvAndTempDir();
         }
       }
@@ -98,14 +107,38 @@ function assertGenerationMetaShape(payload) {
   );
 }
 
+function resetDatabase(db) {
+  db.exec(`
+    DELETE FROM trip_item;
+    DELETE FROM trip_day;
+    DELETE FROM trip;
+    DELETE FROM destination_tag;
+    DELETE FROM destination;
+    DELETE FROM poi;
+    DELETE FROM user_preference;
+    DELETE FROM region_data;
+    DELETE FROM user;
+    DELETE FROM sqlite_sequence;
+  `);
+}
+
+before(async () => {
+  sharedContext = await buildServer();
+});
+
+after(async () => {
+  if (sharedContext) {
+    await sharedContext.cleanup();
+  }
+});
+
+beforeEach(() => {
+  resetDatabase(sharedContext.db);
+});
+
 function testWithServer(name, fn) {
   test(name, async () => {
-    const context = await buildServer();
-    try {
-      await fn(context);
-    } finally {
-      await context.cleanup();
-    }
+    await fn(sharedContext);
   });
 }
 
@@ -114,6 +147,54 @@ testWithServer('missing trip parameters return validation error instead of crash
     method: 'POST',
     url: '/api/trip/generate',
     payload: {}
+  });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().code, 10001);
+});
+
+testWithServer('trip generation rejects empty preferences via shared request normalization', async ({ server }) => {
+  const res = await server.inject({
+    method: 'POST',
+    url: '/api/trip/generate',
+    payload: {
+      destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+      start_date: '2026-05-01',
+      days: 2,
+      preferences: []
+    }
+  });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().code, 10001);
+});
+
+testWithServer('trip generation rejects malformed day counts via shared request normalization', async ({ server }) => {
+  const res = await server.inject({
+    method: 'POST',
+    url: '/api/trip/generate',
+    payload: {
+      destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+      start_date: '2026-05-01',
+      days: '2abc',
+      preferences: ['Relaxed']
+    }
+  });
+
+  assert.equal(res.statusCode, 400);
+  assert.equal(res.json().code, 10001);
+});
+
+testWithServer('trip generation rejects malformed start dates via shared request normalization', async ({ server }) => {
+  const res = await server.inject({
+    method: 'POST',
+    url: '/api/trip/generate',
+    payload: {
+      destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+      start_date: 'not-a-date',
+      days: 2,
+      preferences: ['Relaxed']
+    }
   });
 
   assert.equal(res.statusCode, 400);
@@ -192,6 +273,25 @@ testWithServer('trip generate route forwards rule_based fallback metadata return
   } finally {
     tripModule.tripService.generate = originalGenerate;
   }
+});
+
+testWithServer('real trip generation response includes generation_meta and fallback_level', async ({ server }) => {
+  const res = await server.inject({
+    method: 'POST',
+    url: '/api/trip/generate',
+    payload: {
+      destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+      start_date: '2026-05-01',
+      days: 2,
+      preferences: ['Relaxed'],
+      extra_notes: 'Keep it light'
+    }
+  });
+
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.json().source, 'rule_based');
+  assert.equal(res.json().fallback_level, 'rule_based');
+  assert.equal(res.json().generation_meta?.phase, 'degraded');
 });
 
 testWithServer('trip generation returns a retryable product error when every fallback fails', async ({ server }) => {

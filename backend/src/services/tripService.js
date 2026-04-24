@@ -3,13 +3,37 @@ import { getDb } from '../db/database.js';
 import { poiService } from './poiService.js';
 import { userService } from './userService.js';
 import { Errors } from '../middleware/errorHandler.js';
+import { TripGenerationOrchestrator } from './trip-generation/orchestrator.js';
 
 class TripService {
+  constructor() {
+    this.orchestrator = new TripGenerationOrchestrator({
+      tripService: this,
+      candidateService: {
+        prepare: this.prepareGenerationCandidates.bind(this)
+      },
+      skeletonBuilder: {
+        build: this.buildTripSkeleton.bind(this)
+      },
+      aiEnhancer: null,
+      resultValidator: {
+        validate: this.validateGeneratedItinerary.bind(this)
+      },
+      fallbackTemplateProvider: {
+        get: this.getFallbackTemplate.bind(this)
+      }
+    });
+  }
+
   get db() {
     return getDb();
   }
 
-  async generate({ destinations, start_date, days, preferences, extra_notes }) {
+  async generate(input) {
+    return this.orchestrator.generate(input);
+  }
+
+  async prepareGenerationCandidates({ destinations }) {
     const allPois = { spots: [], foods: [], hotels: [] };
 
     if (process.env.SKIP_EXTERNAL_POI !== 'true') {
@@ -30,34 +54,56 @@ class TripService {
       }
     }
 
+    return allPois;
+  }
+
+  async buildTripSkeleton(request, candidates) {
+    const { destinations, start_date, days, preferences, extra_notes } = request;
+    if (process.env.SKIP_AI === 'true') {
+      return {
+        itinerary: this.getFallbackTemplate(destinations, days, start_date),
+        warnings: ['ai_skipped']
+      };
+    }
+
     const { aiGenerator } = await import('../ai/generator.js');
 
-    let itinerary;
-    if (process.env.SKIP_AI === 'true') {
-      itinerary = this.getFallbackTemplate(destinations, days, start_date);
-    } else {
-      try {
-        itinerary = await aiGenerator.generateTrip({
+    try {
+      return {
+        itinerary: await aiGenerator.generateTrip({
           destinations,
           start_date,
           days,
           preferences,
           extra_notes,
-          pois: allPois
-        });
-      } catch (error) {
-        console.error('AI trip generation failed:', error.message);
-        itinerary = this.getFallbackTemplate(destinations, days, start_date);
-      }
+          pois: candidates
+        }),
+        warnings: []
+      };
+    } catch (error) {
+      console.error('AI trip generation failed:', error.message);
+      return {
+        itinerary: this.getFallbackTemplate(destinations, days, start_date),
+        warnings: ['ai_generation_failed']
+      };
     }
+  }
 
+  validateGeneratedItinerary(itinerary) {
+    return Array.isArray(itinerary) ? itinerary : null;
+  }
+
+  buildGeneratedTripResponse(request, generation) {
     return {
       trip_id: `T${Date.now()}${nanoid(6).toUpperCase()}`,
-      title: `${destinations.map((item) => typeof item === 'string' ? item : item.name).join('+')}${days}日游`,
-      destinations,
-      days,
-      start_date,
-      itinerary
+      title: `${request.destinations.map((item) => typeof item === 'string' ? item : item.name).join('+')}${request.days}\u65e5\u6e38`,
+      destinations: request.destinations,
+      days: request.days,
+      start_date: request.start_date,
+      itinerary: generation.itinerary,
+      source: generation.source,
+      fallback_level: generation.fallback_level,
+      generation_meta: generation.generation_meta
     };
   }
 
