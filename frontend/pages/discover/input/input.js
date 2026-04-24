@@ -14,7 +14,7 @@ Page({
 
     // 常量
     budgetOptions: BUDGET_OPTIONS,
-    preferenceOptions: PREFERENCE_OPTIONS,
+    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
 
     // UI
     locationLoading: true
@@ -91,15 +91,23 @@ Page({
   onPrefTap(e) {
     const { value } = e.currentTarget.dataset;
     const { preferences } = this.data;
+    let nextPreferences;
     if (preferences.includes(value)) {
-      this.setData({ preferences: preferences.filter(p => p !== value) });
+      nextPreferences = preferences.filter(p => p !== value);
     } else {
       if (preferences.length >= 3) {
         wx.showToast({ title: '最多选3个', icon: 'none' });
         return;
       }
-      this.setData({ preferences: [...preferences, value] });
+      nextPreferences = [...preferences, value];
     }
+    this.setData({
+      preferences: nextPreferences,
+      preferenceOptions: PREFERENCE_OPTIONS.map(item => ({
+        ...item,
+        selected: nextPreferences.indexOf(item.value) >= 0
+      }))
+    });
   },
 
   // 开始推荐

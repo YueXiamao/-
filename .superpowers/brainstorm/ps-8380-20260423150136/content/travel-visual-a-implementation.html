@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Direction Implementation</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f1f5f2;
+      color: #17211d;
+    }
+    .page { max-width: 1120px; margin: 0 auto; padding: 34px 24px 50px; }
+    h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
+    .lead { margin: 0 0 24px; color: #64746c; line-height: 1.7; max-width: 780px; }
+    .grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 18px; align-items: start; }
+    .panel {
+      border: 1px solid rgba(23,33,29,.1);
+      border-radius: 24px;
+      background: rgba(255,255,255,.76);
+      box-shadow: 0 16px 38px rgba(39,55,48,.08);
+      padding: 18px;
+    }
+    .panel h2 { margin: 0 0 12px; font-size: 18px; }
+    .list { display: grid; gap: 12px; }
+    .item {
+      border-radius: 18px;
+      background: #fff;
+      border: 1px solid rgba(23,33,29,.08);
+      padding: 14px;
+    }
+    .item strong { display: block; margin-bottom: 5px; }
+    .item p { margin: 0; color: #68776f; line-height: 1.55; font-size: 13px; }
+    .phone-wrap { display: flex; justify-content: center; }
+    .phone {
+      width: 312px;
+      aspect-ratio: 9 / 17.6;
+      border-radius: 36px;
+      border: 8px solid #202822;
+      overflow: hidden;
+      box-shadow: 0 24px 52px rgba(22,30,26,.16);
+      background: #f7f8f4;
+    }
+    .screen {
+      height: 100%;
+      padding: 22px 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.7), rgba(247,248,244,.94) 38%, #f7f8f4 78%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 700'%3E%3Crect fill='%238bb9aa' width='360' height='700'/%3E%3Cpath fill='%23f3cf9a' d='M0 186c69-36 140-55 212-24 50 22 88 0 148-22v560H0z'/%3E%3Cpath fill='%2376a891' opacity='.78' d='M0 275c68-31 133-14 196-35 67-22 104-70 164-44v504H0z'/%3E%3Cpath fill='%23f8f5ea' d='M0 397c85-16 149 15 216-4 59-16 103-24 144-6v313H0z'/%3E%3Cpath stroke='%235d8173' stroke-width='5' fill='none' opacity='.44' d='M38 459c78-46 132-8 193-42 29-15 53-39 91-48'/%3E%3C/svg%3E");
+      background-size: cover;
+      position: relative;
+    }
+    .hero { margin-top: 8px; }
+    .eyebrow { color: #237756; font-size: 12px; font-weight: 800; margin-bottom: 6px; }
+    .title { font-size: 27px; line-height: 1.08; font-weight: 780; max-width: 230px; }
+    .copy { margin: 8px 0 16px; color: #65736d; font-size: 13px; line-height: 1.55; max-width: 240px; }
+    .glass {
+      border-radius: 22px;
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(255,255,255,.72);
+      box-shadow: 0 14px 34px rgba(28,46,38,.1);
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+    .city-strip {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 8px;
+    }
+    .city {
+      height: 54px;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #d7eadf, #f2d29a);
+      padding: 8px;
+      color: #234037;
+      font-weight: 760;
+      font-size: 11px;
+      display: flex;
+      align-items: end;
+    }
+    .city:nth-child(2) { background: linear-gradient(145deg, #d6ece9, #a9cfe7); }
+    .city:nth-child(3) { background: linear-gradient(145deg, #f2d7b6, #eeb78c); }
+    .pref-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .pref {
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(22,160,109,.12);
+      padding: 7px;
+      min-height: 76px;
+    }
+    .art { height: 34px; border-radius: 12px; margin-bottom: 7px; }
+    .pref:nth-child(1) .art { background: linear-gradient(135deg,#cde9df,#f6dfaa); }
+    .pref:nth-child(2) .art { background: linear-gradient(135deg,#f2c9b1,#bfe6e0); }
+    .pref:nth-child(3) .art { background: linear-gradient(135deg,#f3be82,#fff0d4); }
+    .pref-label { font-size: 10px; font-weight: 720; color: #32443c; }
+    .button {
+      margin-top: 14px;
+      height: 42px;
+      border-radius: 999px;
+      background: #16a06d;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 780;
+      font-size: 14px;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .chip { padding: 7px 10px; border-radius: 999px; background: #edf6f1; color: #16734f; font-size: 12px; font-weight: 700; }
+    @media (max-width: 880px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <h1>A 方案落地设计：清透城市明信片</h1>
+    <p class="lead">我会把“背景图”做成小程序本地资源：低饱和、浅蒙层、城市差异明确；把关键表单和列表放在白色/半透明白色容器上，避免图片影响正常使用。</p>
+    <section class="grid">
+      <div class="panel">
+        <h2>实现范围</h2>
+        <div class="list">
+          <div class="item"><strong>1. 全局视觉基底</strong><p>更新颜色 token、卡片阴影、按钮按压态和页面背景层，让所有页面更统一、更年轻，但不做浓重渐变。</p></div>
+          <div class="item"><strong>2. 城市背景图规则</strong><p>按目的地名称匹配：山水古城、海岸、都市夜景、雪山高原、江南水乡、通用城市。成都/都江堰会偏山水街巷；上海/深圳偏都市；厦门/三亚偏海岸。</p></div>
+          <div class="item"><strong>3. 主流程页面</strong><p>首页、目的地选择、行程参数、行程结果、随机玩输入、随机玩结果都会加轻背景和更细的内容层级。</p></div>
+          <div class="item"><strong>4. 偏好方式图片</strong><p>替换现在偏工具感的图标为 7 张本地小插画：度假、打卡、美食、亲子、文化、徒步、购物。色彩统一但主题不同。</p></div>
+          <div class="item"><strong>5. 可读性约束</strong><p>所有背景图都只放在顶部或浅层背景；正文区域保持白底，文字对比优先。避免暗色大图压住输入框和列表。</p></div>
+        </div>
+      </div>
+      <div class="panel phone-wrap">
+        <div class="phone">
+          <div class="screen">
+            <div class="hero">
+              <div class="eyebrow">CHENGDU WEEKEND</div>
+              <div class="title">把城市装进行程里</div>
+              <div class="copy">背景提供气质，内容负责决策。选目的地、偏好、天数都保持清爽可读。</div>
+            </div>
+            <div class="glass">
+              <div class="city-strip">
+                <div class="city">山水古城</div>
+                <div class="city">海岸周末</div>
+                <div class="city">都市夜游</div>
+              </div>
+            </div>
+            <div class="glass">
+              <div class="pref-grid">
+                <div class="pref"><div class="art"></div><div class="pref-label">轻松度假</div></div>
+                <div class="pref"><div class="art"></div><div class="pref-label">网红打卡</div></div>
+                <div class="pref"><div class="art"></div><div class="pref-label">寻找美食</div></div>
+              </div>
+              <div class="chips">
+                <span class="chip">内容优先</span>
+                <span class="chip">低饱和</span>
+                <span class="chip">本地资源</span>
+              </div>
+            </div>
+            <div class="button">按这个方向实现</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

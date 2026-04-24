@@ -1,19 +1,54 @@
 // SQLite 数据库初始化与连接管理
-import Database from 'better-sqlite3';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { config } from '../config/index.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const rootDir = path.resolve(__dirname, '../../..');
-const dataDir = path.join(rootDir, 'data');
-const dbPath = path.join(dataDir, 'travel.db');
+const require = createRequire(import.meta.url);
+const Database = require(process.env.BETTER_SQLITE3_PATH || 'better-sqlite3');
+
+const dbPath = path.isAbsolute(config.db.path)
+  ? config.db.path
+  : path.resolve(process.cwd(), config.db.path);
+const dataDir = path.dirname(dbPath);
+const bundledNativeBinding = path.resolve(
+  process.cwd(),
+  '.node20-deps/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
+);
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-const db = new Database(dbPath);
+function getNativeBindingPath() {
+  if (config.db.nativeBinding) {
+    return path.isAbsolute(config.db.nativeBinding)
+      ? config.db.nativeBinding
+      : path.resolve(process.cwd(), config.db.nativeBinding);
+  }
+
+  return fs.existsSync(bundledNativeBinding) ? bundledNativeBinding : '';
+}
+
+function createDatabase() {
+  try {
+    return new Database(dbPath);
+  } catch (error) {
+    const nativeBinding = getNativeBindingPath();
+    if (!nativeBinding) {
+      throw error;
+    }
+
+    try {
+      return new Database(dbPath, { nativeBinding });
+    } catch (nativeError) {
+      nativeError.cause = error;
+      throw nativeError;
+    }
+  }
+}
+
+const db = createDatabase();
 db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 

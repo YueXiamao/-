@@ -1,38 +1,29 @@
-<!-- pages/discover/result/result.wxml -->
-<view class="container">
-  <!-- 加载 -->
+<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
   <view class="loading-state" wx:if="{{loading}}">
-    <text class="loading-icon">🎲</text>
-    <text class="loading-text">正在为你寻找目的地...</text>
+    <text class="loading-icon">RND</text>
+    <text class="loading-text">正在为你寻找更适合的目的地...</text>
   </view>
 
-  <!-- 错误 -->
   <view class="error-state" wx:elif="{{error}}">
-    <text class="error-icon">😢</text>
+    <text class="error-icon">ERR</text>
     <text class="error-text">{{error}}</text>
-    <button class="btn-secondary" bindtap="onRetry">重试</button>
+    <button class="btn-secondary" bindtap="onRetry">重新获取</button>
   </view>
 
-  <!-- 无结果 -->
   <view class="empty-state" wx:elif="{{recommendations.length === 0}}">
-    <text class="empty-icon">🌍</text>
-    <text class="empty-text">暂未找到合适的目的地</text>
-    <text class="empty-hint">试试调整预算或增加天数</text>
-    <button class="btn-secondary" bindtap="onAgain">重新推荐</button>
+    <text class="empty-icon">NO</text>
+    <text class="empty-text">暂时没有找到合适的目的地</text>
+    <text class="empty-hint">试试调整预算、天数或偏好方式</text>
+    <button class="btn-secondary" bindtap="onAgain">再来一次</button>
   </view>
 
-  <!-- 推荐结果 -->
   <view class="result" wx:else>
     <view class="result-header">
       <text class="result-title">为你推荐</text>
-      <text class="result-subtitle">{{recommendations.length}} 个目的地</text>
+      <text class="result-subtitle">{{recommendations.length}} 个目的地候选</text>
     </view>
 
-    <swiper
-      class="recommend-swiper"
-      circular
-      bindchange="onSwiperChange"
-    >
+    <swiper class="recommend-swiper" circular bindchange="onSwiperChange">
       <swiper-item wx:for="{{recommendations}}" wx:key="rank">
         <view class="rec-card card">
           <view class="rec-rank">TOP {{item.rank}}</view>
@@ -45,15 +36,15 @@
 
           <view class="rec-meta">
             <view class="rec-meta-item">
-              <text class="meta-icon">📍</text>
+              <text class="meta-icon">距</text>
               <text>{{item.destination.distance}}</text>
             </view>
             <view class="rec-meta-item">
-              <text class="meta-icon">💰</text>
+              <text class="meta-icon">费</text>
               <text>{{item.destination.avg_budget}}</text>
             </view>
             <view class="rec-meta-item">
-              <text class="meta-icon">📅</text>
+              <text class="meta-icon">天</text>
               <text>{{item.trip_preview.days}}天</text>
             </view>
           </view>
@@ -62,32 +53,22 @@
             <text class="preview-label">行程预览</text>
             <text class="preview-text">
               包含 {{item.trip_preview.spot_count}} 个景点 ·
-              {{item.trip_preview.food_count}} 家美食 ·
+              {{item.trip_preview.food_count}} 顿美食 ·
               预算 {{item.trip_preview.budget_range}}
             </text>
           </view>
 
-          <button
-            class="btn-primary rec-btn"
-            bindtap="onViewDetail"
-            data-index="{{index}}"
-          >查看完整行程</button>
+          <button class="btn-primary rec-btn" bindtap="onViewDetail" data-index="{{index}}">查看完整行程</button>
         </view>
       </swiper-item>
     </swiper>
 
-    <!-- 分页指示 -->
     <view class="pagination">
-      <view
-        class="dot {{currentIndex === index ? 'active' : ''}}"
-        wx:for="{{recommendations}}"
-        wx:key="index"
-      />
+      <view class="dot {{currentIndex === index ? 'active' : ''}}" wx:for="{{recommendations}}" wx:key="index" />
     </view>
 
-    <!-- 底部 -->
     <view class="bottom-bar">
-      <button class="btn-secondary" bindtap="onAgain">🎲 再来一次</button>
+      <button class="btn-secondary" bindtap="onAgain">换一批目的地</button>
     </view>
   </view>
 </view>

@@ -21,8 +21,8 @@ export default async function destinationRoutes(fastify) {
 
   // 搜索目的地
   fastify.get('/search', async (req) => {
-    const { keyword, limit } = req.query;
-    return destinationService.search(keyword || '', parseInt(limit) || 10);
+    const { q, keyword, limit } = req.query;
+    return destinationService.search(q || keyword || '', parseInt(limit) || 10);
   });
 
   // 热门目的地

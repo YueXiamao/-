@@ -7,7 +7,8 @@ export const config = {
 
   // 数据库 SQLite（本地文件）
   db: {
-    path: process.env.DB_PATH || './data/travel.db'
+    path: process.env.DB_PATH || './data/travel.db',
+    nativeBinding: process.env.BETTER_SQLITE3_NATIVE_BINDING || ''
   },
 
   // Redis（可选）

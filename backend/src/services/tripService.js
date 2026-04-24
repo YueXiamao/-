@@ -1,59 +1,59 @@
-// 行程服务
 import { nanoid } from 'nanoid';
 import { getDb } from '../db/database.js';
 import { poiService } from './poiService.js';
 import { userService } from './userService.js';
-import { AppError } from '../middleware/errorHandler.js';
+import { Errors } from '../middleware/errorHandler.js';
 
 class TripService {
   get db() {
     return getDb();
   }
 
-  // 生成行程
   async generate({ destinations, start_date, days, preferences, extra_notes }) {
-    // 收集各目的地的 POI
     const allPois = { spots: [], foods: [], hotels: [] };
 
-    for (const dest of destinations) {
-      const name = typeof dest === 'string' ? dest : dest.name;
-      try {
-        const [spots, foods, hotels] = await Promise.all([
-          poiService.search({ keyword: name, type: 'spot', city: name, limit: 20 }),
-          poiService.search({ keyword: name, type: 'food', city: name, limit: 10 }),
-          poiService.search({ keyword: name, type: 'hotel', city: name, limit: 5 })
-        ]);
-        allPois.spots.push(...spots);
-        allPois.foods.push(...foods);
-        allPois.hotels.push(...hotels);
-      } catch (err) {
-        console.error(`POI 获取失败 ${name}:`, err.message);
+    if (process.env.SKIP_EXTERNAL_POI !== 'true') {
+      for (const destination of destinations) {
+        const name = typeof destination === 'string' ? destination : destination.name;
+        try {
+          const [spots, foods, hotels] = await Promise.all([
+            poiService.search({ keyword: name, type: 'spot', city: name, limit: 20 }),
+            poiService.search({ keyword: name, type: 'food', city: name, limit: 10 }),
+            poiService.search({ keyword: name, type: 'hotel', city: name, limit: 5 })
+          ]);
+          allPois.spots.push(...spots);
+          allPois.foods.push(...foods);
+          allPois.hotels.push(...hotels);
+        } catch (error) {
+          console.error(`POI fetch failed for ${name}:`, error.message);
+        }
       }
     }
 
-    // 延迟导入，避免循环
     const { aiGenerator } = await import('../ai/generator.js');
 
     let itinerary;
-    try {
-      itinerary = await aiGenerator.generateTrip({
-        destinations,
-        start_date,
-        days,
-        preferences,
-        extra_notes,
-        pois: allPois
-      });
-    } catch (err) {
-      console.error('AI 生成失败:', err.message);
+    if (process.env.SKIP_AI === 'true') {
       itinerary = this.getFallbackTemplate(destinations, days, start_date);
+    } else {
+      try {
+        itinerary = await aiGenerator.generateTrip({
+          destinations,
+          start_date,
+          days,
+          preferences,
+          extra_notes,
+          pois: allPois
+        });
+      } catch (error) {
+        console.error('AI trip generation failed:', error.message);
+        itinerary = this.getFallbackTemplate(destinations, days, start_date);
+      }
     }
 
-    const tripId = `T${Date.now()}${nanoid(6).toUpperCase()}`;
-
     return {
-      trip_id: tripId,
-      title: `${destinations.map(d => typeof d === 'string' ? d : d.name).join('+')}${days}日游`,
+      trip_id: `T${Date.now()}${nanoid(6).toUpperCase()}`,
+      title: `${destinations.map((item) => typeof item === 'string' ? item : item.name).join('+')}${days}日游`,
       destinations,
       days,
       start_date,
@@ -61,41 +61,40 @@ class TripService {
     };
   }
 
-  // 兜底模板
   getFallbackTemplate(destinations, days, startDate) {
     const result = [];
-    const destNames = destinations.map(d => typeof d === 'string' ? d : d.name);
+    const destinationNames = destinations.map((item) => typeof item === 'string' ? item : item.name);
     const start = new Date(startDate);
 
-    for (let i = 0; i < days; i++) {
-      const d = new Date(start);
-      d.setDate(d.getDate() + i);
+    for (let index = 0; index < days; index += 1) {
+      const date = new Date(start);
+      date.setDate(date.getDate() + index);
 
       result.push({
-        day: i + 1,
-        date: d.toISOString().split('T')[0],
+        day: index + 1,
+        date: date.toISOString().split('T')[0],
         items: [
           {
             type: 'spot',
-            name: `${destNames[i % destNames.length]}景区${i + 1}`,
-            address: '待填充',
+            name: `${destinationNames[index % destinationNames.length]}景区${index + 1}`,
+            address: '待补充',
             duration: '2-3小时',
-            description: '请稍后重试获取AI推荐',
+            description: '请稍后重试获取更完整的智能推荐',
             transport_to_next: ''
           },
           {
             type: 'food',
-            name: `${destNames[i % destNames.length]}特色美食`,
-            address: '待填充',
+            name: `${destinationNames[index % destinationNames.length]}特色美食`,
+            address: '待补充',
             budget: '人均50-100元',
             recommend: '当地特色菜品'
           },
           {
             type: 'hotel',
-            name: `${destNames[i % destNames.length]}住宿`,
-            address: '待填充',
+            name: `${destinationNames[index % destinationNames.length]}住宿`,
+            address: '待补充',
             budget: '待确认',
-            reason: '请在结果页查看详细'
+            reason: '可在结果页继续替换成更合适的住宿'
           }
         ]
       });
@@ -104,19 +103,17 @@ class TripService {
     return result;
   }
 
-  // 保存行程
   saveTrip(openid, tripData) {
     const userId = userService.getUserIdByOpenid(openid);
     if (!userId) {
-      throw AppError.UNAUTHORIZED('用户不存在');
+      throw Errors.UNAUTHORIZED('用户不存在');
     }
 
     const insert = this.db.transaction(() => {
-      const tripStmt = this.db.prepare(`
+      const tripResult = this.db.prepare(`
         INSERT INTO trip (user_id, title, destinations, start_date, days, preferences, extra_notes, status, source)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?)
-      `);
-      const tripResult = tripStmt.run(
+      `).run(
         userId,
         tripData.title,
         JSON.stringify(tripData.destinations),
@@ -126,25 +123,34 @@ class TripService {
         tripData.extra_notes || '',
         tripData.source || 'plan'
       );
-      const tripId = tripResult.lastInsertRowid;
 
-      for (const dayData of tripData.itinerary) {
-        const dayStmt = this.db.prepare(
-          'INSERT INTO trip_day (trip_id, day_number, date, summary) VALUES (?, ?, ?, ?)'
-        );
-        const dayResult = dayStmt.run(tripId, dayData.day, dayData.date, dayData.summary || '');
+      const tripId = tripResult.lastInsertRowid;
+      const dayStmt = this.db.prepare(
+        'INSERT INTO trip_day (trip_id, day_number, date, summary) VALUES (?, ?, ?, ?)'
+      );
+      const itemStmt = this.db.prepare(`
+        INSERT INTO trip_item (trip_day_id, type, name, address, description, duration, budget, recommend, reason, transport_to_next, notes, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+
+      for (const day of tripData.itinerary || []) {
+        const dayResult = dayStmt.run(tripId, day.day, day.date, day.summary || '');
         const dayId = dayResult.lastInsertRowid;
 
-        const itemStmt = this.db.prepare(`
-          INSERT INTO trip_item (trip_day_id, type, name, address, description, duration, budget, recommend, reason, transport_to_next, notes, sort_order)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        dayData.items.forEach((item, idx) => {
+        (day.items || []).forEach((item, itemIndex) => {
           itemStmt.run(
-            dayId, item.type, item.name, item.address || '', item.description || '',
-            item.duration || '', item.budget || '', item.recommend || '',
-            item.reason || '', item.transport_to_next || '', item.notes || '', idx
+            dayId,
+            item.type,
+            item.name,
+            item.address || '',
+            item.description || '',
+            item.duration || '',
+            item.budget || '',
+            item.recommend || '',
+            item.reason || '',
+            item.transport_to_next || '',
+            item.notes || '',
+            itemIndex
           );
         });
       }
@@ -156,36 +162,49 @@ class TripService {
     return { trip_id: tripId, title: tripData.title };
   }
 
-  // 行程列表
   getTripList(openid, { page = 1, page_size = 20, source } = {}) {
     const userId = userService.getUserIdByOpenid(openid);
-    if (!userId) return { list: [], total: 0 };
+    if (!userId) {
+      return { list: [], total: 0 };
+    }
 
-    const offset = (page - 1) * page_size;
-    const where = source ? `AND source = '${source}'` : '';
+    const safePage = Math.max(parseInt(page, 10) || 1, 1);
+    const safePageSize = Math.min(Math.max(parseInt(page_size, 10) || 20, 1), 50);
+    const offset = (safePage - 1) * safePageSize;
+    const params = [userId];
+    let where = '';
 
-    const list = this.db.prepare(
-      `SELECT id, title, destinations, start_date, days, preferences, status, source, created_at
-       FROM trip WHERE user_id = ? ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`
-    ).all(userId, page_size, offset);
+    if (source && ['plan', 'discover'].includes(source)) {
+      where = 'AND source = ?';
+      params.push(source);
+    }
 
-    const { count } = this.db.prepare(
-      `SELECT COUNT(*) as count FROM trip WHERE user_id = ? ${where}`
-    ).get(userId);
+    const list = this.db.prepare(`
+      SELECT id, title, destinations, start_date, days, preferences, status, source, created_at
+      FROM trip
+      WHERE user_id = ? ${where}
+      ORDER BY created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, safePageSize, offset);
+
+    const { count } = this.db.prepare(`
+      SELECT COUNT(*) as count
+      FROM trip
+      WHERE user_id = ? ${where}
+    `).get(...params);
 
     return {
-      list: list.map(r => ({
-        ...r,
-        destinations: JSON.parse(r.destinations),
-        preferences: JSON.parse(r.preferences)
+      list: list.map((item) => ({
+        ...item,
+        destinations: this.parseJsonArray(item.destinations),
+        preferences: this.parseJsonArray(item.preferences)
       })),
       total: count,
-      page,
-      page_size
+      page: safePage,
+      page_size: safePageSize
     };
   }
 
-  // 行程详情
   getTripDetail(openid, tripId) {
     const userId = userService.getUserIdByOpenid(openid);
     if (!userId) return null;
@@ -196,56 +215,296 @@ class TripService {
 
     if (!trip) return null;
 
-    const days = this.db.prepare(
+    const itinerary = this.db.prepare(
       'SELECT * FROM trip_day WHERE trip_id = ? ORDER BY day_number'
-    ).all(tripId);
-
-    for (const day of days) {
-      day.items = this.db.prepare(
+    ).all(tripId).map((day) => ({
+      ...day,
+      items: this.db.prepare(
         'SELECT * FROM trip_item WHERE trip_day_id = ? ORDER BY sort_order'
-      ).all(day.id);
-    }
+      ).all(day.id)
+    }));
 
     return {
       ...trip,
-      destinations: JSON.parse(trip.destinations),
-      preferences: JSON.parse(trip.preferences),
-      itinerary: days
+      destinations: this.parseJsonArray(trip.destinations),
+      preferences: this.parseJsonArray(trip.preferences),
+      itinerary
     };
   }
 
-  // 删除行程
   deleteTrip(openid, tripId) {
     const userId = userService.getUserIdByOpenid(openid);
-    if (!userId) throw AppError.UNAUTHORIZED('用户不存在');
+    if (!userId) throw Errors.UNAUTHORIZED('用户不存在');
 
     const result = this.db.prepare(
       'DELETE FROM trip WHERE id = ? AND user_id = ?'
     ).run(tripId, userId);
 
     if (result.changes === 0) {
-      throw AppError.NOT_FOUND('行程不存在');
+      throw Errors.NOT_FOUND('行程不存在');
     }
+
     return { success: true };
   }
 
-  // 更新行程单项备注
   updateTripItemNote(openid, tripId, itemId, notes) {
-    const userId = userService.getUserIdByOpenid(openid);
-    if (!userId) throw AppError.UNAUTHORIZED('用户不存在');
+    const trip = this.getOwnedTrip(openid, tripId);
 
-    // 验证权限
+    const result = this.db.prepare(`
+      UPDATE trip_item
+      SET notes = ?
+      WHERE id = ?
+        AND trip_day_id IN (SELECT id FROM trip_day WHERE trip_id = ?)
+    `).run(notes || '', itemId, trip.id);
+
+    if (result.changes === 0) throw Errors.NOT_FOUND('行程项不存在');
+
+    this.touchTrip(trip.id);
+    return { success: true };
+  }
+
+  reorderTripItem(openid, tripId, itemId, direction) {
+    const trip = this.getOwnedTrip(openid, tripId);
+    if (!['up', 'down'].includes(direction)) {
+      throw Errors.VALIDATION_ERROR('无效的排序方向');
+    }
+
+    const currentItem = this.db.prepare(`
+      SELECT ti.id, ti.trip_day_id, ti.sort_order
+      FROM trip_item ti
+      JOIN trip_day td ON td.id = ti.trip_day_id
+      WHERE ti.id = ? AND td.trip_id = ?
+    `).get(itemId, trip.id);
+
+    if (!currentItem) throw Errors.NOT_FOUND('行程项不存在');
+
+    const adjacentItem = direction === 'up'
+      ? this.db.prepare(`
+          SELECT id, sort_order
+          FROM trip_item
+          WHERE trip_day_id = ? AND sort_order < ?
+          ORDER BY sort_order DESC
+          LIMIT 1
+        `).get(currentItem.trip_day_id, currentItem.sort_order)
+      : this.db.prepare(`
+          SELECT id, sort_order
+          FROM trip_item
+          WHERE trip_day_id = ? AND sort_order > ?
+          ORDER BY sort_order ASC
+          LIMIT 1
+        `).get(currentItem.trip_day_id, currentItem.sort_order);
+
+    if (!adjacentItem) {
+      return { success: true, moved: false };
+    }
+
+    this.db.transaction(() => {
+      this.db.prepare('UPDATE trip_item SET sort_order = ? WHERE id = ?')
+        .run(adjacentItem.sort_order, currentItem.id);
+      this.db.prepare('UPDATE trip_item SET sort_order = ? WHERE id = ?')
+        .run(currentItem.sort_order, adjacentItem.id);
+      this.touchTrip(trip.id);
+    })();
+
+    return { success: true, moved: true, direction };
+  }
+
+  async replaceTripItem(openid, tripId, itemId) {
+    const trip = this.getOwnedTrip(openid, tripId);
+
+    const currentItem = this.db.prepare(`
+      SELECT ti.*, td.day_number
+      FROM trip_item ti
+      JOIN trip_day td ON td.id = ti.trip_day_id
+      WHERE ti.id = ? AND td.trip_id = ?
+    `).get(itemId, trip.id);
+
+    if (!currentItem) throw Errors.NOT_FOUND('行程项不存在');
+
+    const destinations = this.parseJsonArray(trip.destinations);
+    const primaryDestination = destinations[0] || {};
+    const searchCity = primaryDestination.city || primaryDestination.name || '';
+    const searchKeyword = primaryDestination.name || currentItem.name;
+
+    const localCandidates = searchCity
+      ? this.normalizeReplacementCandidates(this.db.prepare(`
+          SELECT name, address, type, city, price, tags
+          FROM poi
+          WHERE city = ? AND type = ?
+          ORDER BY id DESC
+          LIMIT 20
+        `).all(searchCity, currentItem.type))
+      : [];
+
+    const remoteCandidates = this.normalizeReplacementCandidates(
+      await poiService.search({
+        keyword: searchKeyword,
+        type: currentItem.type,
+        city: searchCity,
+        limit: 10
+      })
+    );
+
+    const replacement = [...localCandidates, ...remoteCandidates].find((candidate) => (
+      candidate.name && candidate.name !== currentItem.name
+    ));
+
+    if (!replacement) {
+      throw Errors.NOT_FOUND('暂未找到可替换的候选项');
+    }
+
+    const nextItem = this.buildReplacementItem(currentItem, replacement);
+    this.db.prepare(`
+      UPDATE trip_item
+      SET name = ?, address = ?, description = ?, duration = ?, budget = ?,
+          recommend = ?, reason = ?, transport_to_next = ?
+      WHERE id = ?
+    `).run(
+      nextItem.name,
+      nextItem.address,
+      nextItem.description,
+      nextItem.duration,
+      nextItem.budget,
+      nextItem.recommend,
+      nextItem.reason,
+      nextItem.transport_to_next,
+      itemId
+    );
+
+    this.touchTrip(trip.id);
+    return {
+      success: true,
+      item: this.db.prepare('SELECT * FROM trip_item WHERE id = ?').get(itemId)
+    };
+  }
+
+  deleteTripItem(openid, tripId, itemId) {
+    const trip = this.getOwnedTrip(openid, tripId);
+
+    const result = this.db.prepare(`
+      DELETE FROM trip_item
+      WHERE id = ?
+        AND trip_day_id IN (SELECT id FROM trip_day WHERE trip_id = ?)
+    `).run(itemId, trip.id);
+
+    if (result.changes === 0) throw Errors.NOT_FOUND('行程项不存在');
+
+    this.touchTrip(trip.id);
+    return { success: true };
+  }
+
+  exportTrip(openid, tripId) {
+    const trip = this.getTripDetail(openid, tripId);
+    if (!trip) throw Errors.NOT_FOUND('行程不存在');
+
+    const lines = [
+      trip.title,
+      `${trip.start_date} · ${trip.days}天`,
+      (trip.preferences || []).join(' / '),
+      ''
+    ];
+
+    for (const day of trip.itinerary || []) {
+      lines.push(`DAY ${day.day_number || day.day} ${day.date}`);
+      for (const item of day.items || []) {
+        lines.push(`${item.name}${item.duration ? ` · ${item.duration}` : ''}`);
+        if (item.address) lines.push(`地址：${item.address}`);
+        if (item.description) lines.push(item.description);
+        if (item.recommend) lines.push(`推荐：${item.recommend}`);
+        if (item.budget) lines.push(`预算：${item.budget}`);
+        if (item.transport_to_next) lines.push(`交通：${item.transport_to_next}`);
+        if (item.notes) lines.push(`备注：${item.notes}`);
+        lines.push('');
+      }
+    }
+
+    return { text: lines.join('\n').trim() };
+  }
+
+  getOwnedTrip(openid, tripId) {
+    const userId = userService.getUserIdByOpenid(openid);
+    if (!userId) throw Errors.UNAUTHORIZED('用户不存在');
+
     const trip = this.db.prepare(
-      'SELECT id FROM trip WHERE id = ? AND user_id = ?'
+      'SELECT id, destinations FROM trip WHERE id = ? AND user_id = ?'
     ).get(tripId, userId);
 
-    if (!trip) throw AppError.NOT_FOUND('行程不存在');
+    if (!trip) throw Errors.NOT_FOUND('行程不存在');
+    return trip;
+  }
 
-    this.db.prepare(
-      'UPDATE trip_item SET notes = ? WHERE id = ?'
-    ).run(notes, itemId);
+  touchTrip(tripId) {
+    this.db.prepare('UPDATE trip SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(tripId);
+  }
 
-    return { success: true };
+  parseJsonArray(value) {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
+    }
+  }
+
+  normalizeReplacementCandidates(items = []) {
+    return items.map((item) => ({
+      name: item.name || '',
+      address: item.address || '',
+      city: item.city || '',
+      type: item.type || '',
+      description: item.description || '',
+      recommend: item.recommend || this.buildRecommendText(item),
+      budget: item.budget || this.buildBudgetText(item),
+      reason: item.reason || ''
+    }));
+  }
+
+  buildRecommendText(item) {
+    const tags = Array.isArray(item.tags) ? item.tags : [];
+    return tags.length > 0 ? tags.slice(0, 3).join(' / ') : '';
+  }
+
+  buildBudgetText(item) {
+    if (item?.price === null || item?.price === undefined || item?.price === '') {
+      return item?.budget || '';
+    }
+
+    const amount = Number(item.price);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return item?.budget || '';
+    }
+
+    if (item.type === 'food') return `人均${amount.toFixed(0)}元`;
+    if (item.type === 'hotel') return `约${amount.toFixed(0)}元起`;
+    return item?.budget || '';
+  }
+
+  buildReplacementItem(currentItem, replacement) {
+    const nextItem = {
+      ...currentItem,
+      name: replacement.name,
+      address: replacement.address || currentItem.address || ''
+    };
+
+    if (currentItem.type === 'spot') {
+      nextItem.description = replacement.description || `${replacement.name}更适合接入当天行程。`;
+      nextItem.duration = currentItem.duration || '2-3小时';
+    }
+
+    if (currentItem.type === 'food') {
+      nextItem.recommend = replacement.recommend || currentItem.recommend || '本地口碑餐厅';
+      nextItem.budget = replacement.budget || currentItem.budget || '';
+    }
+
+    if (currentItem.type === 'hotel') {
+      nextItem.reason = replacement.reason || currentItem.reason || '替换为同区域的住宿选项';
+      nextItem.budget = replacement.budget || currentItem.budget || '';
+    }
+
+    return nextItem;
   }
 }
 

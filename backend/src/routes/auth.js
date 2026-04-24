@@ -1,12 +1,13 @@
 // 微信登录
 import { userService } from '../services/userService.js';
+import { Errors } from '../middleware/errorHandler.js';
 
 export default async function authRoutes(fastify) {
   // 微信 code 登录
-  fastify.post('/login', async (req, reply) => {
+  fastify.post('/login', async (req) => {
     const { code } = req.body || {};
     if (!code) {
-      return reply.code(400).send({ error: '缺少 code 参数' });
+      throw Errors.VALIDATION_ERROR('缺少 code 参数');
     }
 
     // 微信接口获取 openid
@@ -26,10 +27,11 @@ export default async function authRoutes(fastify) {
       });
       openid = wxResp.data.openid;
       if (!openid) {
-        return reply.code(401).send({ error: '微信登录失败: ' + wxResp.data.errmsg });
+        throw Errors.UNAUTHORIZED('微信登录失败: ' + (wxResp.data.errmsg || '未返回 openid'));
       }
     } catch (err) {
-      return reply.code(502).send({ error: '微信服务不可用' });
+      if (err.statusCode) throw err;
+      throw Errors.INTERNAL_ERROR('微信服务不可用');
     }
 
     const userId = userService.upsertUser(openid);

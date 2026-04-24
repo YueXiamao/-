@@ -1,20 +1,23 @@
-<!-- pages/discover/input/input.wxml -->
-<view class="container">
-  <!-- 位置 -->
-  <view class="section card">
+<view class="container page-bg">
+  <view class="page-hero">
+    <text class="hero-kicker">DISCOVER</text>
+    <text class="hero-title">不知道去哪，也可以先出发</text>
+    <text class="hero-subtitle">按位置、预算、天数和偏好，给你一个靠谱的周末灵感</text>
+  </view>
+
+  <view class="section glass-card">
     <view class="section-title">当前位置</view>
     <view class="location-bar" bindtap="onLocationInput">
-      <text class="location-icon">📍</text>
+      <text class="location-icon">LOC</text>
       <text class="location-text">{{locationText}}</text>
       <text class="location-edit">修改</text>
     </view>
   </view>
 
-  <!-- 天数 -->
-  <view class="section card">
+  <view class="section glass-card">
     <view class="section-title">想玩几天</view>
     <view class="days-selector">
-      <view class="days-btn" bindtap="onDaysChange" data-delta="-1">−</view>
+      <view class="days-btn" bindtap="onDaysChange" data-delta="-1">-</view>
       <view class="days-value">
         <text class="days-num">{{days}}</text>
         <text class="days-unit">天</text>
@@ -23,8 +26,7 @@
     </view>
   </view>
 
-  <!-- 预算 -->
-  <view class="section card">
+  <view class="section glass-card">
     <view class="section-title">人均预算</view>
     <view class="budget-grid">
       <view
@@ -40,25 +42,23 @@
     </view>
   </view>
 
-  <!-- 游玩方式 -->
-  <view class="section card">
-    <view class="section-title">偏好方式（选填，最多3个）</view>
+  <view class="section glass-card">
+    <view class="section-title">偏好方式 <text class="section-hint">选填，最多 3 个</text></view>
     <view class="pref-grid">
       <view
-        class="pref-item {{preferences.includes(item.value) ? 'active' : ''}}"
+        class="pref-item {{item.selected ? 'active' : ''}}"
         wx:for="{{preferenceOptions}}"
         wx:key="value"
         bindtap="onPrefTap"
         data-value="{{item.value}}"
       >
-        <text class="pref-icon">{{item.icon}}</text>
+        <image class="pref-icon-img" src="{{item.icon}}" mode="aspectFill" />
         <text class="pref-label">{{item.label}}</text>
       </view>
     </view>
   </view>
 
-  <!-- 底部按钮 -->
   <view class="bottom-bar">
-    <button class="btn-primary" bindtap="onRecommend">🎲 开始随机玩</button>
+    <button class="btn-primary" bindtap="onRecommend">开始随机玩</button>
   </view>
 </view>

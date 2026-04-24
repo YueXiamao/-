@@ -12,7 +12,7 @@ export const errorHandler = (error, request, reply) => {
 
   // 构建响应
   const response = {
-    code: statusCode,
+    code: error.code || statusCode,
     message: error.message || '服务器内部错误',
     errors: error.validationErrors || []
   };

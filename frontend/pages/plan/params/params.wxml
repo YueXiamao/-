@@ -1,70 +1,84 @@
-<!-- pages/plan/params/params.wxml -->
-<view class="container">
+<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+  <view class="page-hero">
+    <text class="hero-kicker">PLAN DETAILS</text>
+    <text class="hero-title">把偏好说清楚</text>
+    <text class="hero-subtitle">日期、天数和游玩方式会一起决定每天的节奏，让行程看起来更像真的会去执行。</text>
+    <view class="hero-badges">
+      <text class="hero-badge">{{destinations.length}} 个目的地</text>
+      <text class="hero-badge">{{days}} 天草案</text>
+    </view>
+  </view>
 
-  <!-- 目的地摘要 -->
-  <view class="dest-summary">
-    <text class="dest-summary-label">目的地</text>
+  <view class="dest-summary glass-card">
+    <view class="summary-head">
+      <text class="dest-summary-label">这次想去</text>
+      <text class="dest-summary-hint">可以先生成，再回头微调</text>
+    </view>
     <view class="dest-tags">
       <text class="dest-tag" wx:for="{{destinations}}" wx:key="name">{{item.name}}</text>
     </view>
   </view>
 
-  <!-- 出发日期 -->
-  <view class="form-card">
-    <text class="form-label">出发日期</text>
-    <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
-      <view class="picker-row">
-        <text class="picker-value {{startDate ? 'has-value' : ''}}">{{startDate || '请选择出发日期'}}</text>
-        <text class="picker-arrow">›</text>
-      </view>
-    </picker>
-  </view>
+  <view class="quick-grid">
+    <view class="form-card quick-card">
+      <text class="form-label">出发日期</text>
+      <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
+        <view class="picker-row">
+          <text class="picker-value {{startDate ? 'has-value' : ''}}">{{startDate || '请选择出发日期'}}</text>
+          <text class="picker-arrow">›</text>
+        </view>
+      </picker>
+      <text class="form-helper">默认从明天开始，也可以自行改到别的日期。</text>
+    </view>
 
-  <!-- 游玩天数 -->
-  <view class="form-card">
-    <text class="form-label">游玩天数</text>
-    <view class="days-row">
-      <view class="days-btn" bindtap="onDaysChange" data-delta="-1">−</view>
-      <view class="days-center">
-        <text class="days-num">{{days}}</text>
-        <text class="days-unit">天</text>
+    <view class="form-card quick-card">
+      <text class="form-label">游玩天数</text>
+      <view class="days-row">
+        <view class="days-btn" bindtap="onDaysChange" data-delta="-1">−</view>
+        <view class="days-center">
+          <text class="days-num">{{days}}</text>
+          <text class="days-unit">天</text>
+        </view>
+        <view class="days-btn" bindtap="onDaysChange" data-delta="1">＋</view>
       </view>
-      <view class="days-btn" bindtap="onDaysChange" data-delta="1">+</view>
+      <text class="form-helper">短途周末到多天出行都可以先做草案。</text>
     </view>
   </view>
 
-  <!-- 游玩方式：3列网格 -->
-  <view class="form-card">
-    <text class="form-label">游玩方式 <text class="form-label-hint">（可多选）</text></text>
+  <view class="form-card preference-card">
+    <view class="form-head">
+      <text class="form-label">游玩方式</text>
+      <text class="form-label-hint">可多选</text>
+    </view>
+    <text class="section-desc">偏好越清楚，路线、吃住和节奏就越贴近真实出行方式。</text>
 
     <view class="pref-grid">
       <view
-        class="pref-item {{preferences.indexOf(item.value) >= 0 ? 'pref-on' : ''}}"
+        class="pref-item {{item.selected ? 'pref-on' : ''}}"
         wx:for="{{preferenceOptions}}"
         wx:key="value"
         bindtap="onPreferenceTap"
         data-value="{{item.value}}"
       >
-        <!-- 图标 -->
         <view class="pref-icon-wrap">
-          <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
+          <image class="pref-icon" src="{{item.icon}}" mode="aspectFill" />
         </view>
-        <!-- 标签文字 -->
         <text class="pref-name">{{item.label}}</text>
-        <!-- 选中勾 -->
-        <view class="pref-check" wx:if="{{preferences.indexOf(item.value) >= 0}}">
-          <text class="pref-check-icon">V</text>
+        <view class="pref-check" wx:if="{{item.selected}}">
+          <text class="pref-check-icon">✓</text>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 补充说明 -->
   <view class="form-card">
-    <text class="form-label">补充说明 <text class="form-label-hint">（选填）</text></text>
+    <view class="form-head">
+      <text class="form-label">补充说明</text>
+      <text class="form-label-hint">选填</text>
+    </view>
     <textarea
       class="notes-input"
-      placeholder="如：想看日出、不吃辣、带老人、想泡温泉..."
+      placeholder="例如：想看日出、不吃辣、带长辈、想泡温泉、希望步行少一点"
       value="{{extraNotes}}"
       bindinput="onNotesInput"
       maxlength="200"
@@ -72,11 +86,9 @@
     <text class="notes-count">{{extraNotes.length || 0}}/200</text>
   </view>
 
-  <!-- 底部按钮 -->
   <view class="bottom-bar">
     <button class="btn-primary" bindtap="onGenerate">
       <text>生成行程</text>
     </button>
   </view>
-
 </view>

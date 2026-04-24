@@ -1,32 +1,79 @@
-/* pages/discover/input/input.wxss */
 .container {
   min-height: 100vh;
-  background-color: var(--color-bg);
-  padding: var(--space-base);
-  padding-bottom: 160rpx;
+  padding: 36rpx 24rpx 160rpx;
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('/assets/backgrounds/city-coast.png');
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% auto;
+}
+
+.page-hero {
+  padding: 28rpx 8rpx 30rpx;
+}
+
+.hero-kicker {
+  display: block;
+  color: var(--color-secondary);
+  font-size: 22rpx;
+  font-weight: 800;
+  letter-spacing: 1rpx;
+  margin-bottom: 10rpx;
+}
+
+.hero-title {
+  display: block;
+  max-width: 560rpx;
+  font-size: 46rpx;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.15;
+  margin-bottom: 12rpx;
+}
+
+.hero-subtitle {
+  display: block;
+  font-size: 25rpx;
+  color: var(--color-text-secondary);
+  line-height: 1.55;
 }
 
 .section {
-  margin-bottom: var(--space-base);
+  margin-bottom: 20rpx;
+  border-radius: 24rpx;
+  padding: 26rpx;
 }
 
 .section-title {
   font-size: var(--font-base);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text);
   margin-bottom: var(--space-sm);
 }
 
-/* 位置 */
+.section-hint {
+  font-size: var(--font-xs);
+  color: var(--color-text-hint);
+  font-weight: 400;
+}
+
 .location-bar {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: var(--space-sm) 0;
+  padding: var(--space-xs) 0;
 }
 
 .location-icon {
-  font-size: 32rpx;
+  width: 58rpx;
+  height: 58rpx;
+  border-radius: 20rpx;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 18rpx;
+  font-weight: 800;
+  line-height: 58rpx;
+  text-align: center;
+  letter-spacing: 0;
 }
 
 .location-text {
@@ -40,25 +87,28 @@
   color: var(--color-primary);
 }
 
-/* 天数 */
 .days-selector {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-lg);
+  gap: 56rpx;
   padding: var(--space-sm) 0;
 }
 
 .days-btn {
-  width: 72rpx;
-  height: 72rpx;
+  width: 76rpx;
+  height: 76rpx;
   border-radius: 50%;
-  background: var(--color-bg);
+  background: #F6F9F5;
   text-align: center;
-  line-height: 72rpx;
-  font-size: 40rpx;
+  line-height: 76rpx;
+  font-size: 38rpx;
   color: var(--color-primary);
-  border: 2rpx solid var(--color-primary);
+  border: 2rpx solid rgba(22, 160, 109, 0.3);
+}
+
+.days-btn:active {
+  transform: scale(0.96);
 }
 
 .days-value {
@@ -69,7 +119,7 @@
 
 .days-num {
   font-size: 64rpx;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-primary);
 }
 
@@ -78,7 +128,6 @@
   color: var(--color-text-secondary);
 }
 
-/* 预算 */
 .budget-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -88,26 +137,26 @@
 .budget-item {
   display: flex;
   flex-direction: column;
-  gap: 4rpx;
+  gap: 6rpx;
   padding: var(--space-base);
-  border-radius: var(--radius-base);
-  background: var(--color-bg);
+  border-radius: 20rpx;
+  background: #F8FAF7;
   border: 2rpx solid transparent;
 }
 
 .budget-item.active {
-  background: var(--color-primary-light);
-  border-color: var(--color-primary);
+  background: #FFF0DE;
+  border-color: var(--color-secondary);
 }
 
 .budget-label {
   font-size: var(--font-base);
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text);
 }
 
 .budget-item.active .budget-label {
-  color: var(--color-primary);
+  color: var(--color-secondary);
 }
 
 .budget-desc {
@@ -115,7 +164,6 @@
   color: var(--color-text-secondary);
 }
 
-/* 偏好 */
 .pref-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -127,9 +175,9 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-xs);
-  padding: var(--space-base);
-  border-radius: var(--radius-base);
-  background: var(--color-bg);
+  padding: 12rpx 8rpx 16rpx;
+  border-radius: 20rpx;
+  background: #F8FAF7;
   border: 2rpx solid transparent;
 }
 
@@ -138,29 +186,33 @@
   border-color: var(--color-primary);
 }
 
-.pref-icon {
-  font-size: 40rpx;
+.pref-icon-img {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 24rpx;
 }
 
 .pref-label {
-  font-size: var(--font-sm);
+  font-size: var(--font-xs);
   color: var(--color-text-secondary);
+  font-weight: 600;
+  text-align: center;
 }
 
 .pref-item.active .pref-label {
   color: var(--color-primary);
-  font-weight: 600;
+  font-weight: 800;
 }
 
-/* 底部按钮 */
 .bottom-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
   padding: var(--space-base);
-  background: var(--color-surface);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  padding-bottom: calc(var(--space-base) + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -10rpx 28rpx rgba(35, 55, 45, 0.08);
 }
 
 .btn-primary {

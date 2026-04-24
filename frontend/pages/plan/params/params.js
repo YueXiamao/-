@@ -1,26 +1,22 @@
-// pages/plan/params/params.js
-import { PREFERENCE_OPTIONS, MIN_DAYS, MAX_DAYS } from '../../../constants/index.js';
-import { isValidDate, calcEndDate } from '../../../utils/index.js';
+import { PREFERENCE_OPTIONS, MIN_DAYS, MAX_DAYS, getCityBackground } from '../../../constants/index.js';
+import { isValidDate } from '../../../utils/index.js';
 
 Page({
   data: {
-    // 目的地（从上一页传来）
     destinations: [],
 
-    // 表单数据
     startDate: '',
     days: 2,
     preferences: [],
     extraNotes: '',
 
-    // 常量
-    preferenceOptions: PREFERENCE_OPTIONS,
+    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
     minDays: MIN_DAYS,
     maxDays: MAX_DAYS,
 
-    // UI
     loading: false,
-    today: '' // 今天日期，限制最早选择
+    today: '',
+    pageBackground: getCityBackground()
   },
 
   onLoad() {
@@ -30,7 +26,6 @@ Page({
       return;
     }
 
-    // 设置默认日期为明天
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const todayStr = tomorrow.toISOString().split('T')[0];
@@ -38,41 +33,45 @@ Page({
     this.setData({
       destinations,
       startDate: todayStr,
-      today: todayStr
+      today: todayStr,
+      pageBackground: getCityBackground(destinations)
     });
   },
 
-  // 日期选择
   onDateChange(e) {
-    const startDate = e.detail.value;
-    this.setData({ startDate });
+    this.setData({ startDate: e.detail.value });
   },
 
-  // 天数调整
   onDaysChange(e) {
     const delta = parseInt(e.currentTarget.dataset.delta);
-    const days = Math.max(1, Math.min(14, this.data.days + delta));
+    const days = Math.max(MIN_DAYS, Math.min(MAX_DAYS, this.data.days + delta));
     this.setData({ days });
   },
 
-  // 游玩方式选择
   onPreferenceTap(e) {
     const { value } = e.currentTarget.dataset;
     const { preferences } = this.data;
+    let nextPreferences;
 
     if (preferences.includes(value)) {
-      this.setData({ preferences: preferences.filter(p => p !== value) });
+      nextPreferences = preferences.filter(p => p !== value);
     } else {
-      this.setData({ preferences: [...preferences, value] });
+      nextPreferences = [...preferences, value];
     }
+
+    this.setData({
+      preferences: nextPreferences,
+      preferenceOptions: PREFERENCE_OPTIONS.map(item => ({
+        ...item,
+        selected: nextPreferences.indexOf(item.value) >= 0
+      }))
+    });
   },
 
-  // 补充说明输入
   onNotesInput(e) {
     this.setData({ extraNotes: e.detail.value });
   },
 
-  // 预览行程
   async onGenerate() {
     const { startDate, days, preferences, destinations } = this.data;
 
@@ -94,10 +93,7 @@ Page({
       extra_notes: this.data.extraNotes
     };
 
-    // 存储参数
     wx.setStorageSync('trip_params', params);
-
-    // 跳转到结果页
     wx.navigateTo({
       url: '/pages/plan/result/result'
     });

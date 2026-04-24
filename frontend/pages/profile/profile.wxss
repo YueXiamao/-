@@ -3,6 +3,7 @@
   min-height: 100vh;
   background-color: var(--color-bg);
   padding: var(--space-base);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.9), #F3F6F1 320rpx);
 }
 
 .user-section {
@@ -18,12 +19,14 @@
 .user-avatar {
   width: 100rpx;
   height: 100rpx;
-  border-radius: 50%;
-  background: var(--color-bg);
+  border-radius: 28rpx;
+  background: var(--color-primary-light);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 48rpx;
+  font-size: 26rpx;
+  font-weight: 800;
+  color: var(--color-primary);
 }
 
 .user-text {
@@ -69,6 +72,7 @@
 
 .trip-item {
   position: relative;
+  border-radius: 24rpx;
 }
 
 .trip-item-header {

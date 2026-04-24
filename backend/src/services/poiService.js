@@ -24,7 +24,7 @@ class PoiService {
         params: {
           key: config.amap.key,
           keywords: keyword,
-          city: undefined,
+          city: city || undefined,
           types: TYPE_MAP[type] || undefined,
           offset: limit,
           page: 1,

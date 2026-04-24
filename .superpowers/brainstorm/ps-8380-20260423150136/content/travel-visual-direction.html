@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel Mini Program Visual Direction</title>
+  <style>
+    :root {
+      --ink: #17211d;
+      --muted: #66736c;
+      --line: rgba(23, 33, 29, 0.12);
+      --green: #16a06d;
+      --green-soft: #e8f5ee;
+      --amber: #d9822b;
+      --bg: #f6f8f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #eef3ef;
+      color: var(--ink);
+    }
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 36px 24px 48px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      margin: 0 0 24px;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 760px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+    .option-card {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 18px 42px rgba(32, 45, 39, 0.09);
+      padding: 14px;
+      cursor: pointer;
+    }
+    .option-card:hover { transform: translateY(-2px); }
+    .phone {
+      width: 100%;
+      max-width: 300px;
+      aspect-ratio: 9 / 17.5;
+      margin: 0 auto;
+      border-radius: 34px;
+      overflow: hidden;
+      border: 8px solid #202822;
+      position: relative;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+    }
+    .screen {
+      height: 100%;
+      padding: 22px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,0.76), rgba(246,248,244,0.95) 42%, #f7f8f4);
+      z-index: 0;
+    }
+    .screen > * { position: relative; z-index: 1; }
+    .a .screen {
+      background:
+        radial-gradient(circle at 22% 17%, rgba(255,255,255,0.42), transparent 34%),
+        linear-gradient(150deg, rgba(70, 145, 115, 0.55), rgba(239, 207, 139, 0.28) 44%, rgba(99, 150, 186, 0.35)),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 700'%3E%3Crect fill='%238db9a8' width='360' height='700'/%3E%3Cpath fill='%23f1c88c' d='M0 196c72-42 134-52 202-26s94 2 158-18v548H0z'/%3E%3Cpath fill='%237cae9a' d='M0 278c70-40 141-16 204-38s110-72 156-45v505H0z' opacity='.72'/%3E%3Cpath fill='%23f7f4ea' d='M0 394c89-12 141 14 214-4s101-24 146-7v317H0z'/%3E%3Cpath stroke='%23608277' stroke-width='5' fill='none' opacity='.45' d='M34 456c82-48 133-8 196-42 30-16 54-42 92-48'/%3E%3C/svg%3E");
+      background-size: cover;
+    }
+    .b .screen {
+      background:
+        linear-gradient(180deg, rgba(20,30,32,0.25), rgba(255,255,255,0.94) 56%),
+        linear-gradient(135deg, #214241, #c77748 54%, #ecdcc3);
+    }
+    .c .screen {
+      background:
+        radial-gradient(circle at 18% 18%, rgba(22,160,109,0.16), transparent 30%),
+        radial-gradient(circle at 72% 26%, rgba(217,130,43,0.12), transparent 28%),
+        repeating-linear-gradient(35deg, rgba(22,160,109,0.08) 0 1px, transparent 1px 20px),
+        #f7faf6;
+    }
+    .hero-title {
+      margin-top: 12px;
+      font-size: 26px;
+      font-weight: 750;
+      line-height: 1.12;
+      color: #14231d;
+    }
+    .hero-copy {
+      margin: 8px 0 20px;
+      color: #5d6d65;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .pill-row {
+      display: flex;
+      gap: 7px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .pill {
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      color: #1b7554;
+      background: rgba(255,255,255,0.76);
+      border: 1px solid rgba(22,160,109,0.16);
+    }
+    .panel {
+      border-radius: 20px;
+      background: rgba(255,255,255,0.86);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: 0 14px 34px rgba(28, 46, 38, 0.1);
+      padding: 14px;
+      margin-bottom: 10px;
+    }
+    .panel-title { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
+    .panel-text { color: #69756f; font-size: 12px; line-height: 1.45; }
+    .pref-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .pref {
+      min-height: 70px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(22,160,109,0.13);
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+    .pref-art {
+      height: 30px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #dcefe7, #f4d9ad);
+      position: relative;
+    }
+    .pref:nth-child(2) .pref-art { background: linear-gradient(135deg, #ffdec3, #bfe7df); }
+    .pref:nth-child(3) .pref-art { background: linear-gradient(135deg, #f2c58d, #f8ead2); }
+    .pref-label { font-size: 10px; color: #34413a; font-weight: 650; }
+    .button {
+      margin-top: 14px;
+      height: 42px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #16a06d;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 720;
+    }
+    .body {
+      padding: 14px 4px 0;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 17px;
+    }
+    .desc {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      margin: 0 0 10px;
+    }
+    .recommend {
+      display: inline-flex;
+      color: #fff;
+      background: #16a06d;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 900px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script>
+    function choose(el) {
+      document.querySelectorAll('.option-card').forEach(card => card.style.outline = 'none');
+      el.style.outline = '3px solid rgba(22,160,109,0.35)';
+      const event = { type: 'click', choice: el.dataset.choice, text: el.querySelector('h2').textContent, timestamp: Date.now() };
+      try {
+        const ws = new WebSocket(`ws://${location.host}`);
+        ws.onopen = () => { ws.send(JSON.stringify(event)); setTimeout(() => ws.close(), 120); };
+      } catch (e) {}
+    }
+  </script>
+</head>
+<body>
+  <main class="page">
+    <h1>小程序整体 UI 视觉方向</h1>
+    <p class="subtitle">目标：年轻、轻盈、有旅行感，但背景图必须退到内容之后。请选择一个方向作为主风格，我会据此继续细化城市背景图和偏好方式图片。</p>
+    <section class="cards">
+      <article class="option-card a" data-choice="a" onclick="choose(this)">
+        <div class="recommend">推荐</div>
+        <div class="phone">
+          <div class="screen">
+            <div class="hero-title">周末去哪里</div>
+            <div class="hero-copy">按城市气质生成轻量背景，内容卡片用半透明白底保持可读。</div>
+            <div class="pill-row">
+              <span class="pill">成都</span><span class="pill">都江堰</span><span class="pill">轻松度假</span>
+            </div>
+            <div class="panel">
+              <div class="panel-title">制定行程</div>
+              <div class="panel-text">选好目的地后，快速安排日期、天数和偏好。</div>
+            </div>
+            <div class="panel">
+              <div class="panel-title">游玩方式</div>
+              <div class="pref-grid">
+                <div class="pref"><div class="pref-art"></div><div class="pref-label">轻松度假</div></div>
+                <div class="pref"><div class="pref-art"></div><div class="pref-label">网红打卡</div></div>
+                <div class="pref"><div class="pref-art"></div><div class="pref-label">寻找美食</div></div>
+              </div>
+            </div>
+            <div class="button">生成行程</div>
+          </div>
+        </div>
+        <div class="body">
+          <h2>A. 清透城市明信片</h2>
+          <p class="desc">用低饱和城市风景插画做背景：山水、街巷、海岸、夜市等。适合年轻用户，也最容易保证文字清晰。</p>
+        </div>
+      </article>
+      <article class="option-card b" data-choice="b" onclick="choose(this)">
+        <div class="phone">
+          <div class="screen">
+            <div class="hero-title">今天有点想出发</div>
+            <div class="hero-copy">更强旅拍氛围，适合探索页，但大面积使用会压住表单。</div>
+            <div class="panel"><div class="panel-title">随机玩</div><div class="panel-text">更强的情绪感，按钮和卡片需要更厚重的遮罩。</div></div>
+            <div class="button">开始随机玩</div>
+          </div>
+        </div>
+        <div class="body">
+          <h2>B. 胶片旅拍氛围</h2>
+          <p class="desc">更抓眼，但对列表页和表单页不够克制，容易让小程序从工具感滑向营销页。</p>
+        </div>
+      </article>
+      <article class="option-card c" data-choice="c" onclick="choose(this)">
+        <div class="phone">
+          <div class="screen">
+            <div class="hero-title">把路线排清楚</div>
+            <div class="hero-copy">地图纹理和轻几何作为背景，信息效率最高。</div>
+            <div class="panel"><div class="panel-title">目的地选择</div><div class="panel-text">省市区列表非常清晰，但旅行记忆点弱一点。</div></div>
+            <div class="panel"><div class="panel-title">已选 2/5</div><div class="panel-text">成都 · 都江堰</div></div>
+            <div class="button">下一步</div>
+          </div>
+        </div>
+        <div class="body">
+          <h2>C. 极简地图纹理</h2>
+          <p class="desc">最稳、最工具化，适合信息密集页；但背景图“城市差异感”会比较弱。</p>
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>

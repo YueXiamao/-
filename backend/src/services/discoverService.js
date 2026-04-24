@@ -105,7 +105,9 @@ class DiscoverService {
           days,
           spot_count: 3 + (days > 3 ? days - 3 : 0),
           food_count: 2,
-          budget_range: `${Math.round(minBudget)}-${Math.round(maxBudget)}元/人`
+          budget_range: Number.isFinite(maxBudget)
+            ? `${Math.round(minBudget)}-${Math.round(maxBudget)}元/人`
+            : `${Math.round(minBudget)}元以上/人`
         },
         score: totalScore
       });

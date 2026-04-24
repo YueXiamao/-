@@ -1,18 +1,57 @@
-<!-- pages/plan/destination/destination.wxml -->
-<view class="container">
-  <!-- 搜索框 -->
-  <view class="search-bar">
-    <input
-      class="search-input"
-      placeholder="搜索市或县..."
-      value="{{searchValue}}"
-      bindinput="onSearchInput"
-    />
-    <view class="search-close" bindtap="onSearchClose" wx:if="{{showSearch}}">×</view>
+<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+  <view class="page-hero">
+    <text class="hero-kicker">DESTINATION</text>
+    <text class="hero-title">选择这次想去的城市</text>
+    <text class="hero-subtitle">先把目的地范围圈出来，后面会根据城市和区县组合生成更顺手的路线安排。</text>
+    <view class="hero-badges">
+      <text class="hero-badge">最多 {{maxDestinations}} 个目的地</text>
+      <text class="hero-badge">背景图会跟着城市切换</text>
+    </view>
   </view>
 
-  <!-- 搜索结果 -->
-  <view class="search-results" wx:if="{{showSearch && searchResults.length > 0}}">
+  <view class="overview-card glass-card">
+    <view class="overview-main">
+      <view class="overview-count">{{selectedDestinations.length}}</view>
+      <view class="overview-copy">
+        <text class="overview-title">已选目的地</text>
+        <text class="overview-subtitle">可以混合选择城市和区县，适合一城深玩或多地联动。</text>
+      </view>
+    </view>
+    <view class="steps">
+      <view class="step-item {{step >= 1 ? 'active' : ''}}">
+        <text class="step-no">1</text>
+        <text class="step-name">省份</text>
+      </view>
+      <view class="step-line {{step >= 2 ? 'active' : ''}}"></view>
+      <view class="step-item {{step >= 2 ? 'active' : ''}}">
+        <text class="step-no">2</text>
+        <text class="step-name">城市</text>
+      </view>
+      <view class="step-line {{step >= 3 ? 'active' : ''}}"></view>
+      <view class="step-item {{step >= 3 ? 'active' : ''}}">
+        <text class="step-no">3</text>
+        <text class="step-name">区县</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="search-panel glass-card">
+    <view class="search-title-row">
+      <text class="search-title">快速搜索</text>
+      <text class="search-hint">支持城市或区县</text>
+    </view>
+    <view class="search-bar">
+      <input
+        class="search-input"
+        placeholder="搜索城市或区县"
+        value="{{searchValue}}"
+        bindinput="onSearchInput"
+      />
+      <view class="search-close" bindtap="onSearchClose" wx:if="{{showSearch}}">×</view>
+    </view>
+  </view>
+
+  <view class="search-results glass-card" wx:if="{{showSearch && searchResults.length > 0}}">
     <view
       class="search-result-item"
       wx:for="{{searchResults}}"
@@ -24,96 +63,102 @@
       data-province="{{item.province}}"
       data-city="{{item.city}}"
     >
-      <text class="result-name">{{item.name}}</text>
-      <text class="result-level">{{item.level === 'city' ? '市' : '县'}}</text>
+      <view class="result-copy">
+        <text class="result-name">{{item.name}}</text>
+        <text class="result-path" wx:if="{{item.province || item.city}}">{{item.province}}{{item.city ? ' / ' + item.city : ''}}</text>
+      </view>
+      <text class="result-level">{{item.level === 'city' ? '城市' : '区县'}}</text>
     </view>
   </view>
 
-  <!-- 已选目的地（灰色选中框，始终显示在顶部） -->
-  <view class="selected-bar" wx:if="{{selectedDestinations.length > 0}}">
-    <text class="selected-label">已选 ({{selectedDestinations.length}}/{{maxDestinations}})</text>
+  <scroll-view class="selected-scroll" scroll-x wx:if="{{selectedDestinations.length > 0}}">
     <view class="selected-tags">
       <view
         class="selected-tag"
         wx:for="{{selectedDestinations}}"
         wx:key="name"
       >
-        <text>{{item.name}}</text>
+        <view class="selected-copy">
+          <text class="selected-name">{{item.name}}</text>
+          <text class="selected-meta">{{item.level === 'city' ? '城市' : '区县'}}</text>
+        </view>
         <text class="tag-remove" bindtap="onDestRemove" data-index="{{index}}">×</text>
       </view>
     </view>
-  </view>
+  </scroll-view>
 
-  <!-- 步骤指示 + 返回 -->
-  <view class="steps-bar">
-    <view class="back-btn" bindtap="onBackStep" wx:if="{{step > 1}}">‹ 返回</view>
-    <view class="steps">
-      <text class="step {{step >= 1 ? 'active' : ''}}">①省</text>
-      <text class="step-sep">›</text>
-      <text class="step {{step >= 2 ? 'active' : ''}}">②市</text>
-      <text class="step-sep">›</text>
-      <text class="step {{step >= 3 ? 'active' : ''}}">③县</text>
+  <view class="section-head">
+    <view class="section-copy">
+      <text class="section-title" wx:if="{{step === 1}}">从省份开始选</text>
+      <text class="section-title" wx:if="{{step === 2}}">选择 {{selectedProvince.name}} 的城市</text>
+      <text class="section-title" wx:if="{{step === 3}}">选择 {{selectedCity.name}} 的区县</text>
+      <text class="section-hint" wx:if="{{step === 1}}">先定一个大的方向，再往下细化。</text>
+      <text class="section-hint" wx:if="{{step === 2}}">点进城市继续选区县，也可以直接把整座城市加入行程。</text>
+      <text class="section-hint" wx:if="{{step === 3}}">点击区县即可加入已选列表，可以继续多选。</text>
     </view>
-    <view class="step-hint" wx:if="{{step === 3}}">点击添加县到已选列表</view>
+    <view class="back-chip" bindtap="onBackStep" wx:if="{{step > 1}}">返回上一步</view>
   </view>
 
-  <!-- 省份列表 -->
-  <view class="list" wx:if="{{step === 1}}">
-    <view
-      class="list-item {{selectedProvince && item.code === selectedProvince.code ? 'selected' : ''}}"
-      wx:for="{{provinces}}"
-      wx:key="code"
-      bindtap="onProvinceTap"
-      data-code="{{item.code}}"
-      data-name="{{item.name}}"
-    >
-      <text class="item-name">{{item.name}}</text>
-      <text class="item-arrow">›</text>
-    </view>
-  </view>
-
-  <!-- 城市列表 -->
-  <view class="list" wx:if="{{step === 2}}">
-    <view class="list-header">请选择{{selectedProvince.name}}的市</view>
-    <view
-      class="list-item"
-      wx:for="{{cities}}"
-      wx:key="code"
-      bindtap="onCityTap"
-      data-code="{{item.code}}"
-      data-name="{{item.name}}"
-    >
-      <text class="item-name">{{item.name}}</text>
-      <view class="item-right">
-        <text class="item-confirm-btn" catchtap="onCityConfirm" data-code="{{item.code}}" data-name="{{item.name}}">选市</text>
+  <view class="list-shell glass-card">
+    <view class="list" wx:if="{{step === 1}}">
+      <view
+        class="list-item {{selectedProvince && item.code === selectedProvince.code ? 'selected' : ''}}"
+        wx:for="{{provinces}}"
+        wx:key="code"
+        bindtap="onProvinceTap"
+        data-code="{{item.code}}"
+        data-name="{{item.name}}"
+      >
+        <view class="item-copy">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-subtitle">进入下一步选择城市</text>
+        </view>
         <text class="item-arrow">›</text>
+      </view>
+    </view>
+
+    <view class="list" wx:if="{{step === 2}}">
+      <view
+        class="list-item"
+        wx:for="{{cities}}"
+        wx:key="code"
+        bindtap="onCityTap"
+        data-code="{{item.code}}"
+        data-name="{{item.name}}"
+      >
+        <view class="item-copy">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-subtitle">进入区县，或直接整座城市加入</text>
+        </view>
+        <view class="item-right">
+          <text class="item-confirm-btn" catchtap="onCityConfirm" data-code="{{item.code}}" data-name="{{item.name}}">直接加入</text>
+          <text class="item-arrow">›</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="list" wx:if="{{step === 3}}">
+      <view
+        class="list-item"
+        wx:for="{{districts}}"
+        wx:key="code"
+        bindtap="onDistrictTap"
+        data-code="{{item.code}}"
+        data-name="{{item.name}}"
+      >
+        <view class="item-copy">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-subtitle">点击后加入已选目的地</text>
+        </view>
+        <text class="item-arrow">＋</text>
       </view>
     </view>
   </view>
 
-  <!-- 区县列表 -->
-  <view class="list" wx:if="{{step === 3}}">
-    <view class="list-header">请选择{{selectedCity.name}}的区县</view>
-    <view
-      class="list-item"
-      wx:for="{{districts}}"
-      wx:key="code"
-      bindtap="onDistrictTap"
-      data-code="{{item.code}}"
-      data-name="{{item.name}}"
-    >
-      <text class="item-name">{{item.name}}</text>
-      <text class="item-arrow">›</text>
-    </view>
-    <view class="list-tip">直接点击区县名称即可添加到已选列表，可继续选择</view>
+  <view class="loading glass-card" wx:if="{{loading}}">
+    <text>正在加载列表...</text>
   </view>
 
-  <!-- 加载状态 -->
-  <view class="loading" wx:if="{{loading}}">
-    <text>加载中...</text>
-  </view>
-
-  <!-- 下一步按钮（固定底部） -->
   <view class="bottom-bar">
     <button
       class="btn-primary {{selectedDestinations.length === 0 ? 'btn-disabled' : ''}}"
@@ -121,7 +166,7 @@
       disabled="{{selectedDestinations.length === 0}}"
     >
       <text class="btn-text">下一步</text>
-      <text class="btn-count" wx:if="{{selectedDestinations.length > 0}}">{{selectedDestinations.length}}个目的地</text>
+      <text class="btn-count" wx:if="{{selectedDestinations.length > 0}}">已选 {{selectedDestinations.length}} 个目的地</text>
     </button>
   </view>
 </view>

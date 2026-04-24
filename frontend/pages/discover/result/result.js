@@ -1,5 +1,6 @@
 // pages/discover/result/result.js
 import discoverApi from '../../../services/discover.js';
+import { getCityBackground } from '../../../constants/index.js';
 
 Page({
   data: {
@@ -7,7 +8,8 @@ Page({
     recommendations: [],
     loading: true,
     error: null,
-    currentIndex: 0
+    currentIndex: 0,
+    pageBackground: getCityBackground()
   },
 
   onLoad() {
@@ -27,7 +29,8 @@ Page({
       const result = await discoverApi.recommend(params);
       this.setData({
         recommendations: result.recommendations || [],
-        loading: false
+        loading: false,
+        pageBackground: getCityBackground((result.recommendations || []).map(item => item.destination?.name))
       });
     } catch (err) {
       console.error('推荐失败', err);
@@ -44,26 +47,21 @@ Page({
     const rec = this.data.recommendations[index];
     if (!rec) return;
 
-    // 用推荐的目的地生成行程
-    wx.setStorageSync('trip_destinations', [{
-      name: rec.destination.name,
-      province: rec.destination.province,
-      city: rec.destination.city
-    }]);
-
-    wx.setStorageSync('trip_params', {
-      destinations: [{
-        name: rec.destination.name,
-        province: rec.destination.province,
-        city: rec.destination.city
-      }],
-      start_date: new Date().toISOString().split('T')[0],
-      days: this.data.params.days,
-      preferences: this.data.params.preferences || [],
-      extra_notes: ''
-    });
-
-    wx.navigateTo({ url: '/pages/plan/result/result' });
+    try {
+      wx.showLoading({ title: '生成中...' });
+      const trip = await discoverApi.getDestinationTrip(rec.destination.name, {
+        start_date: new Date().toISOString().split('T')[0],
+        days: this.data.params.days,
+        preferences: this.data.params.preferences || [],
+        extra_notes: ''
+      });
+      wx.setStorageSync('pre_generated_trip', trip);
+      wx.hideLoading();
+      wx.navigateTo({ url: '/pages/plan/result/result' });
+    } catch (err) {
+      wx.hideLoading();
+      wx.showToast({ title: '行程生成失败', icon: 'none' });
+    }
   },
 
   // 重试
@@ -73,7 +71,12 @@ Page({
 
   // 切换卡片
   onSwiperChange(e) {
-    this.setData({ currentIndex: e.detail.current });
+    const currentIndex = e.detail.current;
+    const current = this.data.recommendations[currentIndex];
+    this.setData({
+      currentIndex,
+      pageBackground: getCityBackground([current?.destination?.name])
+    });
   },
 
   // 再来一次

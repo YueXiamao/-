@@ -12,6 +12,31 @@ export const PREFERENCE_OPTIONS = [
 ];
 
 // 预算选项
+export const CITY_BACKGROUND_OPTIONS = {
+  default: '/assets/backgrounds/city-default.png',
+  mountain: '/assets/backgrounds/city-mountain.png',
+  coast: '/assets/backgrounds/city-coast.png',
+  urban: '/assets/backgrounds/city-urban.png',
+  snow: '/assets/backgrounds/city-snow.png',
+  water: '/assets/backgrounds/city-water.png'
+};
+
+const CITY_BACKGROUND_KEYWORDS = [
+  { type: 'mountain', words: ['成都', '都江堰', '重庆', '西安', '桂林', '张家界', '峨眉', '乐山'] },
+  { type: 'coast', words: ['厦门', '三亚', '青岛', '舟山', '海口', '大连', '珠海', '北海'] },
+  { type: 'urban', words: ['上海', '北京', '深圳', '广州', '杭州', '南京', '武汉', '长沙'] },
+  { type: 'snow', words: ['丽江', '大理', '拉萨', '香格里拉', '西宁', '阿坝', '甘孜'] },
+  { type: 'water', words: ['苏州', '无锡', '嘉兴', '湖州', '绍兴', '扬州', '乌镇', '周庄'] }
+];
+
+export function getCityBackground(destinationNames = []) {
+  const text = destinationNames
+    .map(item => (typeof item === 'string' ? item : item?.name || item?.city || item?.province || ''))
+    .join(' ');
+  const match = CITY_BACKGROUND_KEYWORDS.find(group => group.words.some(word => text.includes(word)));
+  return CITY_BACKGROUND_OPTIONS[match?.type || 'default'];
+}
+
 export const BUDGET_OPTIONS = [
   { label: '500元以下', value: '500以下', desc: '周边穷游' },
   { label: '500-1000元', value: '500-1000', desc: '周末轻度假' },

@@ -1,5 +1,6 @@
 // 用户路由
 import { userService } from '../services/userService.js';
+import { Errors } from '../middleware/errorHandler.js';
 
 export default async function userRoutes(fastify) {
   // 获取用户信息
@@ -12,13 +13,18 @@ export default async function userRoutes(fastify) {
     return { ...user, preferences: prefs };
   });
 
-  // 更新偏好
-  fastify.post('/preferences', async (req) => {
+  async function updatePreferences(req) {
     const openid = req.headers['x-openid'] || '';
-    const { preferences } = req.body || [];
+    const { preferences = [] } = req.body || {};
     const userId = await userService.getUserIdByOpenid(openid);
-    if (!userId) throw new Error('用户不存在');
-    userService.upsertPreferences(userId, preferences);
+    if (!userId) throw Errors.UNAUTHORIZED('用户不存在');
+    userService.upsertPreferences(userId, preferences.map((item) => (
+      typeof item === 'string' ? { type: 'preference', value: item } : item
+    )));
     return { success: true };
-  });
+  }
+
+  // 更新偏好
+  fastify.post('/preferences', updatePreferences);
+  fastify.post('/preference', updatePreferences);
 }

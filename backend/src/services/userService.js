@@ -13,7 +13,7 @@ class UserService {
   }
 
   // 获取用户 ID
-  async getUserIdByOpenid(openid) {
+  getUserIdByOpenid(openid) {
     const user = this.getByOpenid(openid);
     return user ? user.id : null;
   }

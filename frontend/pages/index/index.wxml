@@ -1,42 +1,48 @@
-<!-- pages/index/index.wxml -->
-<view class="container">
-  <view class="header">
-    <text class="title">旅行规划</text>
-    <text class="subtitle">智能行程规划，让旅行更简单</text>
-  </view>
-
-  <view class="cards">
-    <view class="card card-plan" bindtap="goToPlan">
-      <text class="card-icon">[MAP]</text>
-      <view class="card-content">
-        <text class="card-title">行程规划</text>
-        <text class="card-desc">已确定目的地？帮您安排每日行程</text>
-      </view>
-      <text class="card-arrow">></text>
-    </view>
-
-    <view class="card card-discover" bindtap="goToDiscover">
-      <text class="card-icon">[RND]</text>
-      <view class="card-content">
-        <text class="card-title">随机玩</text>
-        <text class="card-desc">不确定去哪玩？根据您的位置推荐目的地</text>
-      </view>
-      <text class="card-arrow">></text>
+<view class="container page-bg">
+  <view class="hero-strip glass-card">
+    <text class="eyebrow">TRAVEL PLANNER</text>
+    <text class="title">今天怎么出发</text>
+    <text class="subtitle">选一个入口，直接开始。</text>
+    <view class="hero-meta">
+      <text class="hero-chip">城市背景会跟着目的地切换</text>
+      <text class="hero-chip">偏好图片已按旅行场景重做</text>
     </view>
   </view>
 
-  <view class="features">
-    <view class="feature-item">
-      <text class="feature-icon">[1]</text>
-      <text class="feature-text">真实景点推荐</text>
+  <view class="entry-stage">
+    <view class="entry-card entry-plan glass-card" bindtap="goToPlan">
+      <view class="entry-head">
+        <text class="entry-mark">PLAN</text>
+        <text class="entry-arrow">›</text>
+      </view>
+      <view class="entry-body">
+        <text class="entry-title">行程规划</text>
+        <text class="entry-desc">已经想好去哪，就把路线和节奏安排清楚。</text>
+      </view>
+      <view class="entry-tags">
+        <text class="entry-tag">目的地已确定</text>
+        <text class="entry-tag">适合直接开做</text>
+      </view>
     </view>
-    <view class="feature-item">
-      <text class="feature-icon">[2]</text>
-      <text class="feature-text">本地美食攻略</text>
+
+    <view class="entry-card entry-discover glass-card" bindtap="goToDiscover">
+      <view class="entry-head">
+        <text class="entry-mark">RND</text>
+        <text class="entry-arrow">›</text>
+      </view>
+      <view class="entry-body">
+        <text class="entry-title">随机玩</text>
+        <text class="entry-desc">还没想好去哪，就先拿几组灵感方案。</text>
+      </view>
+      <view class="entry-tags">
+        <text class="entry-tag entry-tag-warm">周末灵感</text>
+        <text class="entry-tag entry-tag-warm">按预算筛选</text>
+      </view>
     </view>
-    <view class="feature-item">
-      <text class="feature-icon">[3]</text>
-      <text class="feature-text">一键生成行程</text>
-    </view>
+  </view>
+
+  <view class="home-notes">
+    <text class="home-note">目的地选择支持到区县</text>
+    <text class="home-note">轻松度假、网红打卡、美食等偏好可组合</text>
   </view>
 </view>
