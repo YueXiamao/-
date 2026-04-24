@@ -5,34 +5,111 @@ import path from 'node:path';
 import test from 'node:test';
 import Fastify from 'fastify';
 
+const tempDirsToCleanup = new Set();
+
+process.once('exit', () => {
+  for (const tmpDir of tempDirsToCleanup) {
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    } catch {
+      // Best effort at process exit.
+    }
+  }
+});
+
 async function buildServer() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'travel-mini-'));
+  const previousEnv = {
+    DB_PATH: process.env.DB_PATH,
+    AMAP_KEY: process.env.AMAP_KEY,
+    SKIP_EXTERNAL_POI: process.env.SKIP_EXTERNAL_POI,
+    SKIP_AI: process.env.SKIP_AI
+  };
+
+  tempDirsToCleanup.add(tmpDir);
   process.env.DB_PATH = path.join(tmpDir, 'travel.db');
   process.env.AMAP_KEY = 'test-amap-key';
   process.env.SKIP_EXTERNAL_POI = 'true';
   process.env.SKIP_AI = 'true';
 
-  const { initDatabase, getDb } = await import('../src/db/database.js');
-  const { errorHandler } = await import('../src/middleware/errorHandler.js');
-  const destinationRoutes = (await import('../src/routes/destinations.js')).default;
-  const discoverRoutes = (await import('../src/routes/discover.js')).default;
-  const tripRoutes = (await import('../src/routes/trip.js')).default;
-  const userRoutes = (await import('../src/routes/user.js')).default;
+  const restoreEnvAndTempDir = () => {
+    for (const [key, value] of Object.entries(previousEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
 
-  initDatabase();
+    try {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+      tempDirsToCleanup.delete(tmpDir);
+    } catch {
+      // Database handles can outlive the Fastify server during the test run.
+    }
+  };
 
-  const server = Fastify({ logger: false });
-  server.setErrorHandler(errorHandler);
-  server.register(destinationRoutes, { prefix: '/api/destinations' });
-  server.register(discoverRoutes, { prefix: '/api/discover' });
-  server.register(tripRoutes, { prefix: '/api/trip' });
-  server.register(userRoutes, { prefix: '/api/user' });
+  try {
+    const { initDatabase, getDb } = await import('../src/db/database.js');
+    const { errorHandler } = await import('../src/middleware/errorHandler.js');
+    const destinationRoutes = (await import('../src/routes/destinations.js')).default;
+    const discoverRoutes = (await import('../src/routes/discover.js')).default;
+    const tripRoutes = (await import('../src/routes/trip.js')).default;
+    const userRoutes = (await import('../src/routes/user.js')).default;
 
-  return { server, db: getDb(), tmpDir };
+    initDatabase();
+
+    const server = Fastify({ logger: false });
+    server.setErrorHandler(errorHandler);
+    server.register(destinationRoutes, { prefix: '/api/destinations' });
+    server.register(discoverRoutes, { prefix: '/api/discover' });
+    server.register(tripRoutes, { prefix: '/api/trip' });
+    server.register(userRoutes, { prefix: '/api/user' });
+
+    return {
+      server,
+      db: getDb(),
+      tmpDir,
+      async cleanup() {
+        try {
+          await server.close();
+        } finally {
+          restoreEnvAndTempDir();
+        }
+      }
+    };
+  } catch (error) {
+    restoreEnvAndTempDir();
+    throw error;
+  }
 }
 
-test('missing trip parameters return validation error instead of crashing', async () => {
-  const { server } = await buildServer();
+function assertGenerationMetaShape(payload) {
+  assert.equal(typeof payload.source, 'string');
+  assert.equal(typeof payload.fallback_level, 'string');
+  assert.ok(payload.generation_meta && typeof payload.generation_meta === 'object');
+  assert.equal(Array.isArray(payload.generation_meta), false);
+  assert.equal(Object.getPrototypeOf(payload.generation_meta), Object.prototype);
+  assert.equal(typeof payload.generation_meta.phase, 'string');
+  assert.equal(Array.isArray(payload.generation_meta.warnings), true);
+  assert.equal(
+    payload.generation_meta.warnings.every((warning) => typeof warning === 'string'),
+    true
+  );
+}
+
+function testWithServer(name, fn) {
+  test(name, async () => {
+    const context = await buildServer();
+    try {
+      await fn(context);
+    } finally {
+      await context.cleanup();
+    }
+  });
+}
+
+testWithServer('missing trip parameters return validation error instead of crashing', async ({ server }) => {
   const res = await server.inject({
     method: 'POST',
     url: '/api/trip/generate',
@@ -41,11 +118,115 @@ test('missing trip parameters return validation error instead of crashing', asyn
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.json().code, 10001);
-  await server.close();
 });
 
-test('missing discover parameters return validation error instead of crashing', async () => {
-  const { server } = await buildServer();
+testWithServer('trip generate route forwards ai_enhanced metadata returned by the service', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalGenerate = tripModule.tripService.generate;
+  tripModule.tripService.generate = async () => ({
+    trip_id: 'trip-enhanced',
+    title: 'Enhanced Trip',
+    source: 'ai_enhanced',
+    fallback_level: 'none',
+    generation_meta: {
+      phase: 'ready',
+      warnings: []
+    },
+    itinerary: []
+  });
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assertGenerationMetaShape(res.json());
+    assert.equal(res.json().source, 'ai_enhanced');
+    assert.equal(res.json().fallback_level, 'none');
+    assert.equal(res.json().generation_meta.phase, 'ready');
+  } finally {
+    tripModule.tripService.generate = originalGenerate;
+  }
+});
+
+testWithServer('trip generate route forwards rule_based fallback metadata returned by the service', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalGenerate = tripModule.tripService.generate;
+  tripModule.tripService.generate = async () => ({
+    trip_id: 'trip-rule-based',
+    title: 'Rule-based Trip',
+    source: 'rule_based',
+    fallback_level: 'rule_based',
+    generation_meta: {
+      phase: 'degraded',
+      warnings: ['ai_enhancement_failed']
+    },
+    itinerary: []
+  });
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Food']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assertGenerationMetaShape(res.json());
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.deepEqual(res.json().generation_meta.warnings, ['ai_enhancement_failed']);
+  } finally {
+    tripModule.tripService.generate = originalGenerate;
+  }
+});
+
+testWithServer('trip generation returns a retryable product error when every fallback fails', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalGenerate = tripModule.tripService.generate;
+  tripModule.tripService.generate = async () => {
+    const error = new Error('trip_generation_failed');
+    error.statusCode = 503;
+    error.code = 30001;
+    error.retryable = true;
+    throw error;
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Photo']
+      }
+    });
+
+    assert.equal(res.statusCode, 503);
+    assert.equal(res.json().code, 30001);
+    assert.equal(res.json().retryable, true);
+    assert.equal(res.json().message, 'trip_generation_failed');
+  } finally {
+    tripModule.tripService.generate = originalGenerate;
+  }
+});
+
+testWithServer('missing discover parameters return validation error instead of crashing', async ({ server }) => {
   const res = await server.inject({
     method: 'POST',
     url: '/api/discover/recommend',
@@ -54,11 +235,9 @@ test('missing discover parameters return validation error instead of crashing', 
 
   assert.equal(res.statusCode, 400);
   assert.equal(res.json().code, 10001);
-  await server.close();
 });
 
-test('destination search accepts the frontend q query parameter', async () => {
-  const { server, db } = await buildServer();
+testWithServer('destination search accepts the frontend q query parameter', async ({ server, db }) => {
   db.prepare(`
     INSERT INTO destination (name, province, city, level, hot_score)
     VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)
@@ -71,11 +250,9 @@ test('destination search accepts the frontend q query parameter', async () => {
 
   assert.equal(res.statusCode, 200);
   assert.deepEqual(res.json().map((item) => item.name), ['成都市']);
-  await server.close();
 });
 
-test('trip save and item note update use awaited user lookup and frontend route shape', async () => {
-  const { server, db } = await buildServer();
+testWithServer('trip save and item note update use awaited user lookup and frontend route shape', async ({ server, db }) => {
   db.prepare('INSERT INTO user (openid) VALUES (?)').run('openid-1');
 
   const tripPayload = {
@@ -123,11 +300,9 @@ test('trip save and item note update use awaited user lookup and frontend route 
 
   const updated = db.prepare('SELECT notes FROM trip_item WHERE id = ?').get(itemId);
   assert.equal(updated.notes, '下午人少时去');
-  await server.close();
 });
 
-test('trip item deletion persists through the frontend route shape', async () => {
-  const { server, db } = await buildServer();
+testWithServer('trip item deletion persists through the frontend route shape', async ({ server, db }) => {
   db.prepare('INSERT INTO user (openid) VALUES (?)').run('openid-delete');
 
   const saveRes = await server.inject({
@@ -169,11 +344,9 @@ test('trip item deletion persists through the frontend route shape', async () =>
   assert.equal(deleteRes.statusCode, 200);
   assert.equal(deleteRes.json().success, true);
   assert.equal(db.prepare('SELECT COUNT(*) as count FROM trip_item WHERE id = ?').get(itemId).count, 0);
-  await server.close();
 });
 
-test('trip item reorder swaps persisted sort order within the same day', async () => {
-  const { server, db } = await buildServer();
+testWithServer('trip item reorder swaps persisted sort order within the same day', async ({ server, db }) => {
   db.prepare('INSERT INTO user (openid) VALUES (?)').run('openid-reorder');
 
   const saveRes = await server.inject({
@@ -231,11 +404,9 @@ test('trip item reorder swaps persisted sort order within the same day', async (
     itemsAfter.map((item) => item.name),
     ['Stop B', 'Stop A', 'Stop C']
   );
-  await server.close();
 });
 
-test('trip item replacement updates persisted item content with a new candidate', async () => {
-  const { server, db } = await buildServer();
+testWithServer('trip item replacement updates persisted item content with a new candidate', async ({ server, db }) => {
   db.prepare('INSERT INTO user (openid) VALUES (?)').run('openid-replace');
 
   const poiModule = await import('../src/services/poiService.js');
@@ -312,12 +483,10 @@ test('trip item replacement updates persisted item content with a new candidate'
     assert.equal(updated.notes, 'Keep this note');
   } finally {
     poiModule.poiService.search = originalSearch;
-    await server.close();
   }
 });
 
-test('discover destination can be converted directly into a trip', async () => {
-  const { server } = await buildServer();
+testWithServer('discover destination can be converted directly into a trip', async ({ server }) => {
   const res = await server.inject({
     method: 'POST',
     url: '/api/discover/%E6%88%90%E9%83%BD%E5%B8%82/trip',
@@ -332,11 +501,9 @@ test('discover destination can be converted directly into a trip', async () => {
   assert.equal(res.statusCode, 200);
   assert.equal(res.json().title, '成都市2日游');
   assert.equal(res.json().itinerary.length, 2);
-  await server.close();
 });
 
-test('app errors expose product error codes in the response body', async () => {
-  const { server } = await buildServer();
+testWithServer('app errors expose product error codes in the response body', async ({ server }) => {
   const res = await server.inject({
     method: 'POST',
     url: '/api/trip/save',
@@ -346,5 +513,4 @@ test('app errors expose product error codes in the response body', async () => {
 
   assert.equal(res.statusCode, 401);
   assert.equal(res.json().code, 10003);
-  await server.close();
 });
