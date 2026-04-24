@@ -294,6 +294,192 @@ testWithServer('real trip generation response includes generation_meta and fallb
   assert.equal(res.json().generation_meta?.phase, 'degraded');
 });
 
+testWithServer('candidate shortage still returns a non-empty rule_based itinerary', async ({ server }) => {
+  const poiModule = await import('../src/services/poiService.js');
+  const originalSearch = poiModule.poiService.search;
+  const previousSkipExternalPoi = process.env.SKIP_EXTERNAL_POI;
+
+  process.env.SKIP_EXTERNAL_POI = 'false';
+  poiModule.poiService.search = async () => [];
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Low Data County', province: 'Test', city: 'Low Data County' }],
+        start_date: '2026-05-01',
+        days: 3,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.equal(res.json().generation_meta?.phase, 'degraded');
+    assert.deepEqual(res.json().generation_meta?.warnings, ['limited_poi_coverage']);
+    assert.equal(res.json().itinerary.length, 3);
+    assert.equal(
+      res.json().itinerary.every((day) => Array.isArray(day.items) && day.items.length > 0),
+      true
+    );
+  } finally {
+    poiModule.poiService.search = originalSearch;
+    process.env.SKIP_EXTERNAL_POI = previousSkipExternalPoi;
+  }
+});
+
+testWithServer('template fallback is returned when skeleton building throws', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalBuild = tripModule.tripService.orchestrator.skeletonBuilder.build;
+  tripModule.tripService.orchestrator.skeletonBuilder.build = async () => {
+    throw new Error('skeleton_builder_failed');
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'fallback_template');
+    assert.equal(res.json().fallback_level, 'template');
+    assert.equal(res.json().generation_meta?.phase, 'degraded');
+    assert.deepEqual(
+      res.json().generation_meta?.warnings,
+      ['skeleton_builder_failed', 'template_fallback']
+    );
+  } finally {
+    tripModule.tripService.orchestrator.skeletonBuilder.build = originalBuild;
+  }
+});
+
+testWithServer('template fallback is returned when skeleton builder returns an empty itinerary', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalBuild = tripModule.tripService.orchestrator.skeletonBuilder.build;
+  tripModule.tripService.orchestrator.skeletonBuilder.build = async () => ({
+    itinerary: [],
+    warnings: ['invalid_skeleton']
+  });
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'fallback_template');
+    assert.equal(res.json().fallback_level, 'template');
+    assert.deepEqual(
+      res.json().generation_meta?.warnings,
+      ['invalid_rule_based_itinerary', 'template_fallback']
+    );
+    assert.equal(res.json().itinerary.length, 2);
+    assert.equal(
+      res.json().itinerary.every((day) => Array.isArray(day.items) && day.items.length > 0),
+      true
+    );
+  } finally {
+    tripModule.tripService.orchestrator.skeletonBuilder.build = originalBuild;
+  }
+});
+
+testWithServer('template fallback is returned when skeleton builder returns days without items', async ({ server }) => {
+  const tripModule = await import('../src/services/tripService.js');
+  const originalBuild = tripModule.tripService.orchestrator.skeletonBuilder.build;
+  tripModule.tripService.orchestrator.skeletonBuilder.build = async () => ({
+    itinerary: [
+      { day: 1, date: '2026-05-01', items: [] },
+      { day: 2, date: '2026-05-02', items: [] }
+    ],
+    warnings: ['invalid_skeleton']
+  });
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'fallback_template');
+    assert.equal(res.json().fallback_level, 'template');
+    assert.deepEqual(
+      res.json().generation_meta?.warnings,
+      ['invalid_rule_based_itinerary', 'template_fallback']
+    );
+    assert.equal(
+      res.json().itinerary.every((day) => Array.isArray(day.items) && day.items.length > 0),
+      true
+    );
+  } finally {
+    tripModule.tripService.orchestrator.skeletonBuilder.build = originalBuild;
+  }
+});
+
+test('trip service keeps Task 3 orchestrator free of result validator wiring', async () => {
+  const tripModule = await import('../src/services/tripService.js');
+  assert.equal(tripModule.tripService.orchestrator.resultValidator, undefined);
+});
+
+test('trip service keeps Task 3 orchestrator free of ai enhancer wiring', async () => {
+  const tripModule = await import('../src/services/tripService.js');
+  assert.equal(tripModule.tripService.orchestrator.aiEnhancer, undefined);
+});
+
+test('trip service no longer exposes legacy fallback template helper', async () => {
+  const tripModule = await import('../src/services/tripService.js');
+  assert.equal(tripModule.tripService.getFallbackTemplate, undefined);
+});
+
+test('task 3 sparse itinerary copy stays neutral for users', async () => {
+  const { TripSkeletonBuilder } = await import('../src/services/trip-generation/skeletonBuilder.js');
+  const { FallbackTemplateProvider } = await import('../src/services/trip-generation/fallbackTemplateProvider.js');
+
+  const request = {
+    destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+    start_date: '2026-05-01',
+    days: 1
+  };
+
+  const sparseResult = new TripSkeletonBuilder().build(request, {
+    spots: [],
+    foods: [],
+    hotels: [],
+    coverage: { level: 'weak' }
+  });
+  const templateResult = new FallbackTemplateProvider().provide(request, {
+    reason: 'skeleton_builder_failed'
+  });
+
+  const sparseText = JSON.stringify(sparseResult.itinerary[0]);
+  const templateText = JSON.stringify(templateResult.itinerary[0]);
+
+  assert.equal(/rule-based|placeholder|live poi coverage/i.test(sparseText), false);
+  assert.equal(/template|placeholder|generation recovers|fallback/i.test(templateText), false);
+});
+
 testWithServer('trip generation returns a retryable product error when every fallback fails', async ({ server }) => {
   const tripModule = await import('../src/services/tripService.js');
   const originalGenerate = tripModule.tripService.generate;
