@@ -1,0 +1,163 @@
+const PRODUCT_FIELD_NAMES = [
+  'summary',
+  'name',
+  'address',
+  'description',
+  'duration',
+  'budget',
+  'recommend',
+  'reason',
+  'transport_to_next',
+  'notes'
+];
+
+const POLLUTED_PATTERNS = [
+  /\[object Object\]/i,
+  /\bundefined\b/i,
+  /\bnull\b/i
+];
+
+const INTERNAL_PATTERNS = [
+  /\brule[_ -]?based\b/i,
+  /\bfallback\b/i,
+  /\btemplate[_ -]?fallback\b/i,
+  /\bplaceholder\b/i,
+  /\bai[_ -]?result[_ -]?rejected\b/i,
+  /\bai[_ -]?enhancement[_ -]?failed\b/i,
+  /\bai[_ -]?skipped\b/i,
+  /\bskeleton[_ -]?builder[_ -]?failed\b/i,
+  /\binvalid[_ -]?rule[_ -]?based[_ -]?itinerary\b/i
+];
+
+function getItinerary(result) {
+  return Array.isArray(result) ? result : result?.itinerary;
+}
+
+function issue(code, path, severity = 'error') {
+  return { code, path, severity };
+}
+
+function hasPollutedText(value) {
+  return typeof value === 'string'
+    && POLLUTED_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function hasInternalText(value) {
+  return typeof value === 'string'
+    && INTERNAL_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function hasNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+export class TripResultValidator {
+  validate(result, { expectedDays, baselineItinerary } = {}) {
+    const itinerary = getItinerary(result);
+    const issues = [];
+
+    if (!Array.isArray(itinerary)) {
+      issues.push(issue('missing_itinerary', 'itinerary'));
+      return this.report(issues);
+    }
+
+    if (Number.isInteger(expectedDays) && itinerary.length !== expectedDays) {
+      issues.push(issue('day_count_mismatch', 'itinerary'));
+    }
+
+    itinerary.forEach((day, dayIndex) => {
+      const dayPath = `itinerary[${dayIndex}]`;
+      const baselineDay = Array.isArray(baselineItinerary) ? baselineItinerary[dayIndex] : null;
+
+      if (!day || typeof day !== 'object') {
+        issues.push(issue('missing_day', dayPath));
+        return;
+      }
+
+      if (baselineDay) {
+        if (day.day !== baselineDay.day) {
+          issues.push(issue('day_number_changed', `${dayPath}.day`));
+        }
+
+        if (day.date !== baselineDay.date) {
+          issues.push(issue('day_date_changed', `${dayPath}.date`));
+        }
+      }
+
+      this.validateTextFields(day, dayPath, issues, baselineDay);
+
+      if (!Array.isArray(day.items) || day.items.length === 0) {
+        issues.push(issue('empty_day_items', `${dayPath}.items`));
+        return;
+      }
+
+      if (baselineDay?.items && day.items.length !== baselineDay.items.length) {
+        issues.push(issue('item_count_changed', `${dayPath}.items`));
+      }
+
+      day.items.forEach((item, itemIndex) => {
+        const itemPath = `${dayPath}.items[${itemIndex}]`;
+        const baselineItem = baselineDay?.items?.[itemIndex];
+
+        if (!item || typeof item !== 'object') {
+          issues.push(issue('missing_item', itemPath));
+          return;
+        }
+
+        if (!item.type || typeof item.type !== 'string') {
+          issues.push(issue('missing_item_type', `${itemPath}.type`));
+        }
+
+        if (!item.name || typeof item.name !== 'string') {
+          issues.push(issue('missing_item_name', `${itemPath}.name`));
+        }
+
+        if (baselineItem?.type && item.type !== baselineItem.type) {
+          issues.push(issue('item_type_changed', `${itemPath}.type`));
+        }
+
+        if (baselineItem?.name && item.name !== baselineItem.name) {
+          issues.push(issue('item_name_changed', `${itemPath}.name`));
+        }
+
+        if (baselineItem?.address && item.address !== baselineItem.address) {
+          issues.push(issue('item_address_changed', `${itemPath}.address`));
+        }
+
+        this.validateTextFields(item, itemPath, issues, baselineItem);
+      });
+    });
+
+    return this.report(issues);
+  }
+
+  validateTextFields(container, basePath, issues, baselineContainer = null) {
+    for (const fieldName of PRODUCT_FIELD_NAMES) {
+      if (hasNonEmptyString(baselineContainer?.[fieldName])
+        && !hasNonEmptyString(container[fieldName])) {
+        issues.push(issue('removed_product_field', `${basePath}.${fieldName}`));
+      }
+
+      if (!(fieldName in container)) continue;
+
+      const value = container[fieldName];
+      const path = `${basePath}.${fieldName}`;
+
+      if (hasPollutedText(value)) {
+        issues.push(issue('polluted_text', path));
+      }
+
+      if (hasInternalText(value)) {
+        issues.push(issue('internal_text', path));
+      }
+    }
+  }
+
+  report(issues) {
+    return {
+      valid: issues.length === 0,
+      severity: issues.length === 0 ? 'none' : 'error',
+      issues
+    };
+  }
+}

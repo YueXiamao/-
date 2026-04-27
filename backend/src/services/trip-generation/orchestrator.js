@@ -44,12 +44,16 @@ export class TripGenerationOrchestrator {
     tripService,
     candidateService,
     skeletonBuilder,
-    fallbackTemplateProvider
+    fallbackTemplateProvider,
+    aiEnhancer,
+    resultValidator
   }) {
     this.tripService = tripService;
     this.candidateService = candidateService;
     this.skeletonBuilder = skeletonBuilder;
     this.fallbackTemplateProvider = fallbackTemplateProvider;
+    this.aiEnhancer = aiEnhancer;
+    this.resultValidator = resultValidator;
   }
 
   async generate(input) {
@@ -60,7 +64,7 @@ export class TripGenerationOrchestrator {
 
     try {
       generation = normalizeGeneration(await this.skeletonBuilder.build(request, candidates));
-      if (!hasUsableItinerary(generation.itinerary, request.days)) {
+      if (!this.isValidItinerary(generation.itinerary, request.days).valid) {
         templateReason = 'invalid_rule_based_itinerary';
       }
     } catch (error) {
@@ -68,12 +72,28 @@ export class TripGenerationOrchestrator {
     }
 
     if (!templateReason) {
+      const enhanced = await this.tryEnhancement(request, candidates, generation);
+
+      if (enhanced.accepted) {
+        return this.tripService.buildGeneratedTripResponse(request, {
+          source: 'ai_enhanced',
+          fallback_level: 'none',
+          generation_meta: createGenerationMeta({
+            phase: 'ready',
+            used_ai: true,
+            warnings: enhanced.warnings
+          }),
+          itinerary: enhanced.itinerary
+        });
+      }
+
       return this.tripService.buildGeneratedTripResponse(request, {
         source: 'rule_based',
         fallback_level: 'rule_based',
         generation_meta: createGenerationMeta({
           phase: 'degraded',
-          warnings: generation?.warnings || []
+          used_ai: false,
+          warnings: [...(generation?.warnings || []), ...enhanced.warnings]
         }),
         itinerary: generation.itinerary
       });
@@ -88,7 +108,7 @@ export class TripGenerationOrchestrator {
       throw buildRetryableGenerationError();
     }
 
-    if (!hasUsableItinerary(templateGeneration.itinerary, request.days)) {
+    if (!this.isValidItinerary(templateGeneration.itinerary, request.days).valid) {
       throw buildRetryableGenerationError();
     }
 
@@ -97,9 +117,62 @@ export class TripGenerationOrchestrator {
       fallback_level: 'template',
       generation_meta: createGenerationMeta({
         phase: 'degraded',
+        used_ai: false,
         warnings: templateGeneration.warnings
       }),
       itinerary: templateGeneration.itinerary
     });
+  }
+
+  async tryEnhancement(request, candidates, generation) {
+    if (!this.aiEnhancer || !this.resultValidator) {
+      return { accepted: false, warnings: [] };
+    }
+
+    try {
+      const enhancedGeneration = await this.aiEnhancer.enhance({
+        request,
+        skeleton: generation.itinerary,
+        candidates
+      });
+
+      if (!enhancedGeneration || enhancedGeneration.skipped) {
+        return {
+          accepted: false,
+          warnings: [enhancedGeneration?.reason || 'ai_skipped']
+        };
+      }
+
+      const normalized = normalizeGeneration(enhancedGeneration);
+      const validation = this.resultValidator.validate(normalized.itinerary, {
+        expectedDays: request.days,
+        baselineItinerary: generation.itinerary
+      });
+
+      if (!validation.valid) {
+        return { accepted: false, warnings: ['ai_result_rejected'] };
+      }
+
+      return {
+        accepted: true,
+        itinerary: normalized.itinerary,
+        warnings: normalized.warnings
+      };
+    } catch (error) {
+      return { accepted: false, warnings: ['ai_enhancement_failed'] };
+    }
+  }
+
+  isValidItinerary(itinerary, expectedDays) {
+    if (this.resultValidator) {
+      return this.resultValidator.validate(itinerary, { expectedDays });
+    }
+
+    const valid = hasUsableItinerary(itinerary, expectedDays);
+    return {
+      valid,
+      severity: valid ? 'none' : 'error',
+      issues: []
+    };
   }
 }

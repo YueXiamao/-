@@ -294,6 +294,433 @@ testWithServer('real trip generation response includes generation_meta and fallb
   assert.equal(res.json().generation_meta?.phase, 'degraded');
 });
 
+testWithServer('ai enhancement upgrades the response to ai_enhanced when validator passes', async ({ server }) => {
+  const aiModule = await import('../src/ai/generator.js');
+  const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
+  const previousSkipAi = process.env.SKIP_AI;
+
+  process.env.SKIP_AI = 'false';
+  aiModule.aiGenerator.enhanceTripSkeleton = async ({ skeleton }) => {
+    const itinerary = Array.isArray(skeleton) ? skeleton : skeleton.itinerary;
+
+    return itinerary.map((day) => ({
+      ...day,
+      items: day.items.map((item) => {
+        if (item.type === 'spot') {
+          return {
+            ...item,
+            description: `Improved route context for ${item.name}.`
+          };
+        }
+
+        if (item.type === 'food') {
+          return {
+            ...item,
+            recommend: `Improved recommendation for ${item.name}.`
+          };
+        }
+
+        if (item.type === 'hotel') {
+          return {
+            ...item,
+            reason: `Improved stay reason for ${item.name}.`
+          };
+        }
+
+        return item;
+      })
+    }));
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'ai_enhanced');
+    assert.equal(res.json().fallback_level, 'none');
+    assert.equal(res.json().generation_meta?.used_ai, true);
+    assert.equal(res.json().generation_meta?.phase, 'ready');
+  } finally {
+    aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
+    process.env.SKIP_AI = previousSkipAi;
+  }
+});
+
+testWithServer('validator rejects polluted ai output and keeps rule_based response', async ({ server }) => {
+  const aiModule = await import('../src/ai/generator.js');
+  const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
+  const previousSkipAi = process.env.SKIP_AI;
+
+  process.env.SKIP_AI = 'false';
+  aiModule.aiGenerator.enhanceTripSkeleton = async ({ skeleton }) => {
+    const itinerary = Array.isArray(skeleton) ? skeleton : skeleton.itinerary;
+
+    return itinerary.map((day) => ({
+      ...day,
+      items: day.items.map((item) => ({
+        ...item,
+        name: '[object Object]'
+      }))
+    }));
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.equal(res.json().generation_meta?.phase, 'degraded');
+    assert.equal(res.json().generation_meta?.warnings.includes('ai_result_rejected'), true);
+  } finally {
+    aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
+    process.env.SKIP_AI = previousSkipAi;
+  }
+});
+
+testWithServer('validator rejects ai output that removes existing product fields', async ({ server }) => {
+  const aiModule = await import('../src/ai/generator.js');
+  const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
+  const previousSkipAi = process.env.SKIP_AI;
+
+  process.env.SKIP_AI = 'false';
+  aiModule.aiGenerator.enhanceTripSkeleton = async ({ skeleton }) => {
+    const itinerary = Array.isArray(skeleton) ? skeleton : skeleton.itinerary;
+
+    return itinerary.map((day) => ({
+      day: day.day,
+      date: day.date,
+      items: day.items.map((item) => ({
+        type: item.type,
+        name: item.name,
+        address: item.address
+      }))
+    }));
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.equal(res.json().generation_meta?.warnings.includes('ai_result_rejected'), true);
+  } finally {
+    aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
+    process.env.SKIP_AI = previousSkipAi;
+  }
+});
+
+testWithServer('raw empty ai output falls back to rule_based response', async ({ server }) => {
+  const aiModule = await import('../src/ai/generator.js');
+  const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
+  const previousSkipAi = process.env.SKIP_AI;
+
+  process.env.SKIP_AI = 'false';
+  aiModule.aiGenerator.enhanceTripSkeleton = async () => [];
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.equal(res.json().generation_meta?.phase, 'degraded');
+    assert.equal(
+      ['ai_enhancement_failed', 'ai_result_rejected'].some((warning) => (
+        res.json().generation_meta?.warnings.includes(warning)
+      )),
+      true
+    );
+  } finally {
+    aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
+    process.env.SKIP_AI = previousSkipAi;
+  }
+});
+
+testWithServer('raw ai output that changes day or item identity falls back to rule_based response', async ({ server }) => {
+  const aiModule = await import('../src/ai/generator.js');
+  const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
+  const previousSkipAi = process.env.SKIP_AI;
+
+  process.env.SKIP_AI = 'false';
+  aiModule.aiGenerator.enhanceTripSkeleton = async ({ skeleton }) => {
+    const itinerary = Array.isArray(skeleton) ? skeleton : skeleton.itinerary;
+
+    return itinerary.map((day, dayIndex) => ({
+      ...day,
+      day: dayIndex === 0 ? 99 : day.day,
+      date: dayIndex === 0 ? '2099-01-01' : day.date,
+      items: day.items.map((item, itemIndex) => ({
+        ...item,
+        type: dayIndex === 0 && itemIndex === 0 ? 'hotel' : item.type,
+        name: dayIndex === 0 && itemIndex === 0 ? 'Changed Place' : item.name,
+        address: dayIndex === 0 && itemIndex === 0 ? 'Changed Address' : item.address
+      }))
+    }));
+  };
+
+  try {
+    const res = await server.inject({
+      method: 'POST',
+      url: '/api/trip/generate',
+      payload: {
+        destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+        start_date: '2026-05-01',
+        days: 2,
+        preferences: ['Relaxed']
+      }
+    });
+
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().source, 'rule_based');
+    assert.equal(res.json().fallback_level, 'rule_based');
+    assert.equal(res.json().generation_meta?.phase, 'degraded');
+    assert.equal(
+      ['ai_enhancement_failed', 'ai_result_rejected'].some((warning) => (
+        res.json().generation_meta?.warnings.includes(warning)
+      )),
+      true
+    );
+  } finally {
+    aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
+    process.env.SKIP_AI = previousSkipAi;
+  }
+});
+
+test('ai enhancement merge preserves skeleton structure and allowed copy fields only', async () => {
+  const { mergeEnhancedItinerary } = await import('../src/ai/generator.js');
+  const skeleton = [
+    {
+      day: 1,
+      date: '2026-05-01',
+      summary: 'Original day summary',
+      items: [
+        {
+          type: 'spot',
+          name: 'Wide Alley',
+          address: 'Qingyang',
+          duration: '2h',
+          description: 'Original description',
+          transport_to_next: 'Walk 8 min'
+        },
+        {
+          type: 'food',
+          name: 'Local Noodles',
+          address: 'Center',
+          budget: 'Flexible',
+          recommend: 'Original recommend'
+        }
+      ]
+    },
+    {
+      day: 2,
+      date: '2026-05-02',
+      items: [
+        {
+          type: 'hotel',
+          name: 'Central Stay',
+          address: 'Downtown',
+          budget: 'To confirm',
+          reason: 'Original reason'
+        }
+      ]
+    }
+  ];
+  const aiOutput = [
+    {
+      day: 1,
+      date: '2026-05-01',
+      summary: 'Improved summary',
+      items: [
+        {
+          type: 'spot',
+          name: 'Wide Alley',
+          address: 'Qingyang',
+          duration: '3h',
+          description: 'Improved description',
+          transport_to_next: 'Taxi 12 min',
+          unexpected: 'discard me'
+        },
+        {
+          type: 'food',
+          name: 'Local Noodles',
+          address: 'Center',
+          budget: '80 RMB',
+          recommend: 'Improved recommend'
+        }
+      ]
+    },
+    {
+      day: 2,
+      date: '2026-05-02',
+      items: [
+        {
+          type: 'hotel',
+          name: 'Central Stay',
+          address: 'Downtown',
+          budget: '420 RMB',
+          reason: 'Improved reason'
+        }
+      ]
+    }
+  ];
+
+  const merged = mergeEnhancedItinerary(skeleton, aiOutput);
+
+  assert.equal(merged.length, 2);
+  assert.equal(merged[0].day, 1);
+  assert.equal(merged[0].date, '2026-05-01');
+  assert.equal(merged[0].summary, 'Improved summary');
+  assert.equal(merged[0].items.length, 2);
+  assert.equal(merged[0].items[0].type, 'spot');
+  assert.equal(merged[0].items[0].name, 'Wide Alley');
+  assert.equal(merged[0].items[0].address, 'Qingyang');
+  assert.equal(merged[0].items[0].description, 'Improved description');
+  assert.equal(merged[0].items[0].duration, '3h');
+  assert.equal(merged[0].items[0].transport_to_next, 'Taxi 12 min');
+  assert.equal(merged[0].items[0].unexpected, undefined);
+  assert.equal(merged[0].items[1].budget, '80 RMB');
+  assert.equal(merged[0].items[1].recommend, 'Improved recommend');
+  assert.equal(merged[1].items[0].budget, '420 RMB');
+  assert.equal(merged[1].items[0].reason, 'Improved reason');
+});
+
+test('ai enhancement merge rejects empty raw ai itinerary', async () => {
+  const { mergeEnhancedItinerary } = await import('../src/ai/generator.js');
+  const skeleton = [
+    {
+      day: 1,
+      date: '2026-05-01',
+      items: [
+        { type: 'spot', name: 'Wide Alley', address: 'Qingyang', description: 'Original' }
+      ]
+    }
+  ];
+
+  assert.throws(
+    () => mergeEnhancedItinerary(skeleton, []),
+    /AI enhancement changed itinerary structure/
+  );
+});
+
+test('ai enhancement merge rejects changed day or item identity', async () => {
+  const { mergeEnhancedItinerary } = await import('../src/ai/generator.js');
+  const skeleton = [
+    {
+      day: 1,
+      date: '2026-05-01',
+      items: [
+        { type: 'spot', name: 'Wide Alley', address: 'Qingyang', description: 'Original' }
+      ]
+    }
+  ];
+
+  assert.throws(
+    () => mergeEnhancedItinerary(skeleton, [
+      {
+        day: 2,
+        date: '2099-01-01',
+        items: [
+          {
+            type: 'hotel',
+            name: 'Changed Place',
+            address: 'Changed Address',
+            description: 'Improved'
+          }
+        ]
+      }
+    ]),
+    /AI enhancement changed itinerary structure/
+  );
+});
+
+test('ai enhancement merge rejects omitted baseline descriptive fields', async () => {
+  const { mergeEnhancedItinerary } = await import('../src/ai/generator.js');
+  const skeleton = [
+    {
+      day: 1,
+      date: '2026-05-01',
+      summary: 'Original day summary',
+      items: [
+        {
+          type: 'spot',
+          name: 'Wide Alley',
+          address: 'Qingyang',
+          duration: '2h',
+          description: 'Original description',
+          transport_to_next: 'Walk 8 min'
+        },
+        {
+          type: 'food',
+          name: 'Local Noodles',
+          address: 'Center',
+          budget: 'Flexible',
+          recommend: 'Original recommend'
+        },
+        {
+          type: 'hotel',
+          name: 'Central Stay',
+          address: 'Downtown',
+          budget: 'To confirm',
+          reason: 'Original reason'
+        }
+      ]
+    }
+  ];
+
+  assert.throws(
+    () => mergeEnhancedItinerary(skeleton, [
+      {
+        day: 1,
+        date: '2026-05-01',
+        items: [
+          { type: 'spot', name: 'Wide Alley', address: 'Qingyang' },
+          { type: 'food', name: 'Local Noodles', address: 'Center' },
+          { type: 'hotel', name: 'Central Stay', address: 'Downtown' }
+        ]
+      }
+    ]),
+    /AI enhancement omitted baseline descriptive fields/
+  );
+});
+
 testWithServer('candidate shortage still returns a non-empty rule_based itinerary', async ({ server }) => {
   const poiModule = await import('../src/services/poiService.js');
   const originalSearch = poiModule.poiService.search;
@@ -318,7 +745,7 @@ testWithServer('candidate shortage still returns a non-empty rule_based itinerar
     assert.equal(res.json().source, 'rule_based');
     assert.equal(res.json().fallback_level, 'rule_based');
     assert.equal(res.json().generation_meta?.phase, 'degraded');
-    assert.deepEqual(res.json().generation_meta?.warnings, ['limited_poi_coverage']);
+    assert.deepEqual(res.json().generation_meta?.warnings, ['limited_poi_coverage', 'ai_skipped']);
     assert.equal(res.json().itinerary.length, 3);
     assert.equal(
       res.json().itinerary.every((day) => Array.isArray(day.items) && day.items.length > 0),
@@ -438,14 +865,14 @@ testWithServer('template fallback is returned when skeleton builder returns days
   }
 });
 
-test('trip service keeps Task 3 orchestrator free of result validator wiring', async () => {
+test('trip service wires Task 4 result validator into the orchestrator', async () => {
   const tripModule = await import('../src/services/tripService.js');
-  assert.equal(tripModule.tripService.orchestrator.resultValidator, undefined);
+  assert.equal(typeof tripModule.tripService.orchestrator.resultValidator?.validate, 'function');
 });
 
-test('trip service keeps Task 3 orchestrator free of ai enhancer wiring', async () => {
+test('trip service wires Task 4 ai enhancer into the orchestrator', async () => {
   const tripModule = await import('../src/services/tripService.js');
-  assert.equal(tripModule.tripService.orchestrator.aiEnhancer, undefined);
+  assert.equal(typeof tripModule.tripService.orchestrator.aiEnhancer?.enhance, 'function');
 });
 
 test('trip service no longer exposes legacy fallback template helper', async () => {

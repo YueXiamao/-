@@ -15,6 +15,18 @@ const TRIP_SYSTEM = `你是一名资深中国旅游规划师。只推荐真实�
 
 const RECOMMEND_SYSTEM = `你是一名熟悉中国旅游的行程规划师，根据用户的位置、预算、天数和偏好，推荐最合适的旅游目的地。只推荐国内目的地。`;
 
+const ENHANCE_SYSTEM = `You are a careful trip itinerary copy editor. Improve only descriptive product-facing fields in an existing itinerary. Preserve day count, day numbers, dates, item order, item types, names, addresses, and destinations. Return pure JSON only.`;
+
+const ALLOWED_ENHANCEMENT_FIELDS = [
+  'description',
+  'recommend',
+  'reason',
+  'duration',
+  'budget',
+  'transport_to_next',
+  'notes'
+];
+
 function buildTripPrompt({ destinations, start_date, days, preferences, extra_notes, pois }) {
   const destNames = destinations.map(d => typeof d === 'string' ? d : d.name).join('、');
 
@@ -64,11 +76,172 @@ function buildRecommendPrompt({ current_location, days, budget, preferences }) {
 }`;
 }
 
+function summarizeCandidates(candidates = {}) {
+  const pick = (items = []) => items.slice(0, 12).map((item) => ({
+    type: item.type || '',
+    name: item.name || '',
+    address: item.address || '',
+    city: item.city || '',
+    tags: item.tags || [],
+    rating: item.rating || '',
+    price: item.price || ''
+  }));
+
+  return {
+    spots: pick(candidates.spots),
+    foods: pick(candidates.foods),
+    hotels: pick(candidates.hotels)
+  };
+}
+
+function buildEnhancementPrompt({ request, skeleton, candidates }) {
+  return JSON.stringify({
+    task: 'Enhance the itinerary copy without changing structure. Only improve fields such as description, recommend, reason, duration, budget, and transport_to_next when useful. Do not change names, addresses, dates, day numbers, item order, or item types. Return the enhanced itinerary array as JSON.',
+    request: {
+      destinations: request.destinations,
+      start_date: request.start_date,
+      days: request.days,
+      preferences: request.preferences || [],
+      extra_notes: request.extra_notes || ''
+    },
+    skeleton,
+    candidates: summarizeCandidates(candidates)
+  });
+}
+
+function getItinerary(result) {
+  return Array.isArray(result) ? result : result?.itinerary;
+}
+
+function hasNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function copyAllowedField(target, source, fieldName) {
+  if (Object.prototype.hasOwnProperty.call(target, fieldName)
+    && hasNonEmptyString(source?.[fieldName])) {
+    target[fieldName] = source[fieldName];
+  }
+}
+
+function hasBaselineValue(value) {
+  return value !== undefined && value !== null && value !== '';
+}
+
+function assertSameValue(actual, expected) {
+  return !hasBaselineValue(expected) || actual === expected;
+}
+
+function assertPreservedDescriptiveFields(aiContainer, baselineContainer, fieldNames) {
+  for (const fieldName of fieldNames) {
+    if (hasNonEmptyString(baselineContainer?.[fieldName])
+      && !hasNonEmptyString(aiContainer?.[fieldName])) {
+      throw new Error('AI enhancement omitted baseline descriptive fields');
+    }
+  }
+}
+
+export function validateRawEnhancedItinerary(skeleton, aiResult) {
+  const skeletonItinerary = getItinerary(skeleton);
+  const aiItinerary = getItinerary(aiResult);
+
+  if (!Array.isArray(skeletonItinerary) || !Array.isArray(aiItinerary)) {
+    throw new Error('AI enhancement changed itinerary structure');
+  }
+
+  if (aiItinerary.length !== skeletonItinerary.length) {
+    throw new Error('AI enhancement changed itinerary structure');
+  }
+
+  skeletonItinerary.forEach((skeletonDay, dayIndex) => {
+    const aiDay = aiItinerary[dayIndex];
+
+    if (!aiDay || typeof aiDay !== 'object') {
+      throw new Error('AI enhancement changed itinerary structure');
+    }
+
+    if (!assertSameValue(aiDay.day, skeletonDay.day)
+      || !assertSameValue(aiDay.day_number, skeletonDay.day_number)
+      || !assertSameValue(aiDay.date, skeletonDay.date)) {
+      throw new Error('AI enhancement changed itinerary structure');
+    }
+
+    assertPreservedDescriptiveFields(aiDay, skeletonDay, ['summary']);
+
+    if (!Array.isArray(skeletonDay.items)
+      || !Array.isArray(aiDay.items)
+      || aiDay.items.length !== skeletonDay.items.length) {
+      throw new Error('AI enhancement changed itinerary structure');
+    }
+
+    skeletonDay.items.forEach((skeletonItem, itemIndex) => {
+      const aiItem = aiDay.items[itemIndex];
+
+      if (!aiItem || typeof aiItem !== 'object') {
+        throw new Error('AI enhancement changed itinerary structure');
+      }
+
+      if (!assertSameValue(aiItem.type, skeletonItem.type)
+        || !assertSameValue(aiItem.name, skeletonItem.name)
+        || !assertSameValue(aiItem.address, skeletonItem.address)) {
+        throw new Error('AI enhancement changed itinerary structure');
+      }
+
+      assertPreservedDescriptiveFields(aiItem, skeletonItem, ALLOWED_ENHANCEMENT_FIELDS);
+    });
+  });
+}
+
+export function mergeEnhancedItinerary(skeleton, aiResult) {
+  const skeletonItinerary = getItinerary(skeleton);
+  const aiItinerary = getItinerary(aiResult);
+
+  validateRawEnhancedItinerary(skeletonItinerary, aiItinerary);
+
+  if (!Array.isArray(skeletonItinerary)) {
+    return [];
+  }
+
+  return skeletonItinerary.map((skeletonDay, dayIndex) => {
+    const aiDay = Array.isArray(aiItinerary) && aiItinerary[dayIndex]
+      && typeof aiItinerary[dayIndex] === 'object'
+      ? aiItinerary[dayIndex]
+      : null;
+    const mergedDay = {
+      ...skeletonDay,
+      items: Array.isArray(skeletonDay.items)
+        ? skeletonDay.items.map((skeletonItem, itemIndex) => {
+          const aiItem = Array.isArray(aiDay?.items) && aiDay.items[itemIndex]
+            && typeof aiDay.items[itemIndex] === 'object'
+            ? aiDay.items[itemIndex]
+            : null;
+          const mergedItem = { ...skeletonItem };
+
+          for (const fieldName of ALLOWED_ENHANCEMENT_FIELDS) {
+            copyAllowedField(mergedItem, aiItem, fieldName);
+          }
+
+          return mergedItem;
+        })
+        : []
+    };
+
+    copyAllowedField(mergedDay, aiDay, 'summary');
+
+    return mergedDay;
+  });
+}
+
 function parseJSON(text) {
   const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
   try {
     return JSON.parse(cleaned);
   } catch (e) {
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      try { return JSON.parse(arrayMatch[0]); } catch {}
+    }
+
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) {
       try { return JSON.parse(match[0]); } catch {}
@@ -141,4 +314,28 @@ async function generateRecommendations(params) {
   }
 }
 
-export const aiGenerator = { generateTrip, generateRecommendations };
+async function enhanceTripSkeleton(params) {
+  const prompt = buildEnhancementPrompt(params);
+  let text;
+
+  try {
+    text = await callMiniMax(prompt, ENHANCE_SYSTEM);
+  } catch (err) {
+    throw Errors.AI_ERROR('AI enhancement call failed');
+  }
+
+  try {
+    const parsed = parseJSON(text);
+    const itinerary = mergeEnhancedItinerary(params.skeleton, parsed);
+
+    if (!Array.isArray(itinerary)) {
+      throw new AppError('AI enhancement did not return an itinerary', 500, 20001);
+    }
+
+    return itinerary;
+  } catch (err) {
+    throw Errors.AI_ERROR('AI enhancement parse failed');
+  }
+}
+
+export const aiGenerator = { generateTrip, generateRecommendations, enhanceTripSkeleton };

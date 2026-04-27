@@ -7,6 +7,8 @@ import { TripGenerationOrchestrator } from './trip-generation/orchestrator.js';
 import { TripCandidateService } from './trip-generation/candidateService.js';
 import { TripSkeletonBuilder } from './trip-generation/skeletonBuilder.js';
 import { FallbackTemplateProvider } from './trip-generation/fallbackTemplateProvider.js';
+import { TripAIEnhancer } from './trip-generation/aiEnhancer.js';
+import { TripResultValidator } from './trip-generation/resultValidator.js';
 
 class TripService {
   constructor() {
@@ -14,7 +16,9 @@ class TripService {
       tripService: this,
       candidateService: new TripCandidateService({ poiService }),
       skeletonBuilder: new TripSkeletonBuilder(),
-      fallbackTemplateProvider: new FallbackTemplateProvider()
+      fallbackTemplateProvider: new FallbackTemplateProvider(),
+      aiEnhancer: new TripAIEnhancer(),
+      resultValidator: new TripResultValidator()
     });
   }
 
