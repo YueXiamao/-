@@ -8,35 +8,34 @@
     <text class="hero-sub">根据你的位置和偏好，精选周末灵感</text>
   </view>
 
-  <!-- 位置卡片 -->
+  <!-- 位置选择 -->
   <view class="section-card">
     <text class="section-label">当前位置</text>
 
-    <!-- 定位成功状态 -->
-    <view class="location-display" wx:if="{{!locationLoading && !locationError}}">
-      <view class="loc-info">
-        <text class="loc-icon">[*]</text>
-        <view class="loc-text-wrap">
-          <text class="loc-province">{{currentProvince ? currentProvince.name : '省'}}</text>
-          <text class="loc-city">{{currentCity ? currentCity.name : '市'}}</text>
-        </view>
-      </view>
-      <view class="loc-actions">
-        <text class="loc-btn" bindtap="onRelocate">重新定位</text>
-        <text class="loc-btn loc-btn-main" bindtap="onLocationInput">手动选择</text>
+    <!-- 已选位置展示 -->
+    <view class="loc-display" wx:if="{{locationText}}">
+      <text class="loc-text">{{locationText}}</text>
+      <view class="loc-tags">
+        <text class="loc-tag" wx:if="{{locationMode === 'loc'}}">GPS</text>
+        <text class="loc-tag loc-tag-manual" wx:if="{{locationMode === 'manual'}}">手动</text>
       </view>
     </view>
 
-    <!-- 定位中 -->
-    <view class="location-loading" wx:if="{{locationLoading}}">
-      <text class="loc-loading-icon">[*]</text>
-      <text class="loc-loading-text">正在定位...</text>
+    <!-- 未选时 -->
+    <view class="loc-placeholder" wx:if="{{!locationText}}">
+      <text class="loc-placeholder-text">请先选择您的位置</text>
     </view>
 
-    <!-- 定位失败 / 手动模式 -->
-    <view class="location-error" wx:if="{{!locationLoading && locationError}}">
-      <text class="loc-error-text">定位失败</text>
-      <text class="loc-btn loc-btn-main" bindtap="onLocationInput">手动选择位置</text>
+    <!-- 定位/选择按钮 -->
+    <view class="loc-btn-row">
+      <view class="loc-btn loc-btn-gps" bindtap="onLocate">
+        <text class="loc-btn-icon">[*]</text>
+        <text class="loc-btn-text">微信定位</text>
+      </view>
+      <view class="loc-btn loc-btn-manual" bindtap="onManualLocation">
+        <text class="loc-btn-icon">[+]</text>
+        <text class="loc-btn-text">手动选择</text>
+      </view>
     </view>
   </view>
 
@@ -113,7 +112,6 @@
           class="search-input"
           placeholder="搜索省份..."
           bindinput="onProvinceSearch"
-          value="{{provinceInput}}"
         />
       </view>
       <scroll-view class="picker-list" scroll-y="{{true}}">
@@ -121,7 +119,7 @@
           class="picker-item"
           wx:for="{{filteredProvinces}}"
           wx:key="code"
-          bindtap="onProvinceConfirm"
+          bindtap="onProvinceTap"
           data-code="{{item.code}}"
           data-name="{{item.name}}"
         >
@@ -145,7 +143,6 @@
           class="search-input"
           placeholder="搜索城市..."
           bindinput="onCitySearch"
-          value="{{cityInput}}"
         />
       </view>
       <scroll-view class="picker-list" scroll-y="{{true}}">
@@ -153,7 +150,7 @@
           class="picker-item"
           wx:for="{{filteredCities}}"
           wx:key="code"
-          bindtap="onCityConfirm"
+          bindtap="onCityTap"
           data-code="{{item.code}}"
           data-name="{{item.name}}"
         >
