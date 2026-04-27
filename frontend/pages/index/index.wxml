@@ -1,5 +1,6 @@
-<view class="container page-bg">
-  <view class="hero-strip glass-card">
+<view class="container">
+
+  <view class="hero-strip">
     <text class="eyebrow">TRAVEL PLANNER</text>
     <text class="title">今天怎么出发</text>
     <text class="subtitle">选一个入口，直接开始。</text>
@@ -10,7 +11,7 @@
   </view>
 
   <view class="entry-stage">
-    <view class="entry-card entry-plan glass-card" bindtap="goToPlan">
+    <view class="entry-card entry-plan" bindtap="goPlan">
       <view class="entry-head">
         <text class="entry-mark">PLAN</text>
         <text class="entry-arrow">›</text>
@@ -25,7 +26,7 @@
       </view>
     </view>
 
-    <view class="entry-card entry-discover glass-card" bindtap="goToDiscover">
+    <view class="entry-card entry-discover" bindtap="goDiscover">
       <view class="entry-head">
         <text class="entry-mark">RND</text>
         <text class="entry-arrow">›</text>
@@ -45,4 +46,5 @@
     <text class="home-note">目的地选择支持到区县</text>
     <text class="home-note">轻松度假、网红打卡、美食等偏好可组合</text>
   </view>
+
 </view>

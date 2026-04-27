@@ -15,7 +15,7 @@ const TRIP_SYSTEM = `你是一名资深中国旅游规划师。只推荐真实�
 
 const RECOMMEND_SYSTEM = `你是一名熟悉中国旅游的行程规划师，根据用户的位置、预算、天数和偏好，推荐最合适的旅游目的地。只推荐国内目的地。`;
 
-const ENHANCE_SYSTEM = `You are a careful trip itinerary copy editor. Improve only descriptive product-facing fields in an existing itinerary. Preserve day count, day numbers, dates, item order, item types, names, addresses, and destinations. Return pure JSON only.`;
+const ENHANCE_SYSTEM = `你是一名谨慎的中文旅行行程文案编辑。只优化已有行程中的中文展示文案字段，不改变天数、日期、顺序、类型、名称、地址和目的地。description、recommend、reason、transport_to_next、notes 必须使用中文；只有真实店名或地名本身是英文时，name 和 address 可以保留英文。只返回纯 JSON。`;
 
 const ALLOWED_ENHANCEMENT_FIELDS = [
   'description',
@@ -96,7 +96,7 @@ function summarizeCandidates(candidates = {}) {
 
 function buildEnhancementPrompt({ request, skeleton, candidates }) {
   return JSON.stringify({
-    task: 'Enhance the itinerary copy without changing structure. Only improve fields such as description, recommend, reason, duration, budget, and transport_to_next when useful. Do not change names, addresses, dates, day numbers, item order, or item types. Return the enhanced itinerary array as JSON.',
+    task: '在不改变结构的前提下优化行程展示文案。只在有必要时优化 description、recommend、reason、duration、budget、transport_to_next 等字段。不要改变名称、地址、日期、天数、条目顺序或类型。解释性文案必须使用中文；只有真实店名或地名本身是英文时，name 和 address 可以保留英文。返回增强后的 itinerary 数组 JSON。',
     request: {
       destinations: request.destinations,
       start_date: request.start_date,
@@ -254,11 +254,11 @@ async function callMiniMax(prompt, systemPrompt) {
   const { default: OpenAI } = await import('openai');
   const client = new OpenAI({
     apiKey: config.ai.apiKey,
-    baseURL: config.ai.baseUrl || 'https://api.minimax.chat/v'
+    baseURL: config.ai.baseUrl
   });
 
   const response = await client.chat.completions.create({
-    model: config.ai.model || 'abab6.5s-chat',
+    model: config.ai.model,
     max_tokens: 2048,
     messages: [
       { role: 'system', content: systemPrompt },

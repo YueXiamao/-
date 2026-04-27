@@ -1,74 +1,97 @@
-<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
-  <view class="loading-state" wx:if="{{loading}}">
-    <text class="loading-icon">RND</text>
-    <text class="loading-text">正在为你寻找更适合的目的地...</text>
+<view class="page-bg">
+
+  <!-- 顶部标题栏 -->
+  <view class="top-bar">
+    <text class="top-bar-title">随机游</text>
   </view>
 
-  <view class="error-state" wx:elif="{{error}}">
-    <text class="error-icon">ERR</text>
-    <text class="error-text">{{error}}</text>
-    <button class="btn-secondary" bindtap="onRetry">重新获取</button>
+  <!-- 加载状态 -->
+  <view wx:if="{{loading}}" class="loading-wrap">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">探索中...</text>
   </view>
 
-  <view class="empty-state" wx:elif="{{recommendations.length === 0}}">
-    <text class="empty-icon">NO</text>
-    <text class="empty-text">暂时没有找到合适的目的地</text>
-    <text class="empty-hint">试试调整预算、天数或偏好方式</text>
-    <button class="btn-secondary" bindtap="onAgain">再来一次</button>
+  <!-- 空状态 -->
+  <view wx:elif="{{!recommendations || recommendations.length === 0}}" class="empty-wrap">
+    <text class="empty-icon">?</text>
+    <text class="empty-title">暂未找到合适的目的地</text>
+    <text class="empty-sub">试试调整你的条件</text>
+    <button class="btn-secondary" bindtap="onBack">重新选择</button>
   </view>
 
-  <view class="result" wx:else>
+  <!-- 推荐结果列表 -->
+  <block wx:else>
     <view class="result-header">
-      <text class="result-title">为你推荐</text>
-      <text class="result-subtitle">{{recommendations.length}} 个目的地候选</text>
+      <text class="result-title">为你找到 {{recommendations.length}} 个好去处</text>
+      <text class="result-sub">根据你的位置和偏好精选推荐</text>
     </view>
 
-    <swiper class="recommend-swiper" circular bindchange="onSwiperChange">
-      <swiper-item wx:for="{{recommendations}}" wx:key="rank">
-        <view class="rec-card card">
-          <view class="rec-rank">TOP {{item.rank}}</view>
-          <view class="rec-name">{{item.destination.name}}</view>
-          <view class="rec-summary">{{item.destination.summary}}</view>
-
-          <view class="rec-tags">
-            <text class="rec-tag" wx:for="{{item.destination.tags}}" wx:for-item="tag">{{tag}}</text>
-          </view>
-
-          <view class="rec-meta">
-            <view class="rec-meta-item">
-              <text class="meta-icon">距</text>
-              <text>{{item.destination.distance}}</text>
-            </view>
-            <view class="rec-meta-item">
-              <text class="meta-icon">费</text>
-              <text>{{item.destination.avg_budget}}</text>
-            </view>
-            <view class="rec-meta-item">
-              <text class="meta-icon">天</text>
-              <text>{{item.trip_preview.days}}天</text>
-            </view>
-          </view>
-
-          <view class="rec-preview">
-            <text class="preview-label">行程预览</text>
-            <text class="preview-text">
-              包含 {{item.trip_preview.spot_count}} 个景点 ·
-              {{item.trip_preview.food_count}} 顿美食 ·
-              预算 {{item.trip_preview.budget_range}}
-            </text>
-          </view>
-
-          <button class="btn-primary rec-btn" bindtap="onViewDetail" data-index="{{index}}">查看完整行程</button>
+    <view class="cards-wrap">
+      <view
+        wx:for="{{recommendations}}"
+        wx:for-item="rec"
+        wx:key="rank"
+        class="rec-card"
+      >
+        <!-- 排名标签 -->
+        <view class="rank-tag rank-{{rec.rank}}">
+          <text wx:if="{{rec.rank === 1}}">1</text>
+          <text wx:elif="{{rec.rank === 2}}">2</text>
+          <text wx:elif="{{rec.rank === 3}}">3</text>
+          <text wx:else>{{rec.rank}}</text>
         </view>
-      </swiper-item>
-    </swiper>
 
-    <view class="pagination">
-      <view class="dot {{currentIndex === index ? 'active' : ''}}" wx:for="{{recommendations}}" wx:key="index" />
+        <!-- 目的地基本信息 -->
+        <view class="rec-header">
+          <view class="rec-name-row">
+            <text class="rec-name">{{rec.destination.name}}</text>
+            <text class="rec-province">{{rec.destination.province}}</text>
+          </view>
+          <view class="rec-meta">
+            <text class="rec-distance">距离{{rec.destination.distance}}</text>
+            <text class="rec-budget">人均{{rec.destination.avg_budget}}</text>
+          </view>
+        </view>
+
+        <!-- 标签 -->
+        <view class="rec-tags" wx:if="{{rec.destination.tags.length > 0}}">
+          <text wx:for="{{rec.destination.tags}}" wx:for-item="tag" wx:key="tag" class="rec-tag">{{tag}}</text>
+        </view>
+
+        <!-- 推荐理由 -->
+        <view class="rec-reason" wx:if="{{rec.destination.summary}}">
+          <text class="rec-reason-text">{{rec.destination.summary}}</text>
+        </view>
+
+        <!-- 行程预览 -->
+        <view class="rec-trip-preview" wx:if="{{rec.trip_preview}}">
+          <view class="preview-item">
+            <text class="preview-text">{{rec.trip_preview.days}}天行程</text>
+          </view>
+          <view class="preview-item">
+            <text class="preview-text">{{rec.trip_preview.spot_count}}个景点</text>
+          </view>
+          <view class="preview-item">
+            <text class="preview-text">{{rec.trip_preview.food_count}}餐美食</text>
+          </view>
+          <view class="preview-item">
+            <text class="preview-text">{{rec.trip_preview.budget_range}}</text>
+          </view>
+        </view>
+
+        <!-- 操作按钮 -->
+        <view class="rec-actions">
+          <button class="btn-detail" data-name="{{rec.destination.name}}" data-city="{{rec.destination.city}}" data-province="{{rec.destination.province}}" bindtap="onViewDetail">查看详情</button>
+          <button class="btn-generate" data-name="{{rec.destination.name}}" data-city="{{rec.destination.city}}" data-province="{{rec.destination.province}}" bindtap="onGenerateTrip">生成行程</button>
+        </view>
+      </view>
     </view>
 
+    <!-- 底部操作栏 -->
     <view class="bottom-bar">
-      <button class="btn-secondary" bindtap="onAgain">换一批目的地</button>
+      <button class="btn-ghost" bindtap="onBack">重新选择</button>
+      <text class="bottom-tip">点击卡片「生成行程」开始规划</text>
     </view>
-  </view>
+  </block>
+
 </view>

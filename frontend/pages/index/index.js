@@ -1,53 +1,53 @@
 // pages/index/index.js
-import { api } from '../../services/api.js';
-import { authApi } from '../../services/auth.js';
 
 Page({
-  data: {},
+  data: {
+    username: '旅行者',
+    hasRecentTrips: false,
+  },
 
   onLoad() {
-    this.checkLogin();
+    const username = wx.getStorageSync('username') || '旅行者';
+    this.setData({ username });
+
+    // 静默检查后端，不阻塞渲染
+    this.checkBackendHealth();
+    this.loadRecentTrips();
   },
 
-  async checkLogin() {
-    let openid = wx.getStorageSync('openid');
-    if (!openid) {
-      try {
-        const code = await this.doWxLogin();
-        await this.loginToServer(code);
-      } catch (e) {
-        console.log('静默登录失败', e);
-      }
-    }
+  onShow() {
+    this.loadRecentTrips();
   },
 
-  doWxLogin() {
-    return new Promise((resolve, reject) => {
-      wx.login({
-        success: (res) => {
-          if (res.code) resolve(res.code);
-          else reject(new Error('no code'));
-        },
-        fail: reject
-      });
-    });
-  },
-
-  async loginToServer(code) {
+  async checkBackendHealth() {
     try {
-      const res = await authApi.login(code);
-      wx.setStorageSync('openid', res.openid);
-      getApp().globalData.openid = res.openid;
+      const res = await wx.request({
+        url: 'http://localhost:3000/health',
+        method: 'GET',
+        timeout: 3000,
+      });
+      if (res.statusCode !== 200) {
+        console.warn('Backend unavailable');
+      }
     } catch (e) {
-      console.error('服务端登录失败', e);
+      console.warn('Backend check skipped:', e.message);
     }
   },
 
-  goToPlan() {
+  loadRecentTrips() {
+    try {
+      const trips = wx.getStorageSync('recent_trips') || [];
+      this.setData({ hasRecentTrips: trips.length > 0 });
+    } catch (e) {
+      this.setData({ hasRecentTrips: false });
+    }
+  },
+
+  goPlan() {
     wx.navigateTo({ url: '/pages/plan/destination/destination' });
   },
 
-  goToDiscover() {
+  goDiscover() {
     wx.navigateTo({ url: '/pages/discover/input/input' });
-  }
+  },
 });

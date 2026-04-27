@@ -11,6 +11,15 @@ const PRODUCT_FIELD_NAMES = [
   'notes'
 ];
 
+const CHINESE_NARRATIVE_FIELD_NAMES = [
+  'summary',
+  'description',
+  'recommend',
+  'reason',
+  'transport_to_next',
+  'notes'
+];
+
 const POLLUTED_PATTERNS = [
   /\[object Object\]/i,
   /\bundefined\b/i,
@@ -45,6 +54,12 @@ function hasPollutedText(value) {
 function hasInternalText(value) {
   return typeof value === 'string'
     && INTERNAL_PATTERNS.some((pattern) => pattern.test(value));
+}
+
+function hasEnglishNarrativeText(fieldName, value) {
+  return CHINESE_NARRATIVE_FIELD_NAMES.includes(fieldName)
+    && typeof value === 'string'
+    && /[A-Za-z]{2,}/.test(value);
 }
 
 function hasNonEmptyString(value) {
@@ -149,6 +164,10 @@ export class TripResultValidator {
 
       if (hasInternalText(value)) {
         issues.push(issue('internal_text', path));
+      }
+
+      if (hasEnglishNarrativeText(fieldName, value)) {
+        issues.push(issue('english_narrative_text', path));
       }
     }
   }

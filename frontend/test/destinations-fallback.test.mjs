@@ -17,14 +17,13 @@ const successfulEmptyApi = {
   }
 };
 
-test('destinations service uses silent backend requests before local fallback', async () => {
+test('destinations service reads province lists from local region tables without backend calls', async () => {
   const calls = [];
   const destinations = createDestinationsService(createFailingApi(calls));
 
   await destinations.getProvinces();
 
-  assert.equal(calls[0][0], '/api/destinations/provinces');
-  assert.deepEqual(calls[0][2], { silent: true });
+  assert.equal(calls.length, 0);
 });
 
 test('destinations service falls back when backend returns an empty province list', async () => {

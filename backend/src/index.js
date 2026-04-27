@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import rateLimit from '@fastify/rate-limit';
 import { config } from './config/index.js';
 import { initDatabase } from './db/database.js';
+import { initCache } from './cache/redis.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // 路由
@@ -27,8 +28,11 @@ await fastify.register(rateLimit, {
   timeWindow: '1 minute'
 });
 
-// 初始化数据库
-initDatabase();
+// 初始化数据库（支持 SQLite/MySQL）
+await initDatabase();
+
+// 初始化缓存（Redis，可选）
+await initCache();
 
 // 注册错误处理器
 fastify.setErrorHandler(errorHandler);

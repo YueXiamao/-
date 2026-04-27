@@ -2,6 +2,7 @@ import { formatDate, copyToClipboard } from '../../../utils/index.js';
 import tripApi from '../../../services/trip.js';
 import { getCityBackground } from '../../../constants/index.js';
 import { normalizeGenerationState } from './generation-state.js';
+import { getGenerationErrorMessage } from '../../../services/backend-health.js';
 
 Page({
   data: {
@@ -16,7 +17,9 @@ Page({
     generatingText: '正在规划行程...',
     currentDay: -1,
     error: null,
-    pageBackground: getCityBackground()
+    pageBackground: getCityBackground(),
+    draggingItem: null,
+    dragOverItem: null
   },
 
   onLoad(options = {}) {
@@ -43,6 +46,17 @@ Page({
 
   setTripState(trip, tripId = null) {
     const generationState = normalizeGenerationState(trip);
+
+    // Build stable itemKey for wx:key (index-based, always unique within day)
+    if (trip?.itinerary) {
+      trip.itinerary = trip.itinerary.map((day, di) => ({
+        ...day,
+        items: (day.items || []).map((item, ii) => ({
+          ...item,
+          itemKey: `${di}-${ii}`
+        }))
+      }));
+    }
 
     this.setData({
       trip,
@@ -94,6 +108,7 @@ Page({
       generatingText: '正在搜索景点与餐饮...'
     });
     try {
+      await tripApi.health();
       await new Promise((resolve) => setTimeout(resolve, 300));
       this.setData({
         step: 'building_skeleton',
@@ -111,7 +126,7 @@ Page({
       this.setData({
         loading: false,
         phase: 'error',
-        error: error?.retryable ? '生成遇到临时问题，可以再试一次' : '行程生成失败，请稍后重试',
+        error: getGenerationErrorMessage(error),
         generatingText: ''
       });
     }
@@ -134,6 +149,95 @@ Page({
     this.setData({
       currentDay: this.data.currentDay === index ? -1 : index
     });
+  },
+
+  // ---------- Touch-based drag reorder ----------
+  _itemHeights: [],
+
+  onDragStart(e) {
+    const { dayIndex, itemIndex } = e.currentTarget.dataset;
+    this._itemHeights = [];
+    this.setData({
+      draggingItem: { dayIndex: Number(dayIndex), itemIndex: Number(itemIndex) },
+      dragOverItem: null
+    });
+  },
+
+  onDragMove(e) {
+    if (!this.data.draggingItem) return;
+
+    const { dayIndex, itemIndex } = e.currentTarget.dataset;
+    // Only show drag-over indicator for items in the same day
+    if (Number(dayIndex) !== this.data.draggingItem.dayIndex) {
+      this.setData({ dragOverItem: null });
+      return;
+    }
+
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    // Use pageY to determine which item we're hovering over
+    const pageY = touch.pageY;
+    const day = this.data.trip?.itinerary?.[dayIndex];
+    if (!day || !day.items) return;
+
+    // Find which item the touch is currently over
+    // We track item top positions using the itemHeights array
+    let overIndex = itemIndex;
+
+    // If we have tracked heights, use them
+    if (this._itemHeights.length === day.items.length) {
+      for (let i = 0; i < this._itemHeights.length; i++) {
+        if (pageY < this._itemHeights[i]) {
+          overIndex = i;
+          break;
+        }
+        overIndex = i;
+      }
+    }
+
+    const currentOver = this.data.dragOverItem;
+    if (!currentOver || currentOver.dayIndex !== dayIndex || currentOver.itemIndex !== overIndex) {
+      this.setData({
+        dragOverItem: { dayIndex: Number(dayIndex), itemIndex: overIndex }
+      });
+    }
+  },
+
+  onDragEnd(e) {
+    if (!this.data.draggingItem) return;
+
+    const { dayIndex, itemIndex } = e.currentTarget.dataset;
+    const fromDayIndex = this.data.draggingItem.dayIndex;
+    const fromItemIndex = this.data.draggingItem.itemIndex;
+    const toItemIndex = this.data.dragOverItem
+      ? this.data.dragOverItem.itemIndex
+      : Number(itemIndex);
+
+    this.setData({ draggingItem: null, dragOverItem: null });
+    this._itemHeights = [];
+
+    if (fromDayIndex !== Number(dayIndex)) return;
+    if (fromItemIndex === toItemIndex) return;
+
+    const day = this.data.trip?.itinerary?.[fromDayIndex];
+    if (!day) return;
+
+    const nextItems = [...day.items];
+    const [movedItem] = nextItems.splice(fromItemIndex, 1);
+    nextItems.splice(toItemIndex, 0, movedItem);
+
+    // Reassign itemKey after reorder to keep wx:key stable
+    nextItems.forEach((item, idx) => {
+      item.itemKey = `${fromDayIndex}-${idx}`;
+    });
+
+    this.updateDayItems(fromDayIndex, nextItems);
+
+    if (movedItem.id && this.data.tripId) {
+      const direction = toItemIndex > fromItemIndex ? 'down' : 'up';
+      tripApi.reorderItem(this.data.tripId, movedItem.id, direction).catch(() => {});
+    }
   },
 
   getItemContext(dataset) {
@@ -188,6 +292,12 @@ Page({
 
       const nextItems = [...day.items];
       [nextItems[itemIndex], nextItems[swapIndex]] = [nextItems[swapIndex], nextItems[itemIndex]];
+
+      // Keep itemKey stable
+      nextItems.forEach((item, idx) => {
+        item.itemKey = `${dayIndex}-${idx}`;
+      });
+
       this.updateDayItems(dayIndex, nextItems);
     } catch (error) {
       wx.hideLoading();
@@ -243,6 +353,9 @@ Page({
           }
 
           const nextItems = day.items.filter((_, index) => index !== itemIndex);
+          nextItems.forEach((item, idx) => {
+            item.itemKey = `${dayIndex}-${idx}`;
+          });
           this.updateDayItems(dayIndex, nextItems);
         } catch (error) {
           wx.hideLoading();

@@ -30,7 +30,8 @@ class PoiService {
           page: 1,
           output: 'json'
         },
-        timeout: 8000
+        timeout: 8000,
+        proxy: false
       });
 
       if (res.data.status !== '1' || !res.data.pois) {

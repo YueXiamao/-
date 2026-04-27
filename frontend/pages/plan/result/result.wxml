@@ -58,71 +58,82 @@
         </view>
 
         <view class="day-content" wx:if="{{currentDay === dayIndex}}">
-          <view class="trip-item" wx:for="{{item.items}}" wx:for-item="tripItem" wx:for-index="itemIndex" wx:key="name">
-            <view wx:if="{{tripItem.type === 'spot'}}" class="item-row item-spot">
-              <view class="item-icon">景</view>
-              <view class="item-body">
-                <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta" wx:if="{{tripItem.address || tripItem.duration}}">{{tripItem.address}}{{tripItem.duration ? ' · ' + tripItem.duration : ''}}</view>
-                <view class="item-desc" wx:if="{{tripItem.description}}">{{tripItem.description}}</view>
-                <view class="item-transport" wx:if="{{tripItem.transport_to_next}}">前往下一站：{{tripItem.transport_to_next}}</view>
-                <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
-              </view>
-              <view class="item-actions">
-                <view class="action-chip-group">
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="up">上移</text>
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="down">下移</text>
+          <view
+            wx:if="{{item.items && item.items.length > 0}}"
+            class="items-list"
+          >
+            <view
+              wx:for="{{item.items}}"
+              wx:for-item="tripItem"
+              wx:for-index="itemIndex"
+              wx:key="itemKey"
+              class="trip-item {{draggingItem && draggingItem.dayIndex === dayIndex && draggingItem.itemIndex === itemIndex ? 'dragging' : ''}} {{dragOverItem && dragOverItem.dayIndex === dayIndex && dragOverItem.itemIndex === itemIndex ? 'drag-over' : ''}}"
+              data-day-index="{{dayIndex}}"
+              data-item-index="{{itemIndex}}"
+              bindtouchstart="onDragStart"
+              bindtouchmove="onDragMove"
+              bindtouchend="onDragEnd"
+            >
+              <view wx:if="{{tripItem.type === 'spot'}}" class="item-row item-spot">
+                <view class="item-drag-handle">⋮⋮</view>
+                <view class="item-icon">景</view>
+                <view class="item-body">
+                  <view class="item-name">{{tripItem.name}}</view>
+                  <view class="item-meta" wx:if="{{tripItem.address || tripItem.duration}}">{{tripItem.address}}{{tripItem.duration ? ' · ' + tripItem.duration : ''}}</view>
+                  <view class="item-desc" wx:if="{{tripItem.description}}">{{tripItem.description}}</view>
+                  <view class="item-transport" wx:if="{{tripItem.transport_to_next}}">前往下一站：{{tripItem.transport_to_next}}</view>
+                  <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
                 </view>
-                <view class="action-chip-group">
-                  <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换一个</text>
-                  <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">备注</text>
-                  <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删除</text>
+                <view class="item-actions">
+                  <view class="action-chip-group">
+                    <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换</text>
+                    <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">注</text>
+                    <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删</text>
+                  </view>
                 </view>
               </view>
-            </view>
 
-            <view wx:elif="{{tripItem.type === 'food'}}" class="item-row item-food">
-              <view class="item-icon">食</view>
-              <view class="item-body">
-                <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
-                <view class="item-rec" wx:if="{{tripItem.recommend || tripItem.budget}}">{{tripItem.recommend}}{{tripItem.budget ? ' · ' + tripItem.budget : ''}}</view>
-                <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
-              </view>
-              <view class="item-actions">
-                <view class="action-chip-group">
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="up">上移</text>
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="down">下移</text>
+              <view wx:elif="{{tripItem.type === 'food'}}" class="item-row item-food">
+                <view class="item-drag-handle">⋮⋮</view>
+                <view class="item-icon">食</view>
+                <view class="item-body">
+                  <view class="item-name">{{tripItem.name}}</view>
+                  <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
+                  <view class="item-rec" wx:if="{{tripItem.recommend || tripItem.budget}}">{{tripItem.recommend}}{{tripItem.budget ? ' · ' + tripItem.budget : ''}}</view>
+                  <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
                 </view>
-                <view class="action-chip-group">
-                  <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换一个</text>
-                  <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">备注</text>
-                  <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删除</text>
+                <view class="item-actions">
+                  <view class="action-chip-group">
+                    <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换</text>
+                    <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">注</text>
+                    <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删</text>
+                  </view>
                 </view>
               </view>
-            </view>
 
-            <view wx:else class="item-row item-hotel">
-              <view class="item-icon">住</view>
-              <view class="item-body">
-                <view class="item-name">{{tripItem.name}}</view>
-                <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
-                <view class="item-reason" wx:if="{{tripItem.reason}}">{{tripItem.reason}}</view>
-                <view class="item-budget" wx:if="{{tripItem.budget}}">{{tripItem.budget}}</view>
-                <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
-              </view>
-              <view class="item-actions">
-                <view class="action-chip-group">
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="up">上移</text>
-                  <text class="item-action" catchtap="onItemMove" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" data-direction="down">下移</text>
+              <view wx:else class="item-row item-hotel">
+                <view class="item-drag-handle">⋮⋮</view>
+                <view class="item-icon">住</view>
+                <view class="item-body">
+                  <view class="item-name">{{tripItem.name}}</view>
+                  <view class="item-meta" wx:if="{{tripItem.address}}">{{tripItem.address}}</view>
+                  <view class="item-reason" wx:if="{{tripItem.reason}}">{{tripItem.reason}}</view>
+                  <view class="item-budget" wx:if="{{tripItem.budget}}">{{tripItem.budget}}</view>
+                  <view class="item-note" wx:if="{{tripItem.notes}}">{{tripItem.notes}}</view>
                 </view>
-                <view class="action-chip-group">
-                  <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换一个</text>
-                  <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">备注</text>
-                  <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删除</text>
+                <view class="item-actions">
+                  <view class="action-chip-group">
+                    <text class="item-action accent" catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">换</text>
+                    <text class="item-action" catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">注</text>
+                    <text class="item-action danger" catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}">删</text>
+                  </view>
                 </view>
               </view>
             </view>
+          </view>
+
+          <view class="empty-day" wx:if="{{!item.items || item.items.length === 0}}">
+            <text>当天暂无安排</text>
           </view>
         </view>
       </view>

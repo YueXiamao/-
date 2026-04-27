@@ -1,59 +1,269 @@
-// SQLite 数据库初始化与连接管理
-import fs from 'fs';
+// 数据库初始化与连接管理
+// 支持 SQLite（默认，sqlite3 纯 JS）和 MySQL（DB_TYPE=mysql）
+// 导出统一的 getDb() 接口，Service 层无感知
+
 import path from 'path';
 import { createRequire } from 'module';
 import { config } from '../config/index.js';
 
 const require = createRequire(import.meta.url);
-const Database = require(process.env.BETTER_SQLITE3_PATH || 'better-sqlite3');
 
-const dbPath = path.isAbsolute(config.db.path)
-  ? config.db.path
-  : path.resolve(process.cwd(), config.db.path);
-const dataDir = path.dirname(dbPath);
-const bundledNativeBinding = path.resolve(
-  process.cwd(),
-  '.node20-deps/node_modules/better-sqlite3/build/Release/better_sqlite3.node'
-);
+// ─── SQLite 引擎（sqlite3 纯 JS）───────────────────────────────────────────
 
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
-}
+function createSqliteDb() {
+  const sqlite3 = require('sqlite3').verbose();
 
-function getNativeBindingPath() {
-  if (config.db.nativeBinding) {
-    return path.isAbsolute(config.db.nativeBinding)
-      ? config.db.nativeBinding
-      : path.resolve(process.cwd(), config.db.nativeBinding);
-  }
+  const dbPath = path.isAbsolute(config.db.path)
+    ? config.db.path
+    : path.resolve(process.cwd(), config.db.path);
 
-  return fs.existsSync(bundledNativeBinding) ? bundledNativeBinding : '';
-}
-
-function createDatabase() {
-  try {
-    return new Database(dbPath);
-  } catch (error) {
-    const nativeBinding = getNativeBindingPath();
-    if (!nativeBinding) {
-      throw error;
+  const db = new sqlite3.Database(dbPath, (err) => {
+    if (err) {
+      console.error('[DB] SQLite 连接失败:', err.message);
+      process.exit(1);
     }
+  });
 
+  // 立即执行 pragma（无需 serialize，避免干扰后续查询）
+  db.run('PRAGMA journal_mode = DELETE');
+  db.run('PRAGMA foreign_keys = ON');
+
+  // ── 接口封装 ────────────────────────────────────────────────────────────
+  // sqlite3 npm 的 db.prepare().each() 在有 pending db.run() 时会返回 null，
+  // 改用 db.all() 直接调用（更稳定）来替代 prepare().all/get/run。
+  const wrapper = {
+    /**
+     * 查询多条记录
+     * @param {string} sql
+     * @param {...any} params
+     * @returns {Promise<any[]>}
+     */
+    all(sql, ...params) {
+      return new Promise((resolve, reject) => {
+        db.all(sql, ...params, (err, rows) => {
+          if (err) return reject(err);
+          resolve(rows);
+        });
+      });
+    },
+
+    /**
+     * 查询单条记录
+     * @param {string} sql
+     * @param {...any} params
+     * @returns {Promise<any|null>}
+     */
+    get(sql, ...params) {
+      return new Promise((resolve, reject) => {
+        db.get(sql, ...params, (err, row) => {
+          if (err) return reject(err);
+          resolve(row || null);
+        });
+      });
+    },
+
+    /**
+     * 执行 INSERT/UPDATE/DELETE
+     * @param {string} sql
+     * @param {...any} params
+     * @returns {Promise<{lastInsertRowid:number, changes:number}>}
+     */
+    run(sql, ...params) {
+      return new Promise((resolve, reject) => {
+        db.run(sql, ...params, function (err) {
+          if (err) return reject(err);
+          resolve({ lastInsertRowid: this.lastID, changes: this.changes });
+        });
+      });
+    },
+
+    /**
+     * 执行多条 SQL（事务块内）
+     * @param {string} sql
+     * @returns {Promise<void>}
+     */
+    exec(sql) {
+      return new Promise((resolve, reject) => {
+        db.exec(sql, (err) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    },
+
+    /**
+     * 事务块
+     * sqlite3 npm 不支持同步事务，用 BEGIN/COMMIT 手动管理。
+     * @param {Function} fn — async function receiving tx object
+     */
+    transaction(fn) {
+      return async function wrappedTransaction(...callArgs) {
+        await new Promise((resolve, reject) => {
+          db.run('BEGIN TRANSACTION', (err) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+        try {
+          const tx = {
+            all(sql, ...params) {
+              return new Promise((res, rej) => {
+                db.all(sql, ...params, (err, rows) => {
+                  if (err) return rej(err);
+                  res(rows);
+                });
+              });
+            },
+            get(sql, ...params) {
+              return new Promise((res, rej) => {
+                db.get(sql, ...params, (err, row) => {
+                  if (err) return rej(err);
+                  res(row || null);
+                });
+              });
+            },
+            run(sql, ...params) {
+              return new Promise((res, rej) => {
+                db.run(sql, ...params, function (err) {
+                  if (err) return rej(err);
+                  res({ lastInsertRowid: this.lastID, changes: this.changes });
+                });
+              });
+            }
+          };
+          const result = await fn(tx, ...callArgs);
+          await new Promise((resolve, reject) => {
+            db.run('COMMIT', (err) => {
+              if (err) return reject(err);
+              resolve();
+            });
+          });
+          return result;
+        } catch (e) {
+          await new Promise((resolve) => {
+            db.run('ROLLBACK', () => { resolve(); });
+          });
+          throw e;
+        }
+      };
+    }
+  };
+
+    const _sqliteDb = {
+      db,
+      dbPath,
+      // 直接方法（discoverService 等直接调 db.all/get/run/query）─────────
+      all: (sql, ...params) => wrapper.all(sql, ...params),
+      get: (sql, ...params) => wrapper.get(sql, ...params),
+      run: (sql, ...params) => wrapper.run(sql, ...params),
+      exec: wrapper.exec,
+      transaction: wrapper.transaction,
+      query: (sql, ...params) => wrapper.all(sql, ...params),
+    };
+
+  return _sqliteDb;
+}
+
+// ─── 数据库实例（统一接口）──────────────────────────────────────────────────
+
+/** @type {any} 数据库实例 */
+let _db;
+/** @type {string} 日志用 */
+let _connectedPath = '';
+
+export async function initDatabase() {
+  const dbType = config.db.type || 'sqlite';
+
+  if (dbType === 'mysql') {
+    // ── MySQL ──────────────────────────────────────────────────────────────
+    let mysql;
     try {
-      return new Database(dbPath, { nativeBinding });
-    } catch (nativeError) {
-      nativeError.cause = error;
-      throw nativeError;
+      mysql = await import('mysql2/promise');
+    } catch {
+      console.error('[DB] mysql2 未安装，请运行: npm install mysql2');
+      process.exit(1);
     }
+
+    const pool = mysql.createPool({
+      host: config.db.host,
+      port: config.db.port || 3306,
+      user: config.db.user,
+      password: config.db.password,
+      database: config.db.database,
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+      enableKeepAlive: true
+    });
+
+    _db = {
+      prepare(sql) {
+        return {
+          all(...params) {
+            return pool.query(sql, params).then(([rows]) => rows);
+          },
+          get(...params) {
+            return pool.query(sql, params).then(([rows]) => rows[0] || null);
+          },
+          run(...params) {
+            return pool.query(sql, params).then(([result]) => ({
+              lastInsertRowid: result.insertId,
+              changes: result.affectedRows
+            }));
+          }
+        };
+      },
+      exec(sql) {
+        return pool.query(sql).then(([r]) => r);
+      },
+      transaction(fn) {
+        return pool.getConnection().then((conn) => {
+          return conn.beginTransaction().then(() => {
+            const tx = {
+              prepare(sql) {
+                return {
+                  all(...params) {
+                    return conn.query(sql, params).then(([rows]) => rows);
+                  },
+                  get(...params) {
+                    return conn.query(sql, params).then(([rows]) => rows[0] || null);
+                  },
+                  run(...params) {
+                    return conn.query(sql, params).then(([result]) => ({
+                      lastInsertRowid: result.insertId,
+                      changes: result.affectedRows
+                    }));
+                  }
+                };
+              }
+            };
+            return fn(tx).then(
+              (result) => conn.commit().then(() => conn.release()).then(() => result),
+              (err) => conn.rollback().then(() => conn.release()).then(() => { throw err; })
+            );
+          });
+        });
+      }
+    };
+
+    _connectedPath = `${config.db.host}:${config.db.port}/${config.db.database}`;
+
+  } else {
+    // ── SQLite ─────────────────────────────────────────────────────────────
+    const sqliteDb = createSqliteDb();
+    _db = sqliteDb;
+    _connectedPath = sqliteDb.dbPath;
   }
+
+  // 初始化表结构
+  initTables();
+  console.log(`[DB] 已连接: ${_connectedPath} (${config.db.type || 'sqlite'})`);
+
+  return _db;
 }
 
-const db = createDatabase();
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-export function initDatabase() {
-  db.exec(`
+function initTables() {
+  _db.exec(`
     CREATE TABLE IF NOT EXISTS user (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       openid TEXT UNIQUE NOT NULL,
@@ -175,12 +385,22 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_region_parent ON region_data(parent_code);
   `);
 
-  console.log('SQLite 数据库初始化完成:', dbPath);
-  return db;
+  console.log('[DB] 表结构初始化完成');
 }
 
+/**
+ * 获取数据库实例
+ * @returns {any} 兼容接口
+ */
 export function getDb() {
-  return db;
+  if (!_db) {
+    throw new Error('[DB] 数据库未初始化，请先调用 initDatabase()');
+  }
+  return _db;
 }
 
-export default db;
+// initDatabase 结束后 _db 已设置，重新导出所有 db 方法供其他模块 import
+export const query = (...args) => _db.query(...args);
+export const get = (...args) => _db.get(...args);
+export const run = (...args) => _db.run(...args);
+export const transaction = (...args) => _db.transaction(...args);

@@ -5,16 +5,27 @@ export const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT || '3000'),
 
-  // 数据库 SQLite（本地文件）
+  // 数据库
   db: {
-    path: process.env.DB_PATH || './data/travel.db',
-    nativeBinding: process.env.BETTER_SQLITE3_NATIVE_BINDING || ''
+    // 类型：sqlite | mysql，默认为 sqlite
+    type: process.env.DB_TYPE || 'sqlite',
+    // SQLite 配置
+    path: process.env.DB_PATH || '/home/fanruulin/hermes-home-linux/data/travel-miniprogram/travel.db',
+    nativeBinding: process.env.BETTER_SQLITE3_NATIVE_BINDING || '',
+    // MySQL 配置
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '3306'),
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || '',
+    database: process.env.DB_NAME || 'travel_planner',
   },
 
-  // Redis（可选）
+  // Redis
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379'),
+    password: process.env.REDIS_PASSWORD || '',
+    db: parseInt(process.env.REDIS_DB || '0'),
     enabled: process.env.REDIS_ENABLED === 'true'
   },
 

@@ -2,7 +2,7 @@
 App({
   onLaunch() {
     // 检查登录状态
-    this.checkLogin();
+    this.doLogin();
   },
 
   globalData: {
@@ -10,32 +10,47 @@ App({
     openid: null
   },
 
-  async checkLogin() {
+  doLogin() {
     const openid = wx.getStorageSync('openid');
     if (openid) {
       this.globalData.openid = openid;
+      console.log('已使用缓存 openid:', openid);
       return;
     }
 
-    // 触发登录
-    try {
-      const res = await wx.cloud?.callFunction({ name: 'login' }) ||
-        await new Promise((resolve, reject) => {
-          wx.login({
-            success: async (res) => {
-              if (!res.code) return reject(new Error('no code'));
-              // 静默登录，不阻塞
-              resolve({ code: res.code });
+    wx.login({
+      success: (res) => {
+        if (!res.code) {
+          console.log('wx.login 无 code');
+          return;
+        }
+        console.log('wx.login 成功, code:', res.code);
+        wx.request({
+          url: 'http://192.168.3.37:3000/api/auth/login',
+          method: 'POST',
+          data: { code: res.code },
+          success: (r) => {
+            console.log('/api/auth/login 响应:', r.data);
+            if (r.data && r.data.openid) {
+              this.setOpenid(r.data.openid);
+            } else {
+              console.log('登录失败: 无 openid', r.data);
             }
-          });
+          },
+          fail: (err) => {
+            console.error('/api/auth/login 请求失败:', err);
+          }
         });
-    } catch (e) {
-      console.log('登录失败', e);
-    }
+      },
+      fail: (err) => {
+        console.error('wx.login 失败:', err);
+      }
+    });
   },
 
   setOpenid(openid) {
     this.globalData.openid = openid;
     wx.setStorageSync('openid', openid);
+    console.log('openid 已存储:', openid);
   }
 });

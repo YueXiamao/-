@@ -309,21 +309,21 @@ testWithServer('ai enhancement upgrades the response to ai_enhanced when validat
         if (item.type === 'spot') {
           return {
             ...item,
-            description: `Improved route context for ${item.name}.`
+            description: '围绕核心景点安排游玩节奏，适合衔接当天主要路线。'
           };
         }
 
         if (item.type === 'food') {
           return {
             ...item,
-            recommend: `Improved recommendation for ${item.name}.`
+            recommend: '推荐结合本地口味，安排在就近时段用餐。'
           };
         }
 
         if (item.type === 'hotel') {
           return {
             ...item,
-            reason: `Improved stay reason for ${item.name}.`
+            reason: '位置便于衔接当天路线，适合作为休息落点。'
           };
         }
 
@@ -394,6 +394,44 @@ testWithServer('validator rejects polluted ai output and keeps rule_based respon
     aiModule.aiGenerator.enhanceTripSkeleton = originalEnhance;
     process.env.SKIP_AI = previousSkipAi;
   }
+});
+
+test('validator rejects English narrative copy while allowing English names and addresses', async () => {
+  const { TripResultValidator } = await import('../src/services/trip-generation/resultValidator.js');
+
+  const report = new TripResultValidator().validate({
+    itinerary: [
+      {
+        day: 1,
+        date: '2026-05-01',
+        items: [
+          {
+            type: 'spot',
+            name: 'JW Garden',
+            address: 'IFS Center',
+            duration: '2-3h',
+            description: 'Core sightseeing block for day 1.',
+            transport_to_next: '地铁 A 口步行 5 分钟'
+          }
+        ]
+      }
+    ]
+  }, { expectedDays: 1 });
+
+  assert.equal(report.valid, false);
+  assert.equal(
+    report.issues.some((item) => (
+      item.code === 'english_narrative_text'
+        && item.path === 'itinerary[0].items[0].description'
+    )),
+    true
+  );
+  assert.equal(report.issues.some((item) => item.path === 'itinerary[0].items[0].name'), false);
+  assert.equal(report.issues.some((item) => item.path === 'itinerary[0].items[0].address'), false);
+  assert.equal(
+    report.issues.some((item) => item.path === 'itinerary[0].items[0].transport_to_next'),
+    false
+  );
 });
 
 testWithServer('validator rejects ai output that removes existing product fields', async ({ server }) => {
@@ -905,6 +943,36 @@ test('task 3 sparse itinerary copy stays neutral for users', async () => {
 
   assert.equal(/rule-based|placeholder|live poi coverage/i.test(sparseText), false);
   assert.equal(/template|placeholder|generation recovers|fallback/i.test(templateText), false);
+});
+
+test('sparse and template itinerary narrative copy is Chinese first', async () => {
+  const { TripSkeletonBuilder } = await import('../src/services/trip-generation/skeletonBuilder.js');
+  const { FallbackTemplateProvider } = await import('../src/services/trip-generation/fallbackTemplateProvider.js');
+
+  const request = {
+    destinations: [{ name: 'Low Data County', province: 'Test', city: 'Low Data County' }],
+    start_date: '2026-05-01',
+    days: 1
+  };
+
+  const sparseResult = new TripSkeletonBuilder().build(request, {
+    spots: [],
+    foods: [],
+    hotels: [],
+    coverage: { level: 'weak' }
+  });
+  const templateResult = new FallbackTemplateProvider().provide(request);
+  const narrativeValues = [
+    ...sparseResult.itinerary[0].items,
+    ...templateResult.itinerary[0].items
+  ].flatMap((item) => [
+    item.description,
+    item.recommend,
+    item.reason,
+    item.transport_to_next
+  ]).filter(Boolean);
+
+  assert.equal(narrativeValues.every((value) => !/[A-Za-z]{2,}/.test(value)), true);
 });
 
 testWithServer('trip generation returns a retryable product error when every fallback fails', async ({ server }) => {

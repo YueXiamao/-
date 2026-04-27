@@ -48,7 +48,7 @@
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
-  background-color: #07c160;
+  background-color: var(--color-primary);
   animation: pulse 1.2s ease-in-out infinite;
 }
 
@@ -358,4 +358,43 @@
 .item-action.danger {
   background: rgba(255, 92, 92, 0.12);
   color: #d94848;
+}
+
+/* 拖拽排序 */
+.items-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.trip-item {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.trip-item.dragging {
+  opacity: 0.6;
+  transform: scale(0.98);
+}
+
+.trip-item.drag-over {
+  border-top: 4rpx solid var(--color-primary);
+  padding-top: 4rpx;
+}
+
+.item-drag-handle {
+  width: 40rpx;
+  font-size: 28rpx;
+  color: #cccccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding-top: 4rpx;
+  letter-spacing: 2rpx;
+}
+
+.empty-day {
+  padding: 48rpx 0;
+  text-align: center;
+  font-size: 28rpx;
+  color: #cccccc;
 }

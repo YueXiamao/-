@@ -1,6 +1,11 @@
 import { api } from './api.js';
+import { ensureBackendHealthy } from './backend-health.js';
 
 export default {
+  health() {
+    return ensureBackendHealthy(api);
+  },
+
   generate(params) {
     return api.post('/api/trip/generate', params);
   },

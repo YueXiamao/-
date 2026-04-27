@@ -1,6 +1,6 @@
 function getDestinationName(request, index) {
   const destination = request.destinations[index % request.destinations.length];
-  return typeof destination === 'string' ? destination : destination?.name || 'Destination';
+  return typeof destination === 'string' ? destination : destination?.name || '目的地';
 }
 
 function formatDay(startDate, offset) {
@@ -32,25 +32,25 @@ export class FallbackTemplateProvider {
           items: [
             {
               type: 'spot',
-              name: `${destinationName} day plan`,
+              name: `${destinationName}参考游玩点`,
               address: destinationName,
               duration: '2-3h',
-              description: 'A balanced sightseeing stop to anchor the day plan.',
-              transport_to_next: 'Arrange a convenient local transfer'
+              description: '先安排一个节奏适中的游玩点，作为当天路线的基础锚点。',
+              transport_to_next: '建议选择方便的本地交通前往下一站'
             },
             {
               type: 'food',
-              name: `${destinationName} meal plan`,
+              name: `${destinationName}用餐建议`,
               address: destinationName,
-              budget: 'Flexible',
-              recommend: 'Pick a dependable local option near the day route'
+              budget: '按实际消费确认',
+              recommend: '优先选择当天路线附近评价稳定的本地餐饮'
             },
             {
               type: 'hotel',
-              name: `${destinationName} overnight stay`,
+              name: `${destinationName}住宿建议`,
               address: destinationName,
-              budget: 'To confirm',
-              reason: 'Choose a comfortable stay with easy access to the main route'
+              budget: '待确认',
+              reason: '建议选择交通方便、便于衔接主要路线的住宿'
             }
           ]
         };

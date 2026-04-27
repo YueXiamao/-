@@ -49,7 +49,7 @@ export const MIN_DAYS = 1;
 export const MAX_DAYS = 14;
 
 export const API_BASE_URL = 'https://api.travel.com';
-export const API_TEST_URL = 'http://localhost:3000';
+export const API_TEST_URL = 'http://192.168.3.37:3000';
 
 export const ITEM_TYPES = {
   SPOT: 'spot',
