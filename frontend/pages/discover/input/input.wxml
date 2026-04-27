@@ -8,33 +8,35 @@
     <text class="hero-sub">根据你的位置和偏好，精选周末灵感</text>
   </view>
 
-  <!-- 位置选择 -->
+  <!-- 位置卡片 -->
   <view class="section-card">
     <text class="section-label">当前位置</text>
 
-    <!-- 已选位置展示 -->
-    <view class="loc-display" wx:if="{{locationText}}">
-      <text class="loc-text">{{locationText}}</text>
-      <view class="loc-tags">
-        <text class="loc-tag" wx:if="{{locationMode === 'loc'}}">GPS</text>
-        <text class="loc-tag loc-tag-manual" wx:if="{{locationMode === 'manual'}}">手动</text>
+    <!-- 已选位置 -->
+    <view class="loc-bar" wx:if="{{locationText}}">
+      <view class="loc-info">
+        <text class="loc-icon">[*]</text>
+        <text class="loc-name">{{locationText}}</text>
+      </view>
+      <view class="loc-mode-tag {{locationMode === 'loc' ? 'tag-gps' : 'tag-manual'}}">
+        {{locationMode === 'loc' ? 'GPS' : '手动'}}
       </view>
     </view>
 
-    <!-- 未选时 -->
-    <view class="loc-placeholder" wx:if="{{!locationText}}">
-      <text class="loc-placeholder-text">请先选择您的位置</text>
+    <!-- 未选 -->
+    <view class="loc-empty" wx:if="{{!locationText}}">
+      <text class="loc-empty-text">请选择您的位置</text>
     </view>
 
-    <!-- 定位/选择按钮 -->
-    <view class="loc-btn-row">
+    <!-- 两个按钮 -->
+    <view class="loc-row">
       <view class="loc-btn loc-btn-gps" bindtap="onLocate">
-        <text class="loc-btn-icon">[*]</text>
-        <text class="loc-btn-text">微信定位</text>
+        <text class="loc-btn-ico">[*]</text>
+        <text class="loc-btn-txt">微信定位</text>
       </view>
-      <view class="loc-btn loc-btn-manual" bindtap="onManualLocation">
-        <text class="loc-btn-icon">[+]</text>
-        <text class="loc-btn-text">手动选择</text>
+      <view class="loc-btn loc-btn-pick" bindtap="onManualLocation">
+        <text class="loc-btn-ico">[v]</text>
+        <text class="loc-btn-txt">选择位置</text>
       </view>
     </view>
   </view>
@@ -88,7 +90,7 @@
         </view>
         <text class="pref-name">{{item.label}}</text>
         <view class="pref-check" wx:if="{{preferences.indexOf(item.value) >= 0}}">
-          <text class="pref-check-icon">V</text>
+          <text class="pref-check-ico">V</text>
         </view>
       </view>
     </view>
@@ -99,66 +101,65 @@
     <button class="btn-primary" bindtap="onRecommend">开始随机玩</button>
   </view>
 
-  <!-- 省份选择弹窗 -->
-  <view class="picker-mask" wx:if="{{showProvincePicker}}" bindtap="onPickerClose">
-    <view class="picker-sheet" catchtap="">
-      <view class="picker-header">
-        <text class="picker-cancel" bindtap="onPickerClose">取消</text>
-        <text class="picker-title">选择省份</text>
-        <view style="width:80rpx"></view>
-      </view>
-      <view class="picker-search">
-        <input
-          class="search-input"
-          placeholder="搜索省份..."
-          bindinput="onProvinceSearch"
-        />
-      </view>
-      <scroll-view class="picker-list" scroll-y="{{true}}">
-        <view
-          class="picker-item"
-          wx:for="{{filteredProvinces}}"
-          wx:key="code"
-          bindtap="onProvinceTap"
-          data-code="{{item.code}}"
-          data-name="{{item.name}}"
-        >
-          <text class="picker-item-text">{{item.name}}</text>
-          <text class="picker-item-arrow">›</text>
-        </view>
-      </scroll-view>
+  <!-- ========================================= -->
+  <!-- 位置选择器：底部抽屉式，类似美团/携程 -->
+  <!-- ========================================= -->
+  <view class="picker-overlay" wx:if="{{showPicker}}" bindtap="onPickerClose"></view>
+  <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
+    <!-- 顶部栏 -->
+    <view class="picker-topbar">
+      <!-- 返回箭头（城市选择时显示） -->
+      <text class="picker-back" wx:if="{{pickerStep === 'city'}}" bindtap="onPickerBack">‹</text>
+      <text class="picker-title">{{pickerStep === 'province' ? '选择省份' : '选择城市'}}</text>
+      <text class="picker-close" bindtap="onPickerClose">×</text>
     </view>
-  </view>
 
-  <!-- 城市选择弹窗 -->
-  <view class="picker-mask" wx:if="{{showCityPicker}}" bindtap="onPickerClose">
-    <view class="picker-sheet" catchtap="">
-      <view class="picker-header">
-        <text class="picker-cancel" bindtap="onPickerClose">返回</text>
-        <text class="picker-title">选择城市</text>
-        <view style="width:80rpx"></view>
-      </view>
-      <view class="picker-search">
-        <input
-          class="search-input"
-          placeholder="搜索城市..."
-          bindinput="onCitySearch"
-        />
-      </view>
-      <scroll-view class="picker-list" scroll-y="{{true}}">
-        <view
-          class="picker-item"
-          wx:for="{{filteredCities}}"
-          wx:key="code"
-          bindtap="onCityTap"
-          data-code="{{item.code}}"
-          data-name="{{item.name}}"
-        >
-          <text class="picker-item-text">{{item.name}}</text>
-          <text class="picker-item-arrow">›</text>
-        </view>
-      </scroll-view>
+    <!-- 搜索框 -->
+    <view class="picker-search-bar">
+      <text class="picker-search-ico">🔍</text>
+      <input
+        class="picker-search-input"
+        placeholder="{{pickerStep === 'province' ? '搜索省份' : '搜索城市'}}"
+        value="{{searchValue}}"
+        bindinput="onPickerSearch"
+        focus="{{showPicker}}"
+      />
     </view>
+
+    <!-- 快捷常用 -->
+    <view class="picker-hot" wx:if="{{pickerStep === 'province'}}">
+      <text class="picker-hot-label">常用</text>
+      <view class="picker-hot-list">
+        <text
+          class="picker-hot-item"
+          wx:for="{{['北京','上海','广东','四川','浙江','江苏']}}"
+          wx:key="this"
+          bindtap="onPickerSelect"
+          data-code=""
+          data-name="{{item}}"
+        >{{item}}</text>
+      </view>
+    </view>
+
+    <!-- 列表 -->
+    <scroll-view class="picker-list" scroll-y="{{true}}">
+      <view
+        class="picker-row {{(pickerStep === 'province' && currentProvince && item.code === currentProvince.code) || (pickerStep === 'city' && currentCity && item.code === currentCity.code) ? 'picker-row-on' : ''}}"
+        wx:for="{{filteredList}}"
+        wx:key="code"
+        bindtap="onPickerSelect"
+        data-code="{{item.code}}"
+        data-name="{{item.name}}"
+      >
+        <text class="picker-row-name">{{item.name}}</text>
+        <text class="picker-row-check" wx:if="{{(pickerStep === 'province' && currentProvince && item.code === currentProvince.code) || (pickerStep === 'city' && currentCity && item.code === currentCity.code)}}">✓</text>
+      </view>
+
+      <!-- 无结果 -->
+      <view class="picker-empty" wx:if="{{filteredList.length === 0}}">
+        <text class="picker-empty-text">未找到结果</text>
+      </view>
+    </scroll-view>
   </view>
 
 </view>

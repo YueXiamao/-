@@ -7,38 +7,6 @@
   padding-bottom: 160rpx;
 }
 
-/* ===== 顶部标题 ===== */
-.hero {
-  background-color: #FFFFFF;
-  border-radius: 24rpx;
-  padding: 32rpx 28rpx;
-  margin-bottom: 20rpx;
-}
-
-.hero-eyebrow {
-  display: block;
-  font-size: 22rpx;
-  color: #07C160;
-  font-weight: 800;
-  letter-spacing: 2rpx;
-  margin-bottom: 12rpx;
-}
-
-.hero-title {
-  display: block;
-  font-size: 44rpx;
-  font-weight: 800;
-  color: #1A1A1A;
-  margin-bottom: 10rpx;
-}
-
-.hero-sub {
-  display: block;
-  font-size: 26rpx;
-  color: #888888;
-  line-height: 1.5;
-}
-
 /* ===== 通用卡片 ===== */
 .section-card {
   background-color: #FFFFFF;
@@ -67,82 +35,138 @@
   color: #BBBBBB;
 }
 
+/* ===== Hero ===== */
+.hero {
+  background-color: #FFFFFF;
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.hero-eyebrow {
+  display: block;
+  font-size: 22rpx;
+  color: #07C160;
+  font-weight: 800;
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.hero-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 800;
+  color: #1A1A1A;
+  margin-bottom: 10rpx;
+}
+
+.hero-sub {
+  display: block;
+  font-size: 26rpx;
+  color: #888888;
+}
+
 /* ===== 位置 ===== */
-.location-display {
+.loc-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 20rpx 24rpx;
+  background-color: #F5F5F5;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
 }
 
 .loc-info {
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  gap: 12rpx;
 }
 
 .loc-icon {
-  font-size: 36rpx;
+  font-size: 28rpx;
   color: #07C160;
 }
 
-.loc-text-wrap {
-  display: flex;
-  flex-direction: column;
-  gap: 4rpx;
+.loc-name {
+  font-size: 30rpx;
+  color: #1A1A1A;
+  font-weight: 500;
 }
 
-.loc-province {
-  font-size: 28rpx;
-  color: #1A1A1A;
+.loc-mode-tag {
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 999rpx;
   font-weight: 600;
 }
 
-.loc-city {
-  font-size: 24rpx;
-  color: #888888;
+.tag-gps {
+  background-color: #E8F8EE;
+  color: #07C160;
 }
 
-.loc-actions {
+.tag-manual {
+  background-color: #FFF3E0;
+  color: #FF9500;
+}
+
+.loc-empty {
+  padding: 24rpx;
+  text-align: center;
+  background-color: #F5F5F5;
+  border-radius: 16rpx;
+  margin-bottom: 16rpx;
+}
+
+.loc-empty-text {
+  font-size: 28rpx;
+  color: #AAAAAA;
+}
+
+.loc-row {
   display: flex;
   gap: 16rpx;
 }
 
 .loc-btn {
-  font-size: 24rpx;
-  color: #888888;
-  padding: 8rpx 16rpx;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  padding: 20rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid;
 }
 
-.loc-btn-main {
+.loc-btn-gps {
+  background-color: #E8F8EE;
+  border-color: #07C160;
+}
+
+.loc-btn-pick {
+  background-color: #F0F0F0;
+  border-color: #E0E0E0;
+}
+
+.loc-btn-ico {
+  font-size: 28rpx;
+}
+
+.loc-btn-gps .loc-btn-ico,
+.loc-btn-gps .loc-btn-txt {
   color: #07C160;
+}
+
+.loc-btn-pick .loc-btn-ico,
+.loc-btn-pick .loc-btn-txt {
+  color: #1A1A1A;
+}
+
+.loc-btn-txt {
+  font-size: 28rpx;
   font-weight: 600;
-}
-
-.location-loading {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.loc-loading-icon {
-  font-size: 32rpx;
-  color: #07C160;
-}
-
-.loc-loading-text {
-  font-size: 28rpx;
-  color: #888888;
-}
-
-.location-error {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.loc-error-text {
-  font-size: 28rpx;
-  color: #FF4444;
 }
 
 /* ===== 天数 ===== */
@@ -181,10 +205,7 @@
   line-height: 1;
 }
 
-.days-unit {
-  font-size: 28rpx;
-  color: #666666;
-}
+.days-unit { font-size: 28rpx; color: #666666; }
 
 /* ===== 预算 ===== */
 .budget-grid {
@@ -199,7 +220,6 @@
   border-radius: 16rpx;
   background-color: #F7F7F7;
   border: 2rpx solid transparent;
-  transition: all 0.15s ease;
 }
 
 .budget-on {
@@ -215,9 +235,7 @@
   margin-bottom: 6rpx;
 }
 
-.budget-on .budget-label {
-  color: #07C160;
-}
+.budget-on .budget-label { color: #07C160; }
 
 .budget-desc {
   display: block;
@@ -243,7 +261,6 @@
   border-radius: 20rpx;
   background-color: #F7F7F7;
   border: 2rpx solid transparent;
-  transition: background-color 0.15s, border-color 0.15s;
 }
 
 .pref-on {
@@ -263,10 +280,7 @@
   overflow: hidden;
 }
 
-.pref-icon {
-  width: 56rpx;
-  height: 56rpx;
-}
+.pref-icon { width: 56rpx; height: 56rpx; }
 
 .pref-name {
   font-size: 24rpx;
@@ -275,10 +289,7 @@
   text-align: center;
 }
 
-.pref-on .pref-name {
-  color: #07C160;
-  font-weight: 700;
-}
+.pref-on .pref-name { color: #07C160; font-weight: 700; }
 
 .pref-check {
   position: absolute;
@@ -293,7 +304,7 @@
   justify-content: center;
 }
 
-.pref-check-icon {
+.pref-check-ico {
   font-size: 18rpx;
   color: #FFFFFF;
   font-weight: 700;
@@ -330,81 +341,169 @@
 
 .bottom-bar button::after { border: none; }
 
-/* ===== 弹窗选择器 ===== */
-.picker-mask {
+/* ============================================= */
+/* ===== 位置选择器：底部抽屉样式（美团风格） ===== */
+/* ============================================= */
+
+/* 半透明遮罩 */
+.picker-overlay {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  background-color: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
 }
 
-.picker-sheet {
+/* 抽屉主体 */
+.picker-drawer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: #FFFFFF;
-  border-radius: 24rpx 24rpx 0 0;
-  max-height: 70vh;
+  border-radius: 32rpx 32rpx 0 0;
+  z-index: 1001;
+  max-height: 75vh;
   display: flex;
   flex-direction: column;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.picker-header {
+.picker-drawer-open {
+  transform: translateY(0);
+}
+
+/* 顶部栏 */
+.picker-topbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 28rpx 32rpx;
+  padding: 28rpx 32rpx 20rpx;
   border-bottom: 1rpx solid #F0F0F0;
+  flex-shrink: 0;
 }
 
-.picker-cancel {
-  font-size: 28rpx;
-  color: #888888;
+.picker-back {
+  font-size: 48rpx;
+  color: #07C160;
+  font-weight: 300;
+  padding: 0 8rpx;
 }
 
 .picker-title {
-  font-size: 30rpx;
+  font-size: 32rpx;
   font-weight: 600;
   color: #1A1A1A;
 }
 
-.picker-search {
-  padding: 16rpx 24rpx;
-  border-bottom: 1rpx solid #F0F0F0;
+.picker-close {
+  font-size: 48rpx;
+  color: #AAAAAA;
+  font-weight: 300;
+  padding: 0 8rpx;
 }
 
-.search-input {
-  width: 100%;
-  height: 72rpx;
+/* 搜索栏 */
+.picker-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin: 16rpx 24rpx;
+  padding: 0 20rpx;
   background-color: #F5F5F5;
-  border-radius: 36rpx;
-  padding: 0 28rpx;
-  font-size: 28rpx;
-  box-sizing: border-box;
+  border-radius: 999rpx;
+  height: 72rpx;
+  flex-shrink: 0;
 }
 
+.picker-search-ico {
+  font-size: 28rpx;
+  flex-shrink: 0;
+}
+
+.picker-search-input {
+  flex: 1;
+  height: 72rpx;
+  font-size: 28rpx;
+  color: #1A1A1A;
+}
+
+/* 快捷常用 */
+.picker-hot {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 0 24rpx 16rpx;
+  flex-shrink: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.picker-hot-label {
+  font-size: 24rpx;
+  color: #999999;
+  flex-shrink: 0;
+}
+
+.picker-hot-list {
+  display: flex;
+  gap: 12rpx;
+  flex-shrink: 0;
+}
+
+.picker-hot-item {
+  font-size: 24rpx;
+  color: #1A1A1A;
+  background-color: #F0F0F0;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  flex-shrink: 0;
+}
+
+.picker-hot-item:active {
+  background-color: #E0E0E0;
+}
+
+/* 列表 */
 .picker-list {
   flex: 1;
-  max-height: 50vh;
   overflow-y: auto;
+  max-height: 50vh;
 }
 
-.picker-item {
+.picker-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 26rpx 32rpx;
-  border-bottom: 1rpx solid #F5F5F5;
+  padding: 28rpx 32rpx;
+  border-bottom: 1rpx solid #F8F8F8;
 }
 
-.picker-item:active { background-color: #F5F5F5; }
+.picker-row:active {
+  background-color: #F5F5F5;
+}
 
-.picker-item-text {
+.picker-row-on {
+  background-color: #E8F8EE;
+}
+
+.picker-row-name {
   font-size: 30rpx;
   color: #1A1A1A;
 }
 
-.picker-item-arrow {
-  font-size: 32rpx;
-  color: #CCCCCC;
+.picker-row-check {
+  font-size: 28rpx;
+  color: #07C160;
+  font-weight: 700;
+}
+
+.picker-empty {
+  padding: 80rpx 0;
+  text-align: center;
+}
+
+.picker-empty-text {
+  font-size: 28rpx;
+  color: #AAAAAA;
 }
