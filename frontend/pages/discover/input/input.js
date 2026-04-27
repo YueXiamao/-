@@ -338,10 +338,11 @@ Page({
 
   onPrefTap(e) {
     const { value } = e.currentTarget.dataset;
-    const prefs = this.data.preferences;
+    const prefs = this.data.preferences || [];
     const idx = prefs.indexOf(value);
-    if (idx >= 0) this.setData({ preferences: prefs.filter(p => p !== value) });
-    else {
+    if (idx >= 0) {
+      this.setData({ preferences: prefs.filter(p => p !== value) });
+    } else {
       if (prefs.length >= 3) { wx.showToast({ title: '最多选3个', icon: 'none' }); return; }
       this.setData({ preferences: [...prefs, value] });
     }

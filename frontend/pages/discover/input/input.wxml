@@ -52,8 +52,13 @@
   <view class="section-card">
     <text class="section-label">人均预算</text>
     <view class="budget-grid">
-      <view class="budget-item {{budget === item.value ? 'budget-on' : ''}}"
-        wx:for="{{budgetOptions}}" wx:key="value" bindtap="onBudgetTap" data-value="{{item.value}}">
+      <view
+        class="budget-item {{budget === item.value ? 'budget-on' : ''}}"
+        wx:for="{{budgetOptions}}"
+        wx:key="value"
+        bindtap="onBudgetTap"
+        data-value="{{item.value}}"
+      >
         <text class="budget-label">{{item.label}}</text>
         <text class="budget-desc">{{item.desc}}</text>
       </view>
@@ -67,14 +72,25 @@
       <text class="section-hint">选1-3个</text>
     </view>
     <view class="pref-grid">
-      <view class="pref-item {{preferences.indexOf(item.value) >= 0 ? 'pref-on' : ''}}"
-        wx:for="{{preferenceOptions}}" wx:key="value" bindtap="onPrefTap" data-value="{{item.value}}">
-        <view class="pref-icon-wrap">
-          <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
+      <view
+        wx:for="{{preferenceOptions}}"
+        wx:key="value"
+        bindtap="onPrefTap"
+        data-value="{{item.value}}"
+      >
+        <!-- 未选中版本 -->
+        <view class="pref-item" wx:if="{{preferences.indexOf(item.value) < 0}}">
+          <view class="pref-icon-wrap">
+            <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
+          </view>
+          <text class="pref-name">{{item.label}}</text>
         </view>
-        <text class="pref-name">{{item.label}}</text>
-        <view class="pref-check" wx:if="{{preferences.indexOf(item.value) >= 0}}">
-          <text class="pref-check-ico">V</text>
+        <!-- 选中版本 -->
+        <view class="pref-item pref-item-on" wx:if="{{preferences.indexOf(item.value) >= 0}}">
+          <view class="pref-icon-wrap pref-icon-wrap-on">
+            <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
+          </view>
+          <text class="pref-name pref-name-on">{{item.label}}</text>
         </view>
       </view>
     </view>
@@ -86,19 +102,19 @@
   </view>
 
   <!-- ========================================= -->
-  <!-- 位置选择器：省 -> 市/区 三步 -->
+  <!-- 位置选择器 -->
   <!-- ========================================= -->
   <view class="picker-overlay" wx:if="{{showPicker}}" bindtap="onPickerClose"></view>
   <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
 
-    <!-- 顶部栏 -->
     <view class="picker-topbar">
       <text class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">‹</text>
-      <text class="picker-title">{{pickerStep === 'province' ? '选择省份' : pickerStep === 'city' ? '选择城市' : '选择区县'}}</text>
+      <text class="picker-title">
+        {{pickerStep === 'province' ? '选择省份' : pickerStep === 'city' ? '选择城市' : '选择区县'}}
+      </text>
       <text class="picker-close" bindtap="onPickerClose">×</text>
     </view>
 
-    <!-- 搜索框 -->
     <view class="picker-search-bar">
       <text class="picker-search-ico">🔍</text>
       <input
@@ -109,19 +125,18 @@
       />
     </view>
 
-    <!-- 常用快捷（仅省份步骤） -->
     <view class="picker-hot" wx:if="{{pickerStep === 'province'}}">
       <text class="picker-hot-label">常用</text>
       <view class="picker-hot-list">
         <text class="picker-hot-item"
           wx:for="{{['北京市','上海市','广东省','四川省','浙江省','江苏省']}}"
-          wx:key="this" data-name="{{item}}" bindtap="onProvinceQuick"> {{item}}</text>
+          wx:key="this"
+          data-name="{{item}}"
+          bindtap="onProvinceQuick"> {{item}}</text>
       </view>
     </view>
 
-    <!-- 列表 -->
     <scroll-view class="picker-list" scroll-y="{{true}}">
-      <!-- 省份列表 -->
       <block wx:if="{{pickerStep === 'province'}}">
         <view class="picker-row"
           wx:for="{{filteredList}}" wx:key="code"
@@ -130,21 +145,19 @@
           <text class="picker-row-arrow">›</text>
         </view>
       </block>
-      <!-- 城市列表（普通省份） -->
       <block wx:if="{{pickerStep === 'city'}}">
         <view class="picker-row"
           wx:for="{{filteredList}}" wx:key="code"
           bindtap="onCitySelect" data-code="{{item.code}}" data-name="{{item.name}}">
-          <text class="picker-row-name">{{item.name}}</text>
+          <text class="picker-row-name {{currentCity && item.code === currentCity.code ? 'row-name-on' : ''}}">{{item.name}}</text>
           <text class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}">✓</text>
         </view>
       </block>
-      <!-- 区县列表（直辖市） -->
       <block wx:if="{{pickerStep === 'district'}}">
         <view class="picker-row"
           wx:for="{{filteredList}}" wx:key="code"
           bindtap="onDistrictSelect" data-code="{{item.code}}" data-name="{{item.name}}">
-          <text class="picker-row-name">{{item.name}}</text>
+          <text class="picker-row-name {{currentDistrict && item.code === currentDistrict.code ? 'row-name-on' : ''}}">{{item.name}}</text>
           <text class="picker-row-check" wx:if="{{currentDistrict && item.code === currentDistrict.code}}">✓</text>
         </view>
       </block>
