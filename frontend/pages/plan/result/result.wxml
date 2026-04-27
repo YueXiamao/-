@@ -27,6 +27,11 @@
       </view>
     </view>
 
+    <view class="generation-banner" wx:if="{{bannerText}}">
+      <text class="generation-banner__label">{{bannerLabel}}</text>
+      <text class="generation-banner__text">{{bannerText}}</text>
+    </view>
+
     <view class="action-bar">
       <view class="action-btn" bindtap="onSave">
         <text class="action-mark">SAVE</text>
