@@ -538,3 +538,21 @@
 最终目标：
 
 > 用户点击“生成行程”后，高概率拿到一份可读、可改、可继续使用的行程；即使外部依赖波动，系统也优先返回基础版而不是把用户直接丢进失败页。
+
+## 9. Implementation Mapping
+
+- Backend request normalization: `backend/src/services/trip-generation/requestNormalizer.js`
+- Backend orchestration: `backend/src/services/trip-generation/orchestrator.js`
+- Candidate preparation: `backend/src/services/trip-generation/candidateService.js`
+- Rule-based skeletons: `backend/src/services/trip-generation/skeletonBuilder.js`
+- AI enhancement adapter: `backend/src/services/trip-generation/aiEnhancer.js`
+- AI enhancement prompt and raw merge validation: `backend/src/ai/generator.js`
+- Result validation: `backend/src/services/trip-generation/resultValidator.js`
+- Template fallback: `backend/src/services/trip-generation/fallbackTemplateProvider.js`
+- Public trip service entry: `backend/src/services/tripService.js`
+- Product error and retryable response shape: `backend/src/middleware/errorHandler.js`
+- Backend contract coverage: `backend/test/backend-contract.test.js`
+- Frontend generation-state adapter: `frontend/pages/plan/result/generation-state.js`
+- Frontend result-page state and degraded banner: `frontend/pages/plan/result/result.js`, `frontend/pages/plan/result/result.wxml`, `frontend/pages/plan/result/result.wxss`
+- Frontend API error preservation: `frontend/services/api.js`
+- Frontend state coverage: `frontend/test/trip-generation-state.test.mjs`

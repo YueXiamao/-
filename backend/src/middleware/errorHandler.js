@@ -14,7 +14,8 @@ export const errorHandler = (error, request, reply) => {
   const response = {
     code: error.code || statusCode,
     message: error.message || '服务器内部错误',
-    errors: error.validationErrors || []
+    errors: error.validationErrors || [],
+    retryable: error.retryable === true
   };
 
   reply.status(statusCode).send(response);

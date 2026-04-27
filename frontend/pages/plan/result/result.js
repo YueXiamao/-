@@ -1,11 +1,17 @@
 import { formatDate, copyToClipboard } from '../../../utils/index.js';
 import tripApi from '../../../services/trip.js';
 import { getCityBackground } from '../../../constants/index.js';
+import { normalizeGenerationState } from './generation-state.js';
 
 Page({
   data: {
     trip: null,
     tripId: null,
+    phase: 'idle',
+    step: 'validating',
+    fallbackLevel: 'none',
+    bannerLabel: '',
+    bannerText: '',
     loading: true,
     generatingText: '正在规划行程...',
     currentDay: -1,
@@ -36,13 +42,19 @@ Page({
   },
 
   setTripState(trip, tripId = null) {
+    const generationState = normalizeGenerationState(trip);
+
     this.setData({
       trip,
       tripId: tripId || trip?.trip_id || this.data.tripId,
       loading: false,
       error: null,
       currentDay: trip?.itinerary?.length ? 0 : -1,
-      pageBackground: getCityBackground(trip?.destinations)
+      pageBackground: getCityBackground(trip?.destinations),
+      phase: generationState.phase,
+      fallbackLevel: generationState.fallbackLevel,
+      bannerLabel: generationState.bannerLabel,
+      bannerText: generationState.bannerText
     });
   },
 
@@ -50,6 +62,10 @@ Page({
     this.setData({
       loading: true,
       error: null,
+      phase: 'loading',
+      step: 'loading_detail',
+      bannerLabel: '',
+      bannerText: '',
       generatingText: '正在加载行程...'
     });
 
@@ -60,6 +76,7 @@ Page({
       console.error('Failed to load trip detail:', error);
       this.setData({
         loading: false,
+        phase: 'error',
         error: '行程加载失败，请稍后重试',
         generatingText: ''
       });
@@ -67,18 +84,34 @@ Page({
   },
 
   async generateTrip(params) {
-    this.setData({ loading: true, error: null, generatingText: '正在搜索景点...' });
-
+    this.setData({
+      loading: true,
+      error: null,
+      phase: 'generating',
+      step: 'fetching_pois',
+      bannerLabel: '',
+      bannerText: '',
+      generatingText: '正在搜索景点与餐饮...'
+    });
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      this.setData({ generatingText: '正在规划每日行程...' });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      this.setData({
+        step: 'building_skeleton',
+        generatingText: '正在安排每日节奏...'
+      });
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      this.setData({
+        step: 'enhancing',
+        generatingText: '正在补充推荐内容...'
+      });
       const trip = await tripApi.generate(params);
       this.setTripState(trip, trip.trip_id);
     } catch (error) {
       console.error('Failed to generate trip:', error);
       this.setData({
         loading: false,
-        error: '行程生成失败，请稍后重试',
+        phase: 'error',
+        error: error?.retryable ? '生成遇到临时问题，可以再试一次' : '行程生成失败，请稍后重试',
         generatingText: ''
       });
     }

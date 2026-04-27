@@ -37,7 +37,10 @@ class ApiService {
                 resolve(res.data.data !== undefined ? res.data.data : res.data);
               } else {
                 wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
-                reject(res.data);
+                reject({
+                  ...(typeof res.data === 'object' && res.data ? res.data : {}),
+                  statusCode: res.statusCode
+                });
               }
             } else {
               // 直接返回数组
@@ -47,13 +50,19 @@ class ApiService {
             // 未登录，清除 openid 重新登录
             wx.removeStorageSync('openid');
             wx.showToast({ title: '请重新登录', icon: 'none' });
-            reject(res.data);
+            reject({
+              ...(typeof res.data === 'object' && res.data ? res.data : {}),
+              statusCode: res.statusCode
+            });
           } else {
             wx.showToast({
               title: `网络错误 (${res.statusCode})`,
               icon: 'none'
             });
-            reject(res.data);
+            reject({
+              ...(typeof res.data === 'object' && res.data ? res.data : {}),
+              statusCode: res.statusCode
+            });
           }
         },
         fail: (err) => {

@@ -3,104 +3,45 @@ import { getDb } from '../db/database.js';
 import { poiService } from './poiService.js';
 import { userService } from './userService.js';
 import { Errors } from '../middleware/errorHandler.js';
+import { TripGenerationOrchestrator } from './trip-generation/orchestrator.js';
+import { TripCandidateService } from './trip-generation/candidateService.js';
+import { TripSkeletonBuilder } from './trip-generation/skeletonBuilder.js';
+import { FallbackTemplateProvider } from './trip-generation/fallbackTemplateProvider.js';
+import { TripAIEnhancer } from './trip-generation/aiEnhancer.js';
+import { TripResultValidator } from './trip-generation/resultValidator.js';
 
 class TripService {
+  constructor() {
+    this.orchestrator = new TripGenerationOrchestrator({
+      tripService: this,
+      candidateService: new TripCandidateService({ poiService }),
+      skeletonBuilder: new TripSkeletonBuilder(),
+      fallbackTemplateProvider: new FallbackTemplateProvider(),
+      aiEnhancer: new TripAIEnhancer(),
+      resultValidator: new TripResultValidator()
+    });
+  }
+
   get db() {
     return getDb();
   }
 
-  async generate({ destinations, start_date, days, preferences, extra_notes }) {
-    const allPois = { spots: [], foods: [], hotels: [] };
-
-    if (process.env.SKIP_EXTERNAL_POI !== 'true') {
-      for (const destination of destinations) {
-        const name = typeof destination === 'string' ? destination : destination.name;
-        try {
-          const [spots, foods, hotels] = await Promise.all([
-            poiService.search({ keyword: name, type: 'spot', city: name, limit: 20 }),
-            poiService.search({ keyword: name, type: 'food', city: name, limit: 10 }),
-            poiService.search({ keyword: name, type: 'hotel', city: name, limit: 5 })
-          ]);
-          allPois.spots.push(...spots);
-          allPois.foods.push(...foods);
-          allPois.hotels.push(...hotels);
-        } catch (error) {
-          console.error(`POI fetch failed for ${name}:`, error.message);
-        }
-      }
-    }
-
-    const { aiGenerator } = await import('../ai/generator.js');
-
-    let itinerary;
-    if (process.env.SKIP_AI === 'true') {
-      itinerary = this.getFallbackTemplate(destinations, days, start_date);
-    } else {
-      try {
-        itinerary = await aiGenerator.generateTrip({
-          destinations,
-          start_date,
-          days,
-          preferences,
-          extra_notes,
-          pois: allPois
-        });
-      } catch (error) {
-        console.error('AI trip generation failed:', error.message);
-        itinerary = this.getFallbackTemplate(destinations, days, start_date);
-      }
-    }
-
-    return {
-      trip_id: `T${Date.now()}${nanoid(6).toUpperCase()}`,
-      title: `${destinations.map((item) => typeof item === 'string' ? item : item.name).join('+')}${days}日游`,
-      destinations,
-      days,
-      start_date,
-      itinerary
-    };
+  async generate(input) {
+    return this.orchestrator.generate(input);
   }
 
-  getFallbackTemplate(destinations, days, startDate) {
-    const result = [];
-    const destinationNames = destinations.map((item) => typeof item === 'string' ? item : item.name);
-    const start = new Date(startDate);
-
-    for (let index = 0; index < days; index += 1) {
-      const date = new Date(start);
-      date.setDate(date.getDate() + index);
-
-      result.push({
-        day: index + 1,
-        date: date.toISOString().split('T')[0],
-        items: [
-          {
-            type: 'spot',
-            name: `${destinationNames[index % destinationNames.length]}景区${index + 1}`,
-            address: '待补充',
-            duration: '2-3小时',
-            description: '请稍后重试获取更完整的智能推荐',
-            transport_to_next: ''
-          },
-          {
-            type: 'food',
-            name: `${destinationNames[index % destinationNames.length]}特色美食`,
-            address: '待补充',
-            budget: '人均50-100元',
-            recommend: '当地特色菜品'
-          },
-          {
-            type: 'hotel',
-            name: `${destinationNames[index % destinationNames.length]}住宿`,
-            address: '待补充',
-            budget: '待确认',
-            reason: '可在结果页继续替换成更合适的住宿'
-          }
-        ]
-      });
-    }
-
-    return result;
+  buildGeneratedTripResponse(request, generation) {
+    return {
+      trip_id: `T${Date.now()}${nanoid(6).toUpperCase()}`,
+      title: `${request.destinations.map((item) => typeof item === 'string' ? item : item.name).join('+')}${request.days}\u65e5\u6e38`,
+      destinations: request.destinations,
+      days: request.days,
+      start_date: request.start_date,
+      itinerary: generation.itinerary,
+      source: generation.source,
+      fallback_level: generation.fallback_level,
+      generation_meta: generation.generation_meta
+    };
   }
 
   saveTrip(openid, tripData) {
