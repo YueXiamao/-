@@ -16,7 +16,7 @@ class ApiService {
   }
 
   // 统一请求方法
-  request(path, data = {}, method = 'GET', header = {}) {
+  request(path, data = {}, method = 'GET', header = {}, options = {}) {
     return new Promise((resolve, reject) => {
       const openid = this.getOpenid();
 
@@ -36,7 +36,9 @@ class ApiService {
               if (res.data.code === 0 || res.data.code === undefined) {
                 resolve(res.data.data !== undefined ? res.data.data : res.data);
               } else {
-                wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
+                if (!options.silent) {
+                  wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
+                }
                 reject({
                   ...(typeof res.data === 'object' && res.data ? res.data : {}),
                   statusCode: res.statusCode
@@ -49,16 +51,20 @@ class ApiService {
           } else if (res.statusCode === 401) {
             // 未登录，清除 openid 重新登录
             wx.removeStorageSync('openid');
-            wx.showToast({ title: '请重新登录', icon: 'none' });
+            if (!options.silent) {
+              wx.showToast({ title: '请重新登录', icon: 'none' });
+            }
             reject({
               ...(typeof res.data === 'object' && res.data ? res.data : {}),
               statusCode: res.statusCode
             });
           } else {
-            wx.showToast({
-              title: `网络错误 (${res.statusCode})`,
-              icon: 'none'
-            });
+            if (!options.silent) {
+              wx.showToast({
+                title: `网络错误 (${res.statusCode})`,
+                icon: 'none'
+              });
+            }
             reject({
               ...(typeof res.data === 'object' && res.data ? res.data : {}),
               statusCode: res.statusCode
@@ -66,10 +72,12 @@ class ApiService {
           }
         },
         fail: (err) => {
-          wx.showToast({
-            title: '网络错误，请检查网络',
-            icon: 'none'
-          });
+          if (!options.silent) {
+            wx.showToast({
+              title: '网络错误，请检查网络',
+              icon: 'none'
+            });
+          }
           reject(err);
         }
       });
@@ -77,23 +85,23 @@ class ApiService {
   }
 
   // GET 请求
-  get(path, data) {
-    return this.request(path, data, 'GET');
+  get(path, data, options) {
+    return this.request(path, data, 'GET', {}, options);
   }
 
   // POST 请求
-  post(path, data) {
-    return this.request(path, data, 'POST');
+  post(path, data, options) {
+    return this.request(path, data, 'POST', {}, options);
   }
 
   // PATCH 请求
-  patch(path, data) {
-    return this.request(path, data, 'PATCH');
+  patch(path, data, options) {
+    return this.request(path, data, 'PATCH', {}, options);
   }
 
   // DELETE 请求
-  delete(path, data) {
-    return this.request(path, data, 'DELETE');
+  delete(path, data, options) {
+    return this.request(path, data, 'DELETE', {}, options);
   }
 }
 
@@ -101,7 +109,7 @@ class ApiService {
 export const api = new ApiService();
 
 // 导出常用请求方法
-export const get = (path, data) => api.get(path, data);
-export const post = (path, data) => api.post(path, data);
-export const patch = (path, data) => api.patch(path, data);
-export const del = (path, data) => api.delete(path, data);
+export const get = (path, data, options) => api.get(path, data, options);
+export const post = (path, data, options) => api.post(path, data, options);
+export const patch = (path, data, options) => api.patch(path, data, options);
+export const del = (path, data, options) => api.delete(path, data, options);
