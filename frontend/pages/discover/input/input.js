@@ -1,7 +1,6 @@
 // pages/discover/input/input.js
 import { BUDGET_OPTIONS, PREFERENCE_OPTIONS } from '../../../constants/index.js';
 
-// 直辖市列表
 const MUNICIPALITIES = ['北京市', '上海市', '天津市', '重庆市'];
 
 Page({
@@ -12,20 +11,18 @@ Page({
     currentCity: null,
     currentDistrict: null,
 
-    // 选择器
     showPicker: false,
-    pickerStep: 'province',   // 'province' | 'city' | 'district'
+    pickerStep: 'province',
     filteredList: [],
     cityList: [],
     districtList: [],
 
-    // 表单
     days: 2,
     budget: '',
     preferences: [],
+    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
 
     budgetOptions: BUDGET_OPTIONS,
-    preferenceOptions: PREFERENCE_OPTIONS,
   },
 
   onLoad() {
@@ -137,10 +134,8 @@ Page({
           rawProvince.includes(p.name) || p.name.includes(rawProvince)
         ) || null;
 
-        // 尝试匹配区县（仅直辖市场景）
         let matchedDistrict = null;
         if (matchedProvince && MUNICIPALITIES.includes(matchedProvince.name) && rawDistrict) {
-          // 加载该城市的区县来匹配
           const cities = await this.loadCities(matchedProvince.code);
           const city = cities[0];
           if (city) {
@@ -181,15 +176,6 @@ Page({
     });
   },
 
-  // ========== 常用省份快捷选择 ==========
-  onProvinceQuick(e) {
-    const name = e.currentTarget.dataset.name;
-    const province = (this.data.provinceList || []).find(p => p.name === name);
-    if (province) {
-      this.onProvinceSelect({ currentTarget: { dataset: { code: province.code, name: province.name } } });
-    }
-  },
-
   // ========== 打开选择器 ==========
   async openPicker() {
     let list = this.data.provinceList || [];
@@ -212,7 +198,7 @@ Page({
     this.openPicker();
   },
 
-  // ========== 搜索 ==========
+  // ========== 选择器搜索 ==========
   onPickerSearch(e) {
     const kw = e.detail.value.trim();
     let src = [];
@@ -230,15 +216,12 @@ Page({
   async onProvinceSelect(e) {
     const { code, name } = e.currentTarget.dataset;
 
-    // 判断是否直辖市
     if (MUNICIPALITIES.includes(name)) {
       wx.showLoading({ title: '加载区县...', mask: true });
       const cities = await this.loadCities(code);
       if (!cities.length) { wx.hideLoading(); wx.showToast({ title: '数据异常', icon: 'none' }); return; }
-
       const districts = await this.loadDistricts(cities[0].code);
       wx.hideLoading();
-
       if (!districts.length) { wx.showToast({ title: '无下辖区县', icon: 'none' }); return; }
 
       this.setData({
@@ -255,7 +238,6 @@ Page({
       wx.showLoading({ title: '加载城市...', mask: true });
       const cities = await this.loadCities(code);
       wx.hideLoading();
-
       if (!cities.length) { wx.showToast({ title: '无下辖城市', icon: 'none' }); return; }
 
       this.setData({
@@ -270,7 +252,16 @@ Page({
     }
   },
 
-  // ========== 选择城市（仅普通省份） ==========
+  // ========== 常用省份快捷 ==========
+  onProvinceQuick(e) {
+    const name = e.currentTarget.dataset.name;
+    const province = (this.data.provinceList || []).find(p => p.name === name);
+    if (province) {
+      this.onProvinceSelect({ currentTarget: { dataset: { code: province.code, name: province.name } } });
+    }
+  },
+
+  // ========== 选择城市/区县 ==========
   onCitySelect(e) {
     const { code, name } = e.currentTarget.dataset;
     const { currentProvince } = this.data;
@@ -286,7 +277,6 @@ Page({
     this.saveLocation(data);
   },
 
-  // ========== 选择区县（仅直辖市） ==========
   onDistrictSelect(e) {
     const { code, name } = e.currentTarget.dataset;
     const { currentProvince } = this.data;
@@ -303,14 +293,7 @@ Page({
 
   onPickerBack() {
     const { pickerStep } = this.data;
-    if (pickerStep === 'city') {
-      this.setData({
-        pickerStep: 'province',
-        currentCity: null,
-        filteredList: this.data.provinceList,
-        searchValue: '',
-      });
-    } else if (pickerStep === 'district') {
+    if (pickerStep === 'city' || pickerStep === 'district') {
       this.setData({
         pickerStep: 'province',
         currentCity: null,
@@ -325,29 +308,44 @@ Page({
     this.setData({ showPicker: false });
   },
 
-  // ========== 表单 ==========
+  // ========== 天数 ==========
   onDaysChange(e) {
     const delta = parseInt(e.currentTarget.dataset.delta);
     this.setData({ days: Math.max(1, Math.min(7, this.data.days + delta)) });
   },
 
+  // ========== 预算 ==========
   onBudgetTap(e) {
     const { value } = e.currentTarget.dataset;
     this.setData({ budget: this.data.budget === value ? '' : value });
   },
 
+  // ========== 游玩偏好（与 params 页面完全一致的写法）==========
   onPrefTap(e) {
     const { value } = e.currentTarget.dataset;
-    const prefs = this.data.preferences || [];
+    const prefs = this.data.preferences;
     const idx = prefs.indexOf(value);
-    if (idx >= 0) {
-      this.setData({ preferences: prefs.filter(p => p !== value) });
-    } else {
-      if (prefs.length >= 3) { wx.showToast({ title: '最多选3个', icon: 'none' }); return; }
-      this.setData({ preferences: [...prefs, value] });
+
+    // 用 preferenceOptions 副本重新构建数组并同步 selected 字段
+    const nextPreferences = idx >= 0
+      ? prefs.filter(p => p !== value)
+      : (prefs.length >= 3 ? null : [...prefs, value]);
+
+    if (nextPreferences === null) {
+      wx.showToast({ title: '最多选3个', icon: 'none' });
+      return;
     }
+
+    this.setData({
+      preferences: nextPreferences,
+      preferenceOptions: this.data.preferenceOptions.map(item => ({
+        ...item,
+        selected: nextPreferences.indexOf(item.value) >= 0,
+      })),
+    });
   },
 
+  // ========== 开始 ==========
   onRecommend() {
     const { currentProvince, currentCity, currentDistrict, budget } = this.data;
     if (!currentProvince && !currentCity && !currentDistrict) {

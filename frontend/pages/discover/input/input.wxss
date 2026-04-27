@@ -187,8 +187,9 @@
   gap: 20rpx;
 }
 
-/* 未选中卡片 */
+/* 游玩偏好卡片 */
 .pref-item {
+  position: relative;
   width: calc((100% - 40rpx) / 3);
   display: flex;
   flex-direction: column;
@@ -196,53 +197,57 @@
   gap: 10rpx;
   padding: 24rpx 8rpx 18rpx;
   border-radius: 20rpx;
-  background-color: #F7F7F7;
+  background-color: #F8FAF7;
   border: 2rpx solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
-/* 选中卡片 */
-.pref-item-on {
-  width: calc((100% - 40rpx) / 3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10rpx;
-  padding: 24rpx 8rpx 18rpx;
-  border-radius: 20rpx;
+.pref-item:active { transform: scale(0.96); }
+
+.pref-on {
   background-color: #E8F8EE;
-  border: 2rpx solid #07C160;
+  border-color: #07C160;
 }
 
 .pref-icon-wrap {
-  width: 80rpx;
-  height: 80rpx;
-  border-radius: 50%;
+  width: 118rpx;
+  height: 118rpx;
+  border-radius: 30rpx;
   background-color: #FFFFFF;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 6rpx 16rpx rgba(35, 55, 45, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
 }
 
-.pref-icon-wrap-on {
-  background-color: #07C160;
-  box-shadow: 0 4rpx 16rpx rgba(7, 193, 96, 0.3);
-}
-
-.pref-icon { width: 56rpx; height: 56rpx; }
+.pref-icon { width: 108rpx; height: 108rpx; border-radius: 24rpx; }
 
 .pref-name {
   font-size: 24rpx;
   color: #1A1A1A;
-  font-weight: 500;
+  font-weight: 600;
   text-align: center;
+  line-height: 1.4;
 }
 
-.pref-name-on {
-  color: #07C160;
-  font-weight: 700;
+.pref-on .pref-name { color: #07C160; font-weight: 700; }
+
+.pref-check {
+  position: absolute;
+  right: 12rpx;
+  bottom: 12rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: #07C160;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4rpx 10rpx rgba(7, 193, 96, 0.24);
 }
+
+.pref-check-icon { color: #FFFFFF; font-size: 20rpx; font-weight: 700; line-height: 1; }
 
 /* ===== 底部按钮 ===== */
 .bottom-bar {

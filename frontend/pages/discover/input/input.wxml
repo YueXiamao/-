@@ -65,7 +65,7 @@
     </view>
   </view>
 
-  <!-- 游玩偏好 -->
+  <!-- 游玩偏好（完全对齐 params 页写法） -->
   <view class="section-card">
     <view class="section-label-row">
       <text class="section-label">游玩偏好</text>
@@ -73,24 +73,18 @@
     </view>
     <view class="pref-grid">
       <view
+        class="pref-item {{item.selected ? 'pref-on' : ''}}"
         wx:for="{{preferenceOptions}}"
         wx:key="value"
         bindtap="onPrefTap"
         data-value="{{item.value}}"
       >
-        <!-- 未选中版本 -->
-        <view class="pref-item" wx:if="{{preferences.indexOf(item.value) < 0}}">
-          <view class="pref-icon-wrap">
-            <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
-          </view>
-          <text class="pref-name">{{item.label}}</text>
+        <view class="pref-icon-wrap">
+          <image class="pref-icon" src="{{item.icon}}" mode="aspectFill" />
         </view>
-        <!-- 选中版本 -->
-        <view class="pref-item pref-item-on" wx:if="{{preferences.indexOf(item.value) >= 0}}">
-          <view class="pref-icon-wrap pref-icon-wrap-on">
-            <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
-          </view>
-          <text class="pref-name pref-name-on">{{item.label}}</text>
+        <text class="pref-name">{{item.label}}</text>
+        <view class="pref-check" wx:if="{{item.selected}}">
+          <text class="pref-check-icon">✓</text>
         </view>
       </view>
     </view>
