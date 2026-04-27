@@ -55,6 +55,10 @@ function createSqliteDb() {
     exec:   wrapper.exec,
     transaction: wrapper.transaction,
     query:  wrapper.all,
+    // 暴露原生 prepare（供 Service 层直接调用同步方法）
+    prepare(sql) {
+      return db.prepare(sql);
+    },
   };
 
   return _sqliteDb;
