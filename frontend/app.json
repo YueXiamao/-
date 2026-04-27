@@ -40,6 +40,7 @@
       "desc": "你的位置信息将用于随机玩功能的目的地推荐"
     }
   },
+  "requiredPrivateInfos": ["getLocation"],
   "style": "v2",
   "componentPlaceholder": {
     "region-picker": "view",

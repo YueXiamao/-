@@ -152,13 +152,23 @@ Page({
 
   // ========== 手动选择 ==========
   onManualLocation() {
-    if (this.data.provinceList.length === 0) {
-      wx.showToast({ title: '省份数据加载中，请稍后', icon: 'none' });
+    const list = this.data.provinceList;
+    if (list.length === 0) {
+      // 列表还没加载好，先加载再弹窗
+      wx.showLoading({ title: '加载中...', mask: true });
+      this.loadProvinces().then(() => {
+        wx.hideLoading();
+        this.setData({
+          showProvincePicker: true,
+          filteredProvinces: this.data.provinceList,
+          provinceInput: '',
+        });
+      });
       return;
     }
     this.setData({
       showProvincePicker: true,
-      filteredProvinces: this.data.provinceList,
+      filteredProvinces: list,
       provinceInput: '',
     });
   },
