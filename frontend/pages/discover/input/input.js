@@ -3,9 +3,16 @@ import { BUDGET_OPTIONS, PREFERENCE_OPTIONS } from '../../../constants/index.js'
 
 Page({
   data: {
-    // 位置
-    currentLocation: null,
-    locationText: '定位中...',
+    // 位置模式：'loc' | 'manual'
+    locationMode: 'loc',
+    locationText: '正在定位...',
+    currentProvince: null,   // { code, name }
+    currentCity: null,       // { code, name }
+    provinceList: [],
+    showProvincePicker: false,
+    showCityPicker: false,
+    provinceInput: '',
+    filteredProvinces: [],
 
     // 表单
     days: 2,
@@ -14,119 +21,230 @@ Page({
 
     // 常量
     budgetOptions: BUDGET_OPTIONS,
-    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
+    preferenceOptions: PREFERENCE_OPTIONS,
 
-    // UI
-    locationLoading: true
+    // UI 状态
+    locationLoading: true,
+    locationError: false,
   },
 
   onLoad() {
-    this.getLocation();
+    this.loadProvinces();
+    this.initLocation();
   },
 
-  // 获取当前位置
-  getLocation() {
+  // ========== 行政区划加载 ==========
+  async loadProvinces() {
+    try {
+      const res = await wx.request({
+        url: 'http://localhost:3000/api/destinations/provinces',
+        method: 'GET',
+        timeout: 5000,
+      });
+      if (res.statusCode === 200 && Array.isArray(res.data)) {
+        this.setData({ provinceList: res.data });
+      }
+    } catch (e) {
+      console.error('加载省份失败', e);
+    }
+  },
+
+  async loadCities(provinceCode) {
+    try {
+      const res = await wx.request({
+        url: `http://localhost:3000/api/destinations/cities/${provinceCode}`,
+        method: 'GET',
+        timeout: 5000,
+      });
+      if (res.statusCode === 200 && Array.isArray(res.data)) {
+        return res.data;
+      }
+    } catch (e) {
+      console.error('加载城市失败', e);
+    }
+    return [];
+  },
+
+  // ========== 定位 ==========
+  initLocation() {
     wx.getLocation({
       type: 'gcj02',
       success: (res) => {
-        this.setData({
-          currentLocation: {
-            latitude: res.latitude,
-            longitude: res.longitude,
-            city: '' // 需要通过逆地理编码获取
-          },
-          locationText: '已获取位置',
-          locationLoading: false
-        });
-        // 逆地理编码获取城市名
         this.reverseGeocode(res.latitude, res.longitude);
       },
       fail: () => {
         this.setData({
-          locationText: '定位失败，请手动输入',
-          locationLoading: false
+          locationText: '定位失败，请手动选择位置',
+          locationLoading: false,
+          locationError: true,
+          locationMode: 'manual',
         });
       }
     });
   },
 
-  // 逆地理编码
   async reverseGeocode(lat, lng) {
-    // 高德逆地理编码，实际使用时通过 API 获取城市名
-    // 这里简化处理
-    this.setData({ locationText: '当前位置' });
+    try {
+      const res = await wx.request({
+        url: `https://restapi.amap.com/v3/geocode/regeo?key=d6a104130c5e6169d1e455991987eb79&location=${lng},${lat}&extensions=base`,
+        method: 'GET',
+        timeout: 5000,
+      });
+      if (res.statusCode === 200 && res.data && res.data.status === '1') {
+        const comp = res.data.regeocode.addressComponent;
+        const province = comp.province;
+        const city = comp.city || province;
+
+        // 匹配省份和城市
+        const provinceList = this.data.provinceList;
+        const matchedProvince = provinceList.find(p => p.name.startsWith(province) || province.startsWith(p.name));
+        
+        this.setData({
+          currentProvince: matchedProvince ? { code: matchedProvince.code, name: matchedProvince.name } : null,
+          currentCity: { code: '', name: city },
+          locationText: province + ' ' + city,
+          locationLoading: false,
+          locationError: false,
+          locationMode: 'loc',
+        });
+      } else {
+        throw new Error('逆地理编码失败');
+      }
+    } catch (e) {
+      this.setData({
+        locationText: '已获取位置（城市未知）',
+        locationLoading: false,
+        locationError: false,
+        locationMode: 'loc',
+      });
+    }
   },
 
-  // 手动输入位置
+  // ========== 手动选择位置 ==========
   onLocationInput() {
-    wx.showModal({
-      title: '输入当前位置',
-      editable: true,
-      placeholderText: '请输入您当前所在城市',
-      success: (res) => {
-        if (res.confirm && res.content) {
-          this.setData({
-            currentLocation: { city: res.content, latitude: null, longitude: null },
-            locationText: res.content
-          });
-        }
-      }
+    this.setData({
+      showProvincePicker: true,
+      filteredProvinces: this.data.provinceList,
+      provinceInput: '',
     });
   },
 
-  // 天数调整
+  onProvinceSearch(e) {
+    const kw = e.detail.value.trim();
+    if (!kw) {
+      this.setData({ filteredProvinces: this.data.provinceList });
+      return;
+    }
+    const filtered = this.data.provinceList.filter(p =>
+      p.name.includes(kw) || kw.includes(p.name)
+    );
+    this.setData({ filteredProvinces: filtered, provinceInput: kw });
+  },
+
+  async onProvinceConfirm(e) {
+    const { code, name } = e.currentTarget.dataset;
+    const cities = await this.loadCities(code);
+    this.setData({
+      currentProvince: { code, name },
+      currentCity: null,
+      showProvincePicker: false,
+      showCityPicker: true,
+      cityList: cities,
+      cityInput: '',
+      filteredCities: cities,
+    });
+  },
+
+  onCitySearch(e) {
+    const kw = e.detail.value.trim();
+    if (!kw) {
+      this.setData({ filteredCities: this.data.cityList });
+      return;
+    }
+    const filtered = this.data.cityList.filter(c =>
+      c.name.includes(kw) || kw.includes(c.name)
+    );
+    this.setData({ filteredCities: filtered, cityInput: kw });
+  },
+
+  onCityConfirm(e) {
+    const { code, name } = e.currentTarget.dataset;
+    this.setData({
+      currentCity: { code, name },
+      locationText: this.data.currentProvince.name + ' ' + name,
+      locationMode: 'manual',
+      showCityPicker: false,
+    });
+  },
+
+  onPickerClose() {
+    this.setData({
+      showProvincePicker: false,
+      showCityPicker: false,
+    });
+  },
+
+  // ========== 重新定位 ==========
+  onRelocate() {
+    this.setData({ locationLoading: true, locationError: false });
+    this.initLocation();
+  },
+
+  // ========== 天数 ==========
   onDaysChange(e) {
     const delta = parseInt(e.currentTarget.dataset.delta);
     const days = Math.max(1, Math.min(7, this.data.days + delta));
     this.setData({ days });
   },
 
-  // 预算选择
+  // ========== 预算 ==========
   onBudgetTap(e) {
     const { value } = e.currentTarget.dataset;
     this.setData({ budget: this.data.budget === value ? '' : value });
   },
 
-  // 游玩方式
+  // ========== 偏好 ==========
   onPrefTap(e) {
     const { value } = e.currentTarget.dataset;
-    const { preferences } = this.data;
-    let nextPreferences;
-    if (preferences.includes(value)) {
-      nextPreferences = preferences.filter(p => p !== value);
+    const prefs = this.data.preferences;
+    if (prefs.indexOf(value) >= 0) {
+      this.setData({ preferences: prefs.filter(p => p !== value) });
     } else {
-      if (preferences.length >= 3) {
+      if (prefs.length >= 3) {
         wx.showToast({ title: '最多选3个', icon: 'none' });
         return;
       }
-      nextPreferences = [...preferences, value];
+      this.setData({ preferences: [...prefs, value] });
     }
-    this.setData({
-      preferences: nextPreferences,
-      preferenceOptions: PREFERENCE_OPTIONS.map(item => ({
-        ...item,
-        selected: nextPreferences.indexOf(item.value) >= 0
-      }))
-    });
   },
 
-  // 开始推荐
+  // ========== 开始推荐 ==========
   onRecommend() {
-    const { currentLocation, days, budget, preferences } = this.data;
+    const { currentProvince, currentCity, days, budget, preferences, locationMode } = this.data;
 
-    if (!currentLocation) {
-      wx.showToast({ title: '请先获取位置或手动输入', icon: 'none' });
+    const province = currentProvince?.name || '';
+    const city = currentCity?.name || '';
+
+    if (!province && !city) {
+      wx.showToast({ title: '请先选择或定位您的位置', icon: 'none' });
       return;
     }
 
     if (!budget) {
-      wx.showToast({ title: '请选择预算', icon: 'none' });
+      wx.showToast({ title: '请选择人均预算', icon: 'none' });
       return;
     }
 
-    const params = { current_location: currentLocation, days, budget, preferences };
+    const params = {
+      location_mode: locationMode,
+      province,
+      city,
+      days,
+      budget,
+      preferences,
+    };
 
     wx.setStorageSync('discover_params', params);
     wx.navigateTo({ url: '/pages/discover/result/result' });
-  }
+  },
 });

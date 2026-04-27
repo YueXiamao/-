@@ -31,18 +31,25 @@ class ApiService {
         },
         success: (res) => {
           if (res.statusCode === 200) {
-            // 兼容两种格式：{ code: 0, data: [...] } 或直接返回 [...]
+            // 兼容三种格式：
+            // 1. { code: 0, data: [...] }         — 标准业务格式
+            // 2. { success: true, data: {...} }   — discover/discover等API格式
+            // 3. [...]                             — 直接返回数组
             if (typeof res.data === 'object' && !Array.isArray(res.data)) {
-              if (res.data.code === 0 || res.data.code === undefined) {
-                resolve(res.data.data !== undefined ? res.data.data : res.data);
-              } else {
-                if (!options.silent) {
-                  wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
+              // 有 code 字段（标准业务格式）
+              if ('code' in res.data) {
+                if (res.data.code === 0) {
+                  resolve(res.data.data !== undefined ? res.data.data : res.data);
+                } else {
+                  if (!options.silent) {
+                    wx.showToast({ title: res.data.message || '请求失败', icon: 'none', duration: 2000 });
+                  }
+                  reject({ ...res.data, statusCode: res.statusCode });
                 }
-                reject({
-                  ...(typeof res.data === 'object' && res.data ? res.data : {}),
-                  statusCode: res.statusCode
-                });
+              } else {
+                // 无 code 字段，有 success 字段（discover等格式）
+                // data 直接就是结果对象/数组
+                resolve(res.data.data !== undefined ? res.data.data : res.data);
               }
             } else {
               // 直接返回数组
