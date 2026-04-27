@@ -8,158 +8,54 @@ import { config } from '../config/index.js';
 
 const require = createRequire(import.meta.url);
 
-// ─── SQLite 引擎（sqlite3 纯 JS）───────────────────────────────────────────
+// ─── SQLite 引擎（better-sqlite3 同步）──────────────────────────────────────
 
 function createSqliteDb() {
-  const sqlite3 = require('sqlite3').verbose();
+  const Database = require('better-sqlite3');
 
   const dbPath = path.isAbsolute(config.db.path)
     ? config.db.path
     : path.resolve(process.cwd(), config.db.path);
 
-  const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-      console.error('[DB] SQLite 连接失败:', err.message);
-      process.exit(1);
-    }
-  });
+  const db = new Database(dbPath);
 
-  // 立即执行 pragma（无需 serialize，避免干扰后续查询）
-  db.run('PRAGMA journal_mode = DELETE');
-  db.run('PRAGMA foreign_keys = ON');
+  db.pragma('journal_mode = DELETE');
+  db.pragma('foreign_keys = ON');
 
-  // ── 接口封装 ────────────────────────────────────────────────────────────
-  // sqlite3 npm 的 db.prepare().each() 在有 pending db.run() 时会返回 null，
-  // 改用 db.all() 直接调用（更稳定）来替代 prepare().all/get/run。
+  // ── Promise 封装（兼容异步调用）───────────────────────────────────────────
   const wrapper = {
-    /**
-     * 查询多条记录
-     * @param {string} sql
-     * @param {...any} params
-     * @returns {Promise<any[]>}
-     */
     all(sql, ...params) {
-      return new Promise((resolve, reject) => {
-        db.all(sql, ...params, (err, rows) => {
-          if (err) return reject(err);
-          resolve(rows);
-        });
-      });
+      return Promise.resolve(db.prepare(sql).all(...params));
     },
-
-    /**
-     * 查询单条记录
-     * @param {string} sql
-     * @param {...any} params
-     * @returns {Promise<any|null>}
-     */
     get(sql, ...params) {
-      return new Promise((resolve, reject) => {
-        db.get(sql, ...params, (err, row) => {
-          if (err) return reject(err);
-          resolve(row || null);
-        });
-      });
+      return Promise.resolve(db.prepare(sql).get(...params) || null);
     },
-
-    /**
-     * 执行 INSERT/UPDATE/DELETE
-     * @param {string} sql
-     * @param {...any} params
-     * @returns {Promise<{lastInsertRowid:number, changes:number}>}
-     */
     run(sql, ...params) {
-      return new Promise((resolve, reject) => {
-        db.run(sql, ...params, function (err) {
-          if (err) return reject(err);
-          resolve({ lastInsertRowid: this.lastID, changes: this.changes });
-        });
-      });
+      const info = db.prepare(sql).run(...params);
+      return Promise.resolve({ lastInsertRowid: info.lastInsertRowid, changes: info.changes });
     },
-
-    /**
-     * 执行多条 SQL（事务块内）
-     * @param {string} sql
-     * @returns {Promise<void>}
-     */
     exec(sql) {
-      return new Promise((resolve, reject) => {
-        db.exec(sql, (err) => {
-          if (err) return reject(err);
-          resolve();
-        });
-      });
+      return Promise.resolve(db.exec(sql));
     },
-
-    /**
-     * 事务块
-     * sqlite3 npm 不支持同步事务，用 BEGIN/COMMIT 手动管理。
-     * @param {Function} fn — async function receiving tx object
-     */
     transaction(fn) {
-      return async function wrappedTransaction(...callArgs) {
-        await new Promise((resolve, reject) => {
-          db.run('BEGIN TRANSACTION', (err) => {
-            if (err) return reject(err);
-            resolve();
-          });
-        });
-        try {
-          const tx = {
-            all(sql, ...params) {
-              return new Promise((res, rej) => {
-                db.all(sql, ...params, (err, rows) => {
-                  if (err) return rej(err);
-                  res(rows);
-                });
-              });
-            },
-            get(sql, ...params) {
-              return new Promise((res, rej) => {
-                db.get(sql, ...params, (err, row) => {
-                  if (err) return rej(err);
-                  res(row || null);
-                });
-              });
-            },
-            run(sql, ...params) {
-              return new Promise((res, rej) => {
-                db.run(sql, ...params, function (err) {
-                  if (err) return rej(err);
-                  res({ lastInsertRowid: this.lastID, changes: this.changes });
-                });
-              });
-            }
-          };
-          const result = await fn(tx, ...callArgs);
-          await new Promise((resolve, reject) => {
-            db.run('COMMIT', (err) => {
-              if (err) return reject(err);
-              resolve();
-            });
-          });
-          return result;
-        } catch (e) {
-          await new Promise((resolve) => {
-            db.run('ROLLBACK', () => { resolve(); });
-          });
-          throw e;
-        }
-      };
-    }
+      // better-sqlite3 原生同步事务
+      return db.transaction(fn);
+    },
   };
 
-    const _sqliteDb = {
-      db,
-      dbPath,
-      // 直接方法（discoverService 等直接调 db.all/get/run/query）─────────
-      all: (sql, ...params) => wrapper.all(sql, ...params),
-      get: (sql, ...params) => wrapper.get(sql, ...params),
-      run: (sql, ...params) => wrapper.run(sql, ...params),
-      exec: wrapper.exec,
-      transaction: wrapper.transaction,
-      query: (sql, ...params) => wrapper.all(sql, ...params),
-    };
+  // ── 返回统一接口 ─────────────────────────────────────────────────────────
+  // 所有服务统一用 db.all / db.get / db.run（Promise 版本）
+  // tripService 等直接调 db.prepare() 的，通过 db.prepare(sql) 访问原生 Statement
+  const _sqliteDb = {
+    db,          // 暴露原生 better-sqlite3 实例（prepare 等同步方法）
+    dbPath,
+    all:    wrapper.all,
+    get:    wrapper.get,
+    run:    wrapper.run,
+    exec:   wrapper.exec,
+    transaction: wrapper.transaction,
+    query:  wrapper.all,
+  };
 
   return _sqliteDb;
 }

@@ -11,7 +11,7 @@ Page({
 
     // 选择器
     showPicker: false,
-    pickerStep: 'province',   // 'province' | 'city'
+    pickerStep: 'province',
     filteredList: [],
     searchValue: '',
     cityList: [],
@@ -66,6 +66,7 @@ Page({
   },
 
   async loadCities(code) {
+    let cities = [];
     try {
       const res = await wx.request({
         url: `http://localhost:3000/api/destinations/cities/${code}`,
@@ -73,12 +74,12 @@ Page({
         timeout: 8000,
       });
       if (res.statusCode === 200 && Array.isArray(res.data)) {
-        return res.data;
+        cities = res.data;
       }
     } catch (e) {
       console.error('加载城市失败', e);
     }
-    return [];
+    return cities;
   },
 
   // ========== 微信定位 ==========
@@ -86,8 +87,7 @@ Page({
     wx.getLocation({
       type: 'gcj02',
       success: (res) => {
-        // 检查坐标是否有效（非0，非极端值）
-        if (!res.latitude || !res.longitude || res.latitude < 1 || res.longitude < 1) {
+        if (!res.latitude || !res.longitude || res.latitude < 1) {
           wx.showToast({ title: '无法获取有效位置，请手动选择', icon: 'none' });
           this.openPicker();
           return;
@@ -151,50 +151,69 @@ Page({
     });
   },
 
-  // ========== 手动选择（打开选择器）==========
+  // ========== 打开选择器 ==========
+  openPicker() {
+    const list = this.data.provinceList;
+    if (list.length === 0) {
+      // 省份未加载，先加载再开弹窗
+      wx.showLoading({ title: '加载中...', mask: true });
+      this.loadProvinces().then(() => {
+        wx.hideLoading();
+        this.setData({
+          showPicker: true,
+          pickerStep: 'province',
+          filteredList: this.data.provinceList,
+          searchValue: '',
+        });
+      });
+    } else {
+      this.setData({
+        showPicker: true,
+        pickerStep: 'province',
+        filteredList: list,
+        searchValue: '',
+      });
+    }
+  },
+
   onManualLocation() {
     this.openPicker();
   },
 
-  openPicker() {
-    // 等省份加载完再开
-    if (this.data.provinceList.length === 0) {
-      wx.showLoading({ title: '加载中...', mask: true });
-      this.loadProvinces().then(() => {
-        wx.hideLoading();
-        this.setData({ showPicker: true, pickerStep: 'province', filteredList: this.data.provinceList, searchValue: '' });
-      });
-    } else {
-      this.setData({ showPicker: true, pickerStep: 'province', filteredList: this.data.provinceList, searchValue: '' });
-    }
-  },
-
-  // ========== 选择器操作 ==========
+  // ========== 选择器搜索 ==========
   onPickerSearch(e) {
     const kw = e.detail.value.trim();
     const src = this.data.pickerStep === 'province' ? this.data.provinceList : this.data.cityList;
-    if (!kw) {
-      this.setData({ filteredList: src, searchValue: kw });
-      return;
-    }
-    this.setData({ filteredList: src.filter(item => item.name.includes(kw) || kw.includes(item.name)), searchValue: kw });
+    const filtered = !kw ? src : src.filter(item =>
+      item.name.includes(kw) || kw.includes(item.name)
+    );
+    this.setData({ filteredList: filtered, searchValue: kw });
   },
 
+  // ========== 选择器选中 ==========
   async onPickerSelect(e) {
     const { code, name } = e.currentTarget.dataset;
+
     if (this.data.pickerStep === 'province') {
+      // 加载该省份下的城市，再切换到城市选择步
       wx.showLoading({ title: '加载城市...', mask: true });
-      const cities = await this.loadCities(code);
-      wx.hideLoading();
-      this.setData({
-        pickerStep: 'city',
-        currentProvince: { code, name },
-        currentCity: null,
-        cityList: cities,
-        filteredList: cities,
-        searchValue: '',
-      });
+      try {
+        const cities = await this.loadCities(code);
+        wx.hideLoading();
+        this.setData({
+          pickerStep: 'city',
+          currentProvince: { code, name },
+          currentCity: null,
+          cityList: cities,
+          filteredList: cities,
+          searchValue: '',
+        });
+      } catch (err) {
+        wx.hideLoading();
+        wx.showToast({ title: '加载城市失败', icon: 'none' });
+      }
     } else {
+      // 城市选择完成，保存
       const { currentProvince } = this.data;
       const text = currentProvince ? currentProvince.name + ' ' + name : name;
       const data = {
@@ -208,15 +227,14 @@ Page({
     }
   },
 
+  // ========== 返回省份列表 ==========
   onPickerBack() {
-    if (this.data.pickerStep === 'city') {
-      this.setData({
-        pickerStep: 'province',
-        currentCity: null,
-        filteredList: this.data.provinceList,
-        searchValue: '',
-      });
-    }
+    this.setData({
+      pickerStep: 'province',
+      currentCity: null,
+      filteredList: this.data.provinceList,
+      searchValue: '',
+    });
   },
 
   onPickerClose() {
