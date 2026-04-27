@@ -11,8 +11,6 @@
   <!-- 位置卡片 -->
   <view class="section-card">
     <text class="section-label">当前位置</text>
-
-    <!-- 已选位置 -->
     <view class="loc-bar" wx:if="{{locationText}}">
       <view class="loc-info">
         <text class="loc-icon">[*]</text>
@@ -22,13 +20,9 @@
         {{locationMode === 'loc' ? 'GPS' : '手动'}}
       </view>
     </view>
-
-    <!-- 未选 -->
     <view class="loc-empty" wx:if="{{!locationText}}">
       <text class="loc-empty-text">请选择您的位置</text>
     </view>
-
-    <!-- 两个按钮 -->
     <view class="loc-row">
       <view class="loc-btn loc-btn-gps" bindtap="onLocate">
         <text class="loc-btn-ico">[*]</text>
@@ -58,13 +52,8 @@
   <view class="section-card">
     <text class="section-label">人均预算</text>
     <view class="budget-grid">
-      <view
-        class="budget-item {{budget === item.value ? 'budget-on' : ''}}"
-        wx:for="{{budgetOptions}}"
-        wx:key="value"
-        bindtap="onBudgetTap"
-        data-value="{{item.value}}"
-      >
+      <view class="budget-item {{budget === item.value ? 'budget-on' : ''}}"
+        wx:for="{{budgetOptions}}" wx:key="value" bindtap="onBudgetTap" data-value="{{item.value}}">
         <text class="budget-label">{{item.label}}</text>
         <text class="budget-desc">{{item.desc}}</text>
       </view>
@@ -78,13 +67,8 @@
       <text class="section-hint">选1-3个</text>
     </view>
     <view class="pref-grid">
-      <view
-        class="pref-item {{preferences.indexOf(item.value) >= 0 ? 'pref-on' : ''}}"
-        wx:for="{{preferenceOptions}}"
-        wx:key="value"
-        bindtap="onPrefTap"
-        data-value="{{item.value}}"
-      >
+      <view class="pref-item {{preferences.indexOf(item.value) >= 0 ? 'pref-on' : ''}}"
+        wx:for="{{preferenceOptions}}" wx:key="value" bindtap="onPrefTap" data-value="{{item.value}}">
         <view class="pref-icon-wrap">
           <image class="pref-icon" src="{{item.icon}}" mode="aspectFit" />
         </view>
@@ -102,15 +86,15 @@
   </view>
 
   <!-- ========================================= -->
-  <!-- 位置选择器：底部抽屉式，类似美团/携程 -->
+  <!-- 位置选择器：省 -> 市/区 三步 -->
   <!-- ========================================= -->
   <view class="picker-overlay" wx:if="{{showPicker}}" bindtap="onPickerClose"></view>
   <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
+
     <!-- 顶部栏 -->
     <view class="picker-topbar">
-      <!-- 返回箭头（城市选择时显示） -->
-      <text class="picker-back" wx:if="{{pickerStep === 'city'}}" bindtap="onPickerBack">‹</text>
-      <text class="picker-title">{{pickerStep === 'province' ? '选择省份' : '选择城市'}}</text>
+      <text class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">‹</text>
+      <text class="picker-title">{{pickerStep === 'province' ? '选择省份' : pickerStep === 'city' ? '选择城市' : '选择区县'}}</text>
       <text class="picker-close" bindtap="onPickerClose">×</text>
     </view>
 
@@ -119,43 +103,52 @@
       <text class="picker-search-ico">🔍</text>
       <input
         class="picker-search-input"
-        placeholder="{{pickerStep === 'province' ? '搜索省份' : '搜索城市'}}"
+        placeholder="{{pickerStep === 'province' ? '搜索省份' : pickerStep === 'city' ? '搜索城市' : '搜索区县'}}"
         value="{{searchValue}}"
         bindinput="onPickerSearch"
-        focus="{{showPicker}}"
       />
     </view>
 
-    <!-- 快捷常用 -->
+    <!-- 常用快捷（仅省份步骤） -->
     <view class="picker-hot" wx:if="{{pickerStep === 'province'}}">
       <text class="picker-hot-label">常用</text>
       <view class="picker-hot-list">
-        <text
-          class="picker-hot-item"
-          wx:for="{{['北京','上海','广东','四川','浙江','江苏']}}"
-          wx:key="this"
-          bindtap="onPickerSelect"
-          data-code=""
-          data-name="{{item}}"
-        >{{item}}</text>
+        <text class="picker-hot-item"
+          wx:for="{{['北京市','上海市','广东省','四川省','浙江省','江苏省']}}"
+          wx:key="this" data-name="{{item}}" bindtap="onProvinceQuick"> {{item}}</text>
       </view>
     </view>
 
     <!-- 列表 -->
     <scroll-view class="picker-list" scroll-y="{{true}}">
-      <view
-        class="picker-row {{(pickerStep === 'province' && currentProvince && item.code === currentProvince.code) || (pickerStep === 'city' && currentCity && item.code === currentCity.code) ? 'picker-row-on' : ''}}"
-        wx:for="{{filteredList}}"
-        wx:key="code"
-        bindtap="onPickerSelect"
-        data-code="{{item.code}}"
-        data-name="{{item.name}}"
-      >
-        <text class="picker-row-name">{{item.name}}</text>
-        <text class="picker-row-check" wx:if="{{(pickerStep === 'province' && currentProvince && item.code === currentProvince.code) || (pickerStep === 'city' && currentCity && item.code === currentCity.code)}}">✓</text>
-      </view>
+      <!-- 省份列表 -->
+      <block wx:if="{{pickerStep === 'province'}}">
+        <view class="picker-row"
+          wx:for="{{filteredList}}" wx:key="code"
+          bindtap="onProvinceSelect" data-code="{{item.code}}" data-name="{{item.name}}">
+          <text class="picker-row-name">{{item.name}}</text>
+          <text class="picker-row-arrow">›</text>
+        </view>
+      </block>
+      <!-- 城市列表（普通省份） -->
+      <block wx:if="{{pickerStep === 'city'}}">
+        <view class="picker-row"
+          wx:for="{{filteredList}}" wx:key="code"
+          bindtap="onCitySelect" data-code="{{item.code}}" data-name="{{item.name}}">
+          <text class="picker-row-name">{{item.name}}</text>
+          <text class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}">✓</text>
+        </view>
+      </block>
+      <!-- 区县列表（直辖市） -->
+      <block wx:if="{{pickerStep === 'district'}}">
+        <view class="picker-row"
+          wx:for="{{filteredList}}" wx:key="code"
+          bindtap="onDistrictSelect" data-code="{{item.code}}" data-name="{{item.name}}">
+          <text class="picker-row-name">{{item.name}}</text>
+          <text class="picker-row-check" wx:if="{{currentDistrict && item.code === currentDistrict.code}}">✓</text>
+        </view>
+      </block>
 
-      <!-- 无结果 -->
       <view class="picker-empty" wx:if="{{filteredList.length === 0}}">
         <text class="picker-empty-text">未找到结果</text>
       </view>
