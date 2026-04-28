@@ -9,6 +9,8 @@ Page({
     error: null,
     isOffline: false,
     recommendations: [],
+    expandedIndex: null,
+    expandedRec: null,
   },
 
   onLoad() {
@@ -61,9 +63,14 @@ Page({
   onBack() { wx.navigateBack(); },
 
   onViewDetail(e) {
-    const { name } = e.currentTarget.dataset;
-    wx.showToast({ title: `${name} 详情开发中`, icon: 'none' });
-    track(EVENT_TYPES.DISCOVER_DETAIL_OPEN, { payload: { name } });
+    const { index } = e.currentTarget.dataset;
+    const { recommendations } = this.data;
+    if (!recommendations || !recommendations[index]) return;
+
+    const rec = recommendations[index];
+    const expanded = this.data.expandedIndex === index ? null : index;
+
+    this.setData({ expandedIndex: expanded, expandedRec: expanded !== null ? rec : null });
   },
 
   onGenerateTrip(e) {
@@ -77,8 +84,23 @@ Page({
       const dd = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${dd}`;
     };
-    wx.navigateTo({
-      url: `/pages/plan/result/result?destination=${encodeURIComponent(name)}&city=${encodeURIComponent(city || name)}&province=${encodeURIComponent(province || '')}&days=${days}&start_date=${fmt(startDate)}&preferences=${encodeURIComponent(JSON.stringify(params.preferences || []))}`,
+
+    // 写 trip_params，plan/result.js onLoad 会自动读取并触发行程生成
+    wx.setStorageSync('trip_params', {
+      destinations: [
+        {
+          name,
+          province: province || '',
+          city: city || name,
+          level: 'city',
+        },
+      ],
+      start_date: fmt(startDate),
+      days,
+      preferences: params.preferences || [],
+      extra_notes: `来自随机玩推荐：${name}`,
     });
+
+    wx.navigateTo({ url: '/pages/plan/result/result' });
   },
 });

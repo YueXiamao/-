@@ -90,8 +90,42 @@
 
         <!-- 操作按钮 -->
         <view class="rec-actions">
-          <button class="btn-detail" data-name="{{rec.destination.name}}" data-city="{{rec.destination.city}}" data-province="{{rec.destination.province}}" bindtap="onViewDetail">查看详情</button>
+          <button class="btn-detail {{expandedIndex === index ? 'btn-detail-active' : ''}}" data-index="{{index}}" bindtap="onViewDetail">{{expandedIndex === index ? '收起详情' : '查看详情'}}</button>
           <button class="btn-generate" data-name="{{rec.destination.name}}" data-city="{{rec.destination.city}}" data-province="{{rec.destination.province}}" bindtap="onGenerateTrip">生成行程</button>
+        </view>
+
+        <!-- 展开详情 -->
+        <view wx:if="{{expandedIndex === index && expandedRec}}" class="rec-detail">
+          <!-- 推荐依据 -->
+          <view class="detail-section" wx:if="{{expandedRec.destination.summary}}">
+            <text class="detail-section-title">推荐依据</text>
+            <text class="detail-section-text">{{expandedRec.destination.summary}}</text>
+          </view>
+
+          <!-- 适合人群 -->
+          <view class="detail-section" wx:if="{{expandedRec.destination.tags.length > 0}}">
+            <text class="detail-section-title">适合人群</text>
+            <view class="detail-tags">
+              <text wx:for="{{expandedRec.destination.tags}}" wx:key="tag" class="detail-tag">{{item}}</text>
+            </view>
+          </view>
+
+          <!-- 行程预览 -->
+          <view class="detail-section" wx:if="{{expandedRec.trip_preview}}">
+            <text class="detail-section-title">行程安排</text>
+            <view class="detail-days">
+              <view wx:for="{{expandedRec.trip_preview.days_info}}" wx:key="day" class="detail-day">
+                <text class="detail-day-label">{{item.label}}</text>
+                <text class="detail-day-text">{{item.summary}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 风险提示 -->
+          <view class="detail-section detail-tip-warn">
+            <text class="detail-tip-icon">!</text>
+            <text class="detail-tip-text">以上为参考行程，具体景点可能受天气、交通等因素调整，建议出行前查看实时信息。</text>
+          </view>
         </view>
       </view>
     </view>
