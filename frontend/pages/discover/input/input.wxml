@@ -53,7 +53,7 @@
     <text class="section-label">人均预算</text>
     <view class="budget-grid">
       <view
-        class="budget-item {{budget === item.value ? 'budget-on' : ''}}"
+        class="budget-item {{budget === item.value ? 'selected' : ''}}"
         wx:for="{{budgetOptions}}"
         wx:key="value"
         bindtap="onBudgetTap"
@@ -73,7 +73,7 @@
     </view>
     <view class="pref-grid">
       <view
-        class="pref-item {{item.selected ? 'pref-on' : ''}}"
+        class="pref-item {{item.selected ? 'selected' : ''}}"
         wx:for="{{preferenceOptions}}"
         wx:key="value"
         bindtap="onPrefTap"
