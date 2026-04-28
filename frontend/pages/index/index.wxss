@@ -1,176 +1,192 @@
-/* ===== 首页根容器 ===== */
+/* pages/index/index.wxss */
+
+/* ── Container ── */
 .container {
   min-height: 100vh;
-  padding: 34rpx 24rpx 44rpx;
-  background-color: #F5F5F5;
-  box-sizing: border-box;
+  background-color: var(--color-bg);
+  padding: 32rpx 28rpx 140rpx;
 }
 
-/* ===== Hero 区域 ===== */
+/* ── Hero ── */
 .hero-strip {
-  padding: 26rpx 24rpx 24rpx;
-  border-radius: 30rpx;
-  margin-bottom: 22rpx;
-  background: #fff;
+  margin-bottom: 32rpx;
 }
 
 .eyebrow {
   display: block;
-  font-size: 22rpx;
-  color: #07C160;
-  font-weight: 800;
-  letter-spacing: 1rpx;
+  font-size: var(--font-kicker);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 3rpx;
   margin-bottom: 14rpx;
+  text-transform: uppercase;
 }
 
 .title {
   display: block;
-  font-size: 58rpx;
-  line-height: 1.06;
-  font-weight: 820;
-  color: #1A1A1A;
+  font-size: 56rpx;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+  letter-spacing: -1rpx;
   margin-bottom: 12rpx;
 }
 
 .subtitle {
   display: block;
-  font-size: 26rpx;
-  color: rgba(26, 26, 26, 0.6);
+  font-size: var(--font-base);
+  color: var(--color-text-secondary);
   line-height: 1.5;
 }
 
-.hero-meta {
+/* ── Entry Cards ── */
+.entry-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.entry-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  padding: 36rpx 32rpx 32rpx;
+  min-height: 260rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  border: 1rpx solid var(--color-border);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.entry-card:active {
+  transform: scale(0.975);
+  box-shadow: var(--shadow-xs);
+}
+
+/* plan card — green accent */
+.entry-plan {
+  border-left: 6rpx solid var(--color-primary);
+}
+
+/* discover card — amber accent */
+.entry-discover {
+  border-left: 6rpx solid var(--color-secondary);
+}
+
+/* ── Card Header ── */
+.entry-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.entry-mark {
+  display: inline-flex;
+  align-items: center;
+  height: 48rpx;
+  padding: 0 16rpx;
+  border-radius: var(--r-full);
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: var(--font-kicker);
+  font-weight: 800;
+  letter-spacing: 1.5rpx;
+}
+
+.entry-discover .entry-mark {
+  background: var(--color-secondary-light);
+  color: var(--color-secondary);
+}
+
+.entry-arrow {
+  font-size: 40rpx;
+  color: var(--color-border-strong);
+  font-weight: 300;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.entry-card:active .entry-arrow {
+  transform: translateX(6rpx);
+  color: var(--color-text-hint);
+}
+
+/* ── Card Body ── */
+.entry-body { flex: 1; }
+
+.entry-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+  margin-bottom: 12rpx;
+  letter-spacing: -0.5rpx;
+}
+
+.entry-desc {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  max-width: 480rpx;
+}
+
+/* ── Card Tags ── */
+.entry-tags {
   display: flex;
   flex-wrap: wrap;
   gap: 10rpx;
   margin-top: 20rpx;
 }
 
-.hero-chip {
-  padding: 10rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(255, 255, 255, 0.82);
-  color: rgba(26, 26, 26, 0.4);
-  font-size: 21rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.68);
-}
-
-/* ===== 入口卡片区域 ===== */
-.entry-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 18rpx;
-}
-
-.entry-card {
-  position: relative;
-  overflow: hidden;
-  border-radius: 32rpx;
-  padding: 28rpx 26rpx 26rpx;
-  min-height: 290rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  background: #fff;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.06);
-}
-
-.entry-card:active {
-  transform: scale(0.985);
-}
-
-.entry-plan {
-  background: linear-gradient(135deg, #e8f5ee, #ffffff);
-}
-
-.entry-discover {
-  background: linear-gradient(135deg, #fff5e6, #ffffff);
-}
-
-/* ===== 卡片头部 ===== */
-.entry-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.entry-mark {
-  min-width: 94rpx;
-  height: 56rpx;
-  border-radius: 999rpx;
-  padding: 0 18rpx;
-  background: rgba(7, 193, 96, 0.1);
-  color: #07C160;
-  font-size: 20rpx;
-  font-weight: 800;
-  line-height: 56rpx;
-  text-align: center;
-}
-
-.entry-discover .entry-mark {
-  background: rgba(255, 149, 0, 0.1);
-  color: #FF9500;
-}
-
-.entry-arrow {
-  font-size: 42rpx;
-  color: rgba(26, 26, 26, 0.2);
-}
-
-/* ===== 卡片内容 ===== */
-.entry-body {
-  margin-top: 28rpx;
-}
-
-.entry-title {
-  display: block;
-  font-size: 48rpx;
-  font-weight: 800;
-  color: #1A1A1A;
-  line-height: 1.08;
-  margin-bottom: 14rpx;
-}
-
-.entry-desc {
-  display: block;
-  max-width: 460rpx;
-  font-size: 25rpx;
-  color: rgba(26, 26, 26, 0.6);
-  line-height: 1.55;
-}
-
-/* ===== 卡片标签 ===== */
-.entry-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10rpx;
-  margin-top: 18rpx;
-}
-
 .entry-tag {
-  padding: 9rpx 16rpx;
-  border-radius: 999rpx;
-  background: rgba(7, 193, 96, 0.08);
-  color: #07C160;
-  font-size: 21rpx;
+  display: inline-flex;
+  align-items: center;
+  padding: 8rpx 16rpx;
+  border-radius: var(--r-full);
+  background: var(--color-primary-muted);
+  color: var(--color-primary);
+  font-size: var(--font-xs);
+  font-weight: 600;
 }
 
 .entry-tag-warm {
-  background: rgba(255, 149, 0, 0.08);
-  color: #FF9500;
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--color-secondary);
 }
 
-/* ===== 底部说明 ===== */
-.home-notes {
+/* ── Feature pills row ── */
+.feature-row {
   display: flex;
   flex-direction: column;
-  gap: 8rpx;
-  margin-top: 18rpx;
-  padding: 4rpx 6rpx 0;
+  gap: 12rpx;
+  margin-top: 24rpx;
 }
 
-.home-note {
-  font-size: 22rpx;
-  color: rgba(26, 26, 26, 0.4);
-  line-height: 1.55;
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 14rpx;
+}
+
+.feature-dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  background: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.entry-discover .feature-dot {
+  background: var(--color-secondary);
+}
+
+.feature-text {
+  font-size: var(--font-xs);
+  color: var(--color-text-hint);
+  line-height: 1.4;
 }

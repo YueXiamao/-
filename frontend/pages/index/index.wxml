@@ -1,15 +1,13 @@
 <view class="container">
 
+  <!-- Hero -->
   <view class="hero-strip">
-    <text class="eyebrow">TRAVEL PLANNER</text>
+    <text class="eyebrow">Travel Planner</text>
     <text class="title">今天怎么出发</text>
-    <text class="subtitle">选一个入口，直接开始。</text>
-    <view class="hero-meta">
-      <text class="hero-chip">城市背景会跟着目的地切换</text>
-      <text class="hero-chip">偏好图片已按旅行场景重做</text>
-    </view>
+    <text class="subtitle">选一个入口，开启你的下一段旅程。</text>
   </view>
 
+  <!-- 行程规划 -->
   <view class="entry-stage">
     <view class="entry-card entry-plan" bindtap="goPlan">
       <view class="entry-head">
@@ -18,14 +16,29 @@
       </view>
       <view class="entry-body">
         <text class="entry-title">行程规划</text>
-        <text class="entry-desc">已经想好去哪，就把路线和节奏安排清楚。</text>
+        <text class="entry-desc">已经想好去哪，把路线和节奏安排清楚。</text>
       </view>
       <view class="entry-tags">
         <text class="entry-tag">目的地已确定</text>
         <text class="entry-tag">适合直接开做</text>
       </view>
+      <view class="feature-row">
+        <view class="feature-item">
+          <view class="feature-dot"></view>
+          <text class="feature-text">支持市+区县混合选择</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-dot"></view>
+          <text class="feature-text">轻松度假 / 网红打卡 / 美食等玩法</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-dot"></view>
+          <text class="feature-text">真实景点、餐厅、住宿推荐</text>
+        </view>
+      </view>
     </view>
 
+    <!-- 随机玩 -->
     <view class="entry-card entry-discover" bindtap="goDiscover">
       <view class="entry-head">
         <text class="entry-mark">RND</text>
@@ -33,18 +46,23 @@
       </view>
       <view class="entry-body">
         <text class="entry-title">随机玩</text>
-        <text class="entry-desc">还没想好去哪，就先拿几组灵感方案。</text>
+        <text class="entry-desc">还没想好去哪，让系统给你几组灵感方案。</text>
       </view>
       <view class="entry-tags">
         <text class="entry-tag entry-tag-warm">周末灵感</text>
         <text class="entry-tag entry-tag-warm">按预算筛选</text>
       </view>
+      <view class="feature-row">
+        <view class="feature-item">
+          <view class="feature-dot"></view>
+          <text class="feature-text">输入当前位置，自动推荐周边目的地</text>
+        </view>
+        <view class="feature-item">
+          <view class="feature-dot"></view>
+          <text class="feature-text">输入预算天数，马上出攻略</text>
+        </view>
+      </view>
     </view>
-  </view>
-
-  <view class="home-notes">
-    <text class="home-note">目的地选择支持到区县</text>
-    <text class="home-note">轻松度假、网红打卡、美食等偏好可组合</text>
   </view>
 
 </view>
