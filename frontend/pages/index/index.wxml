@@ -1,67 +1,68 @@
 <view class="container">
 
-  <!-- Hero -->
-  <view class="hero-strip">
-    <text class="eyebrow">Travel Planner</text>
-    <text class="title">今天怎么出发</text>
-    <text class="subtitle">选一个入口，开启你的下一段旅程。</text>
+  <!-- Hero Banner -->
+  <view class="hero-banner">
+    <text class="hero-kicker">Travel Planner</text>
+    <text class="hero-title">今天怎么出发</text>
+    <view class="hero-divider"></view>
+    <text class="hero-subtitle">选一个入口，开启你的下一段旅程。</text>
   </view>
 
-  <!-- 行程规划 -->
+  <!-- Entry Cards -->
   <view class="entry-stage">
+
+    <!-- PLAN -->
     <view class="entry-card entry-plan" bindtap="goPlan">
       <view class="entry-head">
-        <text class="entry-mark">PLAN</text>
+        <view class="entry-mark-wrap">
+          <text class="entry-mark">PLAN</text>
+          <text class="entry-tagline">行程规划</text>
+        </view>
         <text class="entry-arrow">›</text>
       </view>
       <view class="entry-body">
-        <text class="entry-title">行程规划</text>
-        <text class="entry-desc">已经想好去哪，把路线和节奏安排清楚。</text>
+        <text class="entry-title">已经想好去哪</text>
+        <text class="entry-desc">把路线和节奏安排清楚，直接开做。</text>
       </view>
       <view class="entry-tags">
-        <text class="entry-tag">目的地已确定</text>
-        <text class="entry-tag">适合直接开做</text>
-      </view>
-      <view class="feature-row">
-        <view class="feature-item">
-          <view class="feature-dot"></view>
-          <text class="feature-text">支持市+区县混合选择</text>
-        </view>
-        <view class="feature-item">
-          <view class="feature-dot"></view>
-          <text class="feature-text">轻松度假 / 网红打卡 / 美食等玩法</text>
-        </view>
-        <view class="feature-item">
-          <view class="feature-dot"></view>
-          <text class="feature-text">真实景点、餐厅、住宿推荐</text>
-        </view>
+        <text class="entry-tag"><text class="entry-tag-dot"></text>市 + 区县混合</text>
+        <text class="entry-tag"><text class="entry-tag-dot"></text>轻松度假</text>
+        <text class="entry-tag"><text class="entry-tag-dot"></text>网红打卡</text>
+        <text class="entry-tag"><text class="entry-tag-dot"></text>美食之旅</text>
       </view>
     </view>
 
-    <!-- 随机玩 -->
+    <!-- RND -->
     <view class="entry-card entry-discover" bindtap="goDiscover">
       <view class="entry-head">
-        <text class="entry-mark">RND</text>
+        <view class="entry-mark-wrap">
+          <text class="entry-mark">RND</text>
+          <text class="entry-tagline">随机玩</text>
+        </view>
         <text class="entry-arrow">›</text>
       </view>
       <view class="entry-body">
-        <text class="entry-title">随机玩</text>
-        <text class="entry-desc">还没想好去哪，让系统给你几组灵感方案。</text>
+        <text class="entry-title">还没想好去哪</text>
+        <text class="entry-desc">告诉系统你的位置、天数和预算，马上出灵感。</text>
       </view>
       <view class="entry-tags">
-        <text class="entry-tag entry-tag-warm">周末灵感</text>
-        <text class="entry-tag entry-tag-warm">按预算筛选</text>
+        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>当前位置推荐</text>
+        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>按预算筛选</text>
+        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>马上出攻略</text>
       </view>
-      <view class="feature-row">
-        <view class="feature-item">
-          <view class="feature-dot"></view>
-          <text class="feature-text">输入当前位置，自动推荐周边目的地</text>
-        </view>
-        <view class="feature-item">
-          <view class="feature-dot"></view>
-          <text class="feature-text">输入预算天数，马上出攻略</text>
-        </view>
-      </view>
+    </view>
+
+  </view>
+
+  <!-- Footer hints -->
+  <view class="home-footer">
+    <view class="home-footer-item">
+      <view class="home-footer-dot"></view>
+      <text class="home-footer-text">目的地精确到区县，支持市 + 区县组合</text>
+    </view>
+    <view class="home-footer-item">
+      <view class="home-footer-dot"></view>
+      <text class="home-footer-text">推荐内容完全过滤广告，真实好玩</text>
     </view>
   </view>
 

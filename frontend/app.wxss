@@ -1,62 +1,79 @@
 /* ================================================================
-   Global Design Tokens & Reset
+   Global Design Tokens v2 — Premium Travel App
    ================================================================ */
 page {
   /* ── Palette ── */
-  --color-primary: #16A06D;
-  --color-primary-hover: #128560;
-  --color-primary-light: rgba(22, 160, 109, 0.1);
-  --color-primary-muted: rgba(22, 160, 109, 0.06);
-  --color-secondary: #F59E0B;
-  --color-secondary-light: rgba(245, 158, 11, 0.1);
-  --color-bg: #F0F3EE;
-  --color-bg-alt: #E8ECE7;
+  --color-primary: #0D9C6E;
+  --color-primary-hover: #0A865E;
+  --color-primary-light: rgba(13, 156, 110, 0.12);
+  --color-primary-muted: rgba(13, 156, 110, 0.06);
+  --color-secondary: #E8810A;
+  --color-secondary-hover: #D47209;
+  --color-secondary-light: rgba(232, 129, 10, 0.12);
+  --color-secondary-muted: rgba(232, 129, 10, 0.06);
+  --color-purple: #7C5CFC;
+  --color-purple-light: rgba(124, 92, 252, 0.12);
+  --color-bg: #F2F5F1;
+  --color-bg-warm: #F7F5F0;
   --color-surface: #FFFFFF;
-  --color-surface-soft: rgba(255, 255, 255, 0.88);
-  --color-text: #1A1A1A;
-  --color-text-secondary: rgba(26, 26, 26, 0.58);
-  --color-text-hint: rgba(26, 26, 26, 0.36);
-  --color-border: rgba(26, 26, 26, 0.08);
-  --color-border-strong: rgba(26, 26, 26, 0.14);
-  --color-danger: #EF4444;
-  --color-danger-light: rgba(239, 68, 68, 0.1);
-  --color-success: #16A06D;
-  --color-overlay: rgba(0, 0, 0, 0.4);
+  --color-surface-soft: rgba(255, 255, 255, 0.82);
+  --color-surface-glass: rgba(255, 255, 255, 0.65);
+  --color-text: #18181B;
+  --color-text-secondary: rgba(24, 24, 27, 0.55);
+  --color-text-hint: rgba(24, 24, 27, 0.35);
+  --color-border: rgba(24, 24, 27, 0.07);
+  --color-border-strong: rgba(24, 24, 27, 0.13);
+  --color-danger: #DC2626;
+  --color-danger-light: rgba(220, 38, 38, 0.1);
+  --color-overlay: rgba(10, 14, 12, 0.45);
 
   /* ── Typography ── */
-  --font-xxl: 48rpx;
-  --font-xl:  36rpx;
-  --font-lg:  32rpx;
-  --font-base: 28rpx;
-  --font-sm:  24rpx;
-  --font-xs:  22rpx;
-  --font-kicker: 20rpx;
+  --font-display: 52rpx;
+  --font-xxl:  44rpx;
+  --font-xl:   36rpx;
+  --font-lg:   30rpx;
+  --font-base: 27rpx;
+  --font-sm:   24rpx;
+  --font-xs:   21rpx;
+  --font-kicker: 19rpx;
+  --tracking-tight: -0.5rpx;
+  --tracking-wide:  1.5rpx;
 
   /* ── Spacing ── */
-  --sp-xs:  8rpx;
-  --sp-sm:  12rpx;
-  --sp-base: 24rpx;
-  --sp-lg:  32rpx;
-  --sp-xl:  48rpx;
+  --sp-1:  4rpx;
+  --sp-2:  8rpx;
+  --sp-3:  12rpx;
+  --sp-4:  16rpx;
+  --sp-5:  20rpx;
+  --sp-6:  24rpx;
+  --sp-8:  32rpx;
+  --sp-10: 40rpx;
+  --sp-12: 48rpx;
 
   /* ── Border-radius ── */
-  --r-sm:   12rpx;
-  --r-base: 20rpx;
-  --r-lg:   28rpx;
-  --r-xl:   40rpx;
+  --r-xs:  8rpx;
+  --r-sm:  12rpx;
+  --r-md:  18rpx;
+  --r-lg:  24rpx;
+  --r-xl:  36rpx;
+  --r-2xl: 48rpx;
   --r-full: 9999rpx;
 
-  /* ── Shadows ── */
-  --shadow-xs: 0 2rpx 8rpx rgba(35, 55, 45, 0.06);
-  --shadow-sm: 0 4rpx 16rpx rgba(35, 55, 45, 0.08);
-  --shadow-md: 0 8rpx 28rpx rgba(35, 55, 45, 0.11);
-  --shadow-lg: 0 16rpx 48rpx rgba(35, 55, 45, 0.14);
+  /* ── Shadows (tinted to background) ── */
+  --shadow-xs: 0 2rpx 8rpx rgba(13, 156, 110, 0.05);
+  --shadow-sm: 0 4rpx 16rpx rgba(13, 156, 110, 0.08), 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 8rpx 32rpx rgba(13, 156, 110, 0.10), 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 16rpx 48rpx rgba(13, 156, 110, 0.12), 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
+  --shadow-xl: 0 24rpx 64rpx rgba(13, 156, 110, 0.14), 0 6rpx 20rpx rgba(0, 0, 0, 0.07);
+  --shadow-card: 0 2rpx 8rpx rgba(0, 0, 0, 0.04), 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+  --shadow-amber: 0 8rpx 24rpx rgba(232, 129, 10, 0.22);
 
   /* ── Page base ── */
   background-color: var(--color-bg);
   font-size: var(--font-base);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* ── Reset ── */
@@ -64,16 +81,24 @@ view, text, navigator, button, input, textarea {
   box-sizing: border-box;
 }
 
-/* ── Global card ── */
-.card {
-  background: var(--color-surface);
-  border-radius: var(--r-lg);
-  padding: var(--sp-base);
-  box-shadow: var(--shadow-sm);
-  border: 1rpx solid var(--color-border);
+/* ── Glass card (true frosted glass) ── */
+.glass-card {
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1rpx solid rgba(255, 255, 255, 0.55);
+  box-shadow: var(--shadow-card);
 }
 
-/* ── Global button reset ── */
+/* ── Surface card (pure white) ── */
+.surface-card {
+  background: var(--color-surface);
+  border-radius: var(--r-lg);
+  border: 1rpx solid var(--color-border);
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Button reset ── */
 button {
   padding: 0;
   margin: 0;
@@ -94,13 +119,44 @@ button::after { border: none; }
   background-size: 100% auto;
 }
 
-/* ── Glass surface ── */
-.glass-card {
-  background: var(--color-surface-soft);
-  border: 1rpx solid rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-sm);
+/* ── Badge pill ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  border-radius: var(--r-full);
+  font-size: var(--font-xs);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.badge-green {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.badge-amber {
+  background: var(--color-secondary-light);
+  color: var(--color-secondary);
+}
+
+.badge-purple {
+  background: var(--color-purple-light);
+  color: var(--color-purple);
+}
+
+.badge-ghost {
+  background: rgba(24, 24, 27, 0.06);
+  color: var(--color-text-secondary);
+}
+
+/* ── Section label ── */
+.section-label {
+  font-size: var(--font-kicker);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
 }
 
 /* ── Safe bottom ── */
@@ -109,7 +165,9 @@ button::after { border: none; }
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ── Utility ── */
+/* ── Utility colors ── */
 .text-primary { color: var(--color-primary); }
+.text-amber   { color: var(--color-secondary); }
+.text-purple  { color: var(--color-purple); }
 .text-secondary { color: var(--color-text-secondary); }
 .text-hint { color: var(--color-text-hint); }
