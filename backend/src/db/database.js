@@ -265,6 +265,16 @@ function initTables() {
       UNIQUE(user_id, preference_type, value)
     );
 
+    CREATE TABLE IF NOT EXISTS user_event (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      openid TEXT NOT NULL DEFAULT '',
+      event_type TEXT NOT NULL,
+      target_type TEXT NOT NULL DEFAULT '',
+      target_id TEXT NOT NULL DEFAULT '',
+      payload TEXT NOT NULL DEFAULT '{}',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
     CREATE TABLE IF NOT EXISTS region_data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       code TEXT UNIQUE NOT NULL,

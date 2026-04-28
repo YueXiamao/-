@@ -3,6 +3,7 @@ import tripApi from '../../../services/trip.js';
 import { getCityBackground } from '../../../constants/index.js';
 import { normalizeGenerationState } from './generation-state.js';
 import { getGenerationErrorMessage } from '../../../services/backend-health.js';
+import { track, EVENT_TYPES } from '../../../services/analytics.js';
 
 Page({
   data: {
@@ -121,6 +122,10 @@ Page({
       });
       const trip = await tripApi.generate(params);
       this.setTripState(trip, trip.trip_id);
+      track(EVENT_TYPES.TRIP_GENERATE_SUCCESS, {
+        targetType: 'trip', targetId: trip.trip_id,
+        payload: { days: params.days, destinations: params.destinations }
+      });
     } catch (error) {
       console.error('Failed to generate trip:', error);
       this.setData({
@@ -128,6 +133,9 @@ Page({
         phase: 'error',
         error: getGenerationErrorMessage(error),
         generatingText: ''
+      });
+      track(EVENT_TYPES.TRIP_GENERATE_FAILED, {
+        payload: { error: error?.message || String(error), params }
       });
     }
   },
@@ -327,6 +335,9 @@ Page({
       };
       this.updateDayItems(dayIndex, nextItems);
       wx.showToast({ title: '已换一个', icon: 'success' });
+      track(EVENT_TYPES.TRIP_ITEM_REPLACE, {
+        targetType: 'trip_item', targetId: item.id, payload: { tripId: this.data.tripId, itemType: item.type }
+      });
     } catch (error) {
       wx.hideLoading();
       wx.showToast({ title: '暂时没有更合适的替换项', icon: 'none' });
@@ -357,6 +368,9 @@ Page({
             item.itemKey = `${dayIndex}-${idx}`;
           });
           this.updateDayItems(dayIndex, nextItems);
+          track(EVENT_TYPES.TRIP_ITEM_DELETE, {
+            targetType: 'trip_item', targetId: item.id, payload: { tripId: this.data.tripId, itemType: item.type }
+          });
         } catch (error) {
           wx.hideLoading();
           wx.showToast({ title: '删除失败', icon: 'none' });
@@ -408,6 +422,7 @@ Page({
       wx.hideLoading();
       this.setTripState(detail, saved.trip_id);
       wx.showToast({ title: '保存成功', icon: 'success' });
+      track(EVENT_TYPES.TRIP_SAVE, { targetType: 'trip', targetId: saved.trip_id });
     } catch (error) {
       wx.hideLoading();
       wx.showToast({ title: '保存失败', icon: 'none' });
@@ -441,11 +456,13 @@ Page({
     }
 
     await copyToClipboard(text);
+    track(EVENT_TYPES.TRIP_COPY, { targetType: 'trip', targetId: this.data.tripId || '' });
   },
 
   onShareAppMessage() {
     const { trip } = this.data;
     const hasSavedTrip = /^\d+$/.test(String(this.data.tripId || ''));
+    track(EVENT_TYPES.TRIP_SHARE, { targetType: 'trip', targetId: this.data.tripId || '' });
     return {
       title: trip?.title || '我的旅行行程',
       path: hasSavedTrip

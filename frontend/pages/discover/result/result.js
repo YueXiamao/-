@@ -1,6 +1,7 @@
 // pages/discover/result/result.js
 import discoverApi from '../../../services/discover.js';
 import { isBackendUnavailableError } from '../../../services/backend-health.js';
+import { track, EVENT_TYPES } from '../../../services/analytics.js';
 
 Page({
   data: {
@@ -30,6 +31,12 @@ Page({
         preferences: params.preferences || [],
       });
       this.setData({ loading: false, recommendations: Array.isArray(recs) ? recs : [] });
+      // 曝光埋点
+      if (Array.isArray(recs) && recs.length > 0) {
+        track(EVENT_TYPES.DISCOVER_RECOMMEND_VIEW, {
+          payload: { count: recs.length, params }
+        });
+      }
       if (!recs || recs.length === 0) {
         this.setData({ error: '暂未找到合适的目的地，请尝试调整条件' });
       }
@@ -56,6 +63,7 @@ Page({
   onViewDetail(e) {
     const { name } = e.currentTarget.dataset;
     wx.showToast({ title: `${name} 详情开发中`, icon: 'none' });
+    track(EVENT_TYPES.DISCOVER_DETAIL_OPEN, { payload: { name } });
   },
 
   onGenerateTrip(e) {
