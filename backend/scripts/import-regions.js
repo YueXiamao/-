@@ -21,7 +21,12 @@ if (!fs.existsSync(dataDir)) {
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 
-const AMAP_KEY = process.env.AMAP_KEY || 'd6a104130c5e6169d1e455991987eb79';
+const AMAP_KEY = process.env.AMAP_KEY;
+if (!AMAP_KEY) {
+  console.error('错误: 请设置环境变量 AMAP_KEY');
+  console.error('  export AMAP_KEY=你的高德key');
+  process.exit(1);
+}
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // 递归解析高德行政区划树
