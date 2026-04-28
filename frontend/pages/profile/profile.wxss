@@ -1,10 +1,10 @@
 /* pages/profile/profile.wxss */
 
 /* ── Page ── */
-.container {
+.page {
   min-height: 100vh;
   background-color: var(--color-bg);
-  padding: 0 0 120rpx 0;
+  padding: 24rpx 28rpx 120rpx;
 }
 
 /* ── Glass card (reused from app.wxss, redefined here for completeness) ── */

@@ -1,11 +1,11 @@
-<view class="container">
+<view class="page page-bg">
 
   <!-- Hero Banner -->
-  <view class="hero-banner">
-    <text class="hero-kicker">Travel Planner</text>
-    <text class="hero-title">今天怎么出发</text>
-    <view class="hero-divider"></view>
-    <text class="hero-subtitle">选一个入口，开启你的下一段旅程。</text>
+  <view class="page-hero" style="padding: 64rpx 32rpx 48rpx">
+    <text class="page-kicker">TRAVEL PLANNER</text>
+    <text class="page-title">今天怎么出发</text>
+    <view style="height: 4rpx; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); border-radius: 2rpx; margin: 24rpx 0;"></view>
+    <text class="page-subtitle">选一个入口，开启你的下一段旅程。</text>
   </view>
 
   <!-- Entry Cards -->
