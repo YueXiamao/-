@@ -1,9 +1,15 @@
 // ─── POI 类型枚举 ──────────────────────────────────────────────────────────
-const POI_TYPES = ['attraction', 'food', 'hotel', 'transport', 'shopping', 'entertainment'];
+const POI_TYPES = ['spot', 'attraction', 'food', 'hotel', 'transport', 'shopping', 'entertainment'];
 
 // 各类 POI 的必填（required）/ 选填（optional）字段规范
 // 用于 AI 增强结果校验和数据库写入前的校验
 const FIELD_SPEC = {
+  // 景点：必须有名称、类型
+  spot: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
   // 景点：必须有名称、类型
   attraction: {
     required: ['type', 'name'],

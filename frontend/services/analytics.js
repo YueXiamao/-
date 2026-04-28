@@ -1,9 +1,41 @@
-// 用户行为分析服务（异步，不阻塞主流程）
+// 行为埋点服务
+// 特性：静默失败，不阻塞主流程；批量上报减少请求
 import { api } from './api.js';
 
-/**
- * 事件类型常量
- */
+const EVENT_QUEUE_KEY = 'analytics_event_queue';
+const MAX_QUEUE_SIZE = 50;
+const FLUSH_THRESHOLD = 10;
+
+let _queue = [];
+
+function loadQueue() {
+  try {
+    _queue = wx.getStorageSync(EVENT_QUEUE_KEY) || [];
+  } catch {
+    _queue = [];
+  }
+}
+
+function saveQueue() {
+  try {
+    wx.setStorageSync(EVENT_QUEUE_KEY, _queue);
+  } catch {}
+}
+
+async function flushAsync() {
+  loadQueue();
+  if (_queue.length === 0) return;
+  const events = [..._queue];
+  _queue = [];
+  saveQueue();
+  try {
+    await api.post('/api/analytics/event', { events }, { silent: true });
+  } catch (_) {
+    _queue = [...events.slice(-MAX_QUEUE_SIZE), ..._queue].slice(-MAX_QUEUE_SIZE);
+    saveQueue();
+  }
+}
+
 export const EVENT_TYPES = {
   TRIP_GENERATE_SUCCESS: 'trip_generate_success',
   TRIP_GENERATE_FAILED: 'trip_generate_failed',
@@ -19,25 +51,57 @@ export const EVENT_TYPES = {
   FEEDBACK_NOT_INTERESTED: 'feedback_not_interested',
 };
 
-/**
- * 静默上报事件（失败不弹窗，不阻塞调用方）
- * @param {string} eventType - 事件类型
- * @param {object} [extra] - { targetType, targetId, payload }
- */
-export function track(eventType, extra = {}) {
-  api.post('/api/analytics/event', {
-    event_type: eventType,
-    target_type: extra.targetType || '',
-    target_id: extra.targetId || '',
-    payload: extra.payload || {},
-  }, { silent: true }).catch(() => {
-    // 静默忽略任何失败
-  });
+function enqueue(eventType, payload = {}) {
+  loadQueue();
+  _queue.push({ eventType, payload, ts: Date.now() });
+  if (_queue.length > MAX_QUEUE_SIZE) {
+    _queue = _queue.slice(-MAX_QUEUE_SIZE);
+  }
+  saveQueue();
+  if (_queue.length >= FLUSH_THRESHOLD) {
+    flushAsync();
+  }
 }
 
-/**
- * 批量上报（不阻塞）
- */
-export function trackBatch(events) {
-  api.post('/api/analytics/events', { events }, { silent: true }).catch(() => {});
+export function track(eventType, payload = {}) {
+  enqueue(eventType, payload);
+  flushAsync();
 }
+
+track.tripGenerateSuccess = (tripId, city) =>
+  track('trip_generate_success', { target_type: 'trip', target_id: tripId, city });
+
+track.tripGenerateFailed = (reason) =>
+  track('trip_generate_failed', { target_type: 'trip', reason });
+
+track.tripSave = (tripId) =>
+  track('trip_save', { target_type: 'trip', target_id: tripId });
+
+track.tripCopy = (tripId) =>
+  track('trip_copy', { target_type: 'trip', target_id: tripId });
+
+track.tripShare = (tripId) =>
+  track('trip_share', { target_type: 'trip', target_id: tripId });
+
+track.tripItemReplace = (tripId, itemId, newItemId) =>
+  track('trip_item_replace', { target_type: 'trip_item', target_id: itemId, new_item_id: newItemId, trip_id: tripId });
+
+track.tripItemDelete = (tripId, itemId) =>
+  track('trip_item_delete', { target_type: 'trip_item', target_id: itemId, trip_id: tripId });
+
+track.discoverRecommendView = (city, province) =>
+  track('discover_recommend_view', { target_type: 'recommendation', city, province });
+
+track.discoverDetailOpen = (name, city) =>
+  track('discover_detail_open', { target_type: 'recommendation', name, city });
+
+track.feedbackTooRushed = (tripId) =>
+  track('feedback_too_rushed', { target_type: 'feedback', trip_id: tripId });
+
+track.feedbackBudgetMismatch = (tripId) =>
+  track('feedback_budget_mismatch', { target_type: 'feedback', trip_id: tripId });
+
+track.feedbackNotInterested = (tripId, reason) =>
+  track('feedback_not_interested', { target_type: 'feedback', trip_id: tripId, reason });
+
+export default { track, EVENT_TYPES };

@@ -296,3 +296,38 @@ CREATE TABLE `poi_cache` (
 | 景点 | 7 天 | 变化少 |
 | 餐厅 | 3 天 | 可能有新开业/歇业 |
 | 酒店 | 1 天 | 价格经常变动 |
+
+---
+
+## 用户行为事件表（user_event）
+
+用于 v2 个性化推荐的数据积累。
+
+```sql
+CREATE TABLE IF NOT EXISTS user_event (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  openid       TEXT NOT NULL DEFAULT '',
+  event_type   TEXT NOT NULL,
+  target_type  TEXT NOT NULL DEFAULT '',
+  target_id    TEXT NOT NULL DEFAULT '',
+  payload      TEXT NOT NULL DEFAULT '{}',
+  created_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### 事件类型
+
+| event_type | 说明 | 触发 |
+|---|---|---|
+| `trip_generate_success` | 行程生成成功 | plan/result.js |
+| `trip_generate_failed` | 行程生成失败 | plan/result.js |
+| `trip_save` | 保存行程 | plan/result.js |
+| `trip_copy` | 复制行程 | plan/result.js |
+| `trip_share` | 分享行程 | plan/result.js |
+| `trip_item_replace` | 替换行程项 | plan/result.js |
+| `trip_item_delete` | 删除行程项 | plan/result.js |
+| `discover_recommend_view` | 随机玩结果曝光 | discover/result.js |
+| `discover_detail_open` | 打开推荐详情 | discover/result.js |
+| `feedback_too_rushed` | 反馈：太赶 | TBD |
+| `feedback_budget_mismatch` | 反馈：预算不符 | TBD |
+| `feedback_not_interested` | 反馈：不感兴趣 | TBD |

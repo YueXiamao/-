@@ -71,6 +71,15 @@ Page({
     const expanded = this.data.expandedIndex === index ? null : index;
 
     this.setData({ expandedIndex: expanded, expandedRec: expanded !== null ? rec : null });
+
+    // 展开详情时埋点
+    if (expanded !== null) {
+      track(EVENT_TYPES.DISCOVER_DETAIL_OPEN, {
+        name: rec?.name || '',
+        city: rec?.city || '',
+        rank: index + 1,
+      });
+    }
   },
 
   onGenerateTrip(e) {
