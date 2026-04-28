@@ -19,10 +19,10 @@
   </view>
 
   <!-- Result -->
-  <view class="result" wx:else>
+  <view class="trip-result" wx:else>
 
     <!-- Trip Header -->
-    <view class="trip-header card">
+     <view class="trip-header trip-card">
       <view class="trip-title">{{trip.title || '行程规划'}}</view>
       <view class="trip-meta">
         <text class="meta-item">{{trip.start_date}} · {{trip.days}}天</text>
@@ -57,7 +57,7 @@
 
     <!-- Days -->
     <view class="days">
-      <view class="day-section card" wx:for="{{trip.itinerary}}" wx:for-index="dayIndex" wx:key="day">
+      <view class="day-section trip-card" wx:for="{{trip.itinerary}}" wx:for-index="dayIndex" wx:key="day">
 
         <!-- Day Header -->
         <view class="day-header" bindtap="onDayTap" data-index="{{dayIndex}}">

@@ -11,7 +11,7 @@
 }
 
 /* ── Card base ── */
-.card {
+.trip-card {
   background: var(--color-surface);
   border-radius: var(--r-xl);
   overflow: hidden;
@@ -20,7 +20,7 @@
 }
 
 /* ── Result wrapper ── */
-.result {
+.trip-result {
   width: 100%;
 }
 
