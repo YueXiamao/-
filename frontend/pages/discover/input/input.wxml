@@ -1,12 +1,12 @@
 <!-- pages/discover/input/input.wxml -->
-<view class="container">
-
-  <!-- 顶部标题 -->
-  <view class="hero">
-    <text class="hero-eyebrow">DISCOVER</text>
-    <text class="hero-title">不知道去哪，先出发</text>
-    <text class="hero-sub">根据你的位置和偏好，精选周末灵感</text>
+<view class="page page-bg">
+  <view class="page-hero">
+    <text class="page-kicker">随机玩</text>
+    <text class="page-title">不知道去哪，先出发</text>
+    <text class="page-subtitle">根据你的位置和预算，精选周末灵感</text>
   </view>
+
+  <view class="page-content">
 
   <!-- 位置卡片 -->
   <view class="section-card {{locationError ? 'section-card-error' : ''}}">
@@ -162,4 +162,5 @@
     </scroll-view>
   </view>
 
+  </view>
 </view>

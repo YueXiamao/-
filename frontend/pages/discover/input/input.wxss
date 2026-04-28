@@ -8,11 +8,6 @@
 }
 
 /* ── Hero ── */
-.hero {
-  padding: 56rpx 36rpx 40rpx;
-  background: linear-gradient(160deg, #FDF0E0 0%, #F5EDE0 50%, var(--color-bg) 100%);
-  position: relative;
-  overflow: hidden;
 }
 
 .hero::before {
@@ -27,31 +22,10 @@
   pointer-events: none;
 }
 
-.hero-eyebrow {
-  display: block;
-  font-size: var(--font-kicker);
-  font-weight: 700;
-  color: var(--color-secondary);
-  letter-spacing: 3rpx;
-  margin-bottom: 12rpx;
-  text-transform: uppercase;
 }
 
-.hero-title {
-  display: block;
-  font-size: 44rpx;
-  font-weight: 800;
-  color: var(--color-text);
-  line-height: 1.1;
-  letter-spacing: var(--tracking-tight);
-  margin-bottom: 10rpx;
 }
 
-.hero-sub {
-  display: block;
-  font-size: var(--font-sm);
-  color: var(--color-text-secondary);
-  line-height: 1.55;
 }
 
 /* ── Sections ── */

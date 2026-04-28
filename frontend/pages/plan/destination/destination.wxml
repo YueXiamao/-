@@ -1,11 +1,10 @@
-<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+<view class="page page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
   <view class="page-hero">
-    <text class="hero-kicker">DESTINATION</text>
-    <text class="hero-title">选择这次想去的城市</text>
-    <text class="hero-subtitle">先把目的地范围圈出来，后面会根据城市和区县组合生成更顺手的路线安排。</text>
-    <view class="hero-badges">
-      <text class="hero-badge">最多 {{maxDestinations}} 个目的地</text>
-      <text class="hero-badge">背景图会跟着城市切换</text>
+    <text class="page-kicker">目的地</text>
+    <text class="page-title">选择这次想去的城市</text>
+    <text class="page-subtitle">先把目的地范围圈出来，后面会根据城市和区县组合生成更顺手的路线安排。</text>
+    <view class="page-badges">
+      <text class="page-badge badge-amber">最多 {{maxDestinations}} 个目的地</text>
     </view>
   </view>
 

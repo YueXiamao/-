@@ -1,11 +1,11 @@
-<view class="container page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+<view class="page page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
   <view class="page-hero">
-    <text class="hero-kicker">PLAN DETAILS</text>
-    <text class="hero-title">把偏好说清楚</text>
-    <text class="hero-subtitle">日期、天数和游玩方式会一起决定每天的节奏，让行程看起来更像真的会去执行。</text>
-    <view class="hero-badges">
-      <text class="hero-badge">{{destinations.length}} 个目的地</text>
-      <text class="hero-badge">{{days}} 天草案</text>
+    <text class="page-kicker">行程参数</text>
+    <text class="page-title">把偏好说清楚</text>
+    <text class="page-subtitle">日期、天数和游玩方式会一起决定每天的节奏，让行程看起来更像真的会去执行。</text>
+    <view class="page-badges">
+      <text class="page-badge badge-green">{{destinations.length}} 个目的地</text>
+      <text class="page-badge badge-amber">{{days}} 天草案</text>
     </view>
   </view>
 

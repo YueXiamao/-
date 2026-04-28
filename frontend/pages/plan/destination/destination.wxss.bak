@@ -11,18 +11,66 @@
 }
 
 /* ── Hero ── */
+.hero-wrap {
+  padding: 56rpx 36rpx 40rpx;
+  background: linear-gradient(160deg, #E8F5EE 0%, #EDF5F0 60%, var(--color-bg) 100%);
+  position: relative;
+  overflow: hidden;
 }
 
+.hero-wrap::before {
+  content: '';
+  position: absolute;
+  top: -50rpx;
+  right: -50rpx;
+  width: 300rpx;
+  height: 300rpx;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(13, 156, 110, 0.1) 0%, transparent 70%);
+  pointer-events: none;
 }
 
+.hero-kicker {
+  display: block;
+  font-size: var(--font-kicker);
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: 3rpx;
+  margin-bottom: 10rpx;
+  text-transform: uppercase;
 }
 
+.hero-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: 12rpx;
 }
 
+.hero-subtitle {
+  display: block;
+  font-size: var(--font-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
 }
 
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10rpx;
+  margin-top: 18rpx;
 }
 
+.hero-badge {
+  padding: 7rpx 16rpx;
+  border-radius: var(--r-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: var(--font-xs);
+  border: 1rpx solid var(--color-border);
 }
 
 /* ── Content ── */
