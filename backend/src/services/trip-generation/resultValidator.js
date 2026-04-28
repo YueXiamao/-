@@ -1,3 +1,49 @@
+// ─── POI 类型枚举 ──────────────────────────────────────────────────────────
+const POI_TYPES = ['attraction', 'food', 'hotel', 'transport', 'shopping', 'entertainment'];
+
+// 各类 POI 的必填（required）/ 选填（optional）字段规范
+// 用于 AI 增强结果校验和数据库写入前的校验
+const FIELD_SPEC = {
+  // 景点：必须有名称、类型
+  attraction: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
+  // 美食：必须有名称、类型，可选推荐理由
+  food: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
+  // 住宿：必须有名称、类型
+  hotel: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
+  // 交通：必须有类型、名称（或描述）
+  transport: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes']
+  },
+  // 购物：必须有名称、类型
+  shopping: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
+  // 娱乐：必须有名称、类型
+  entertainment: {
+    required: ['type', 'name'],
+    optional: ['address', 'description', 'duration', 'budget', 'recommend', 'reason',
+                'transport_to_next', 'notes', 'rating', 'confidence_level', 'image_url', 'tags']
+  },
+};
+
+export { POI_TYPES, FIELD_SPEC };
+
 const PRODUCT_FIELD_NAMES = [
   'summary', 'name', 'address', 'description', 'duration', 'budget',
   'recommend', 'reason', 'transport_to_next', 'notes'
@@ -101,9 +147,6 @@ export class TripResultValidator {
         if (day.date !== baselineDay.date) issues.push(issue('day_date_changed', `${dayPath}.date`));
       }
 
-      // ── 可信字段校验 ──
-      this.validateItemConfidence(day, dayPath, issues);
-
       if (!Array.isArray(day.items) || day.items.length === 0) {
         issues.push(issue('empty_day_items', `${dayPath}.items`));
         return;
@@ -120,13 +163,23 @@ export class TripResultValidator {
 
         if (!item.type || typeof item.type !== 'string') {
           issues.push(issue('missing_item_type', `${itemPath}.type`));
+        } else if (!POI_TYPES.includes(item.type)) {
+          issues.push(issue('unknown_item_type', `${itemPath}.type`, 'warning'));
+        } else {
+          const spec = FIELD_SPEC[item.type];
+          if (spec) {
+            for (const reqField of spec.required) {
+              if (!item[reqField] || typeof item[reqField] !== 'string' || item[reqField].trim() === '') {
+                issues.push(issue('missing_required_field', `${itemPath}.${reqField}`, 'error'));
+              }
+            }
+          }
         }
 
         if (!item.name || typeof item.name !== 'string') {
           issues.push(issue('missing_item_name', `${itemPath}.name`));
         }
 
-        // ── POI 可信字段校验 ──
         validateItemConfidence(item, itemPath, issues);
 
         if (baselineItem?.type && item.type !== baselineItem.type) {
@@ -148,10 +201,6 @@ export class TripResultValidator {
 
   validateItemConfidence(container, basePath, issues) {
     for (const fieldName of PRODUCT_FIELD_NAMES) {
-      if (hasNonEmptyString(baselineContainer?.[fieldName])
-        && !hasNonEmptyString(container[fieldName])) {
-        issues.push(issue('removed_product_field', `${basePath}.${fieldName}`));
-      }
       if (!(fieldName in container)) continue;
       const value = container[fieldName];
       const path = `${basePath}.${fieldName}`;
@@ -162,7 +211,16 @@ export class TripResultValidator {
   }
 
   validateTextFields(container, basePath, issues, baselineContainer = null) {
-    // delegate to shared logic
+    // 检测是否移除了必填字段
+    if (baselineContainer) {
+      for (const fieldName of PRODUCT_FIELD_NAMES) {
+        if (hasNonEmptyString(baselineContainer[fieldName])
+          && !hasNonEmptyString(container[fieldName])) {
+          issues.push(issue('removed_product_field', `${basePath}.${fieldName}`));
+        }
+      }
+    }
+    // 污染文本和内部文本检测
     this.validateItemConfidence(container, basePath, issues);
   }
 

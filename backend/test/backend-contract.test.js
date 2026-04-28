@@ -1030,7 +1030,7 @@ testWithServer('destination search accepts the frontend q query parameter', asyn
   });
 
   assert.equal(res.statusCode, 200);
-  assert.deepEqual(res.json().map((item) => item.name), ['成都市']);
+  assert.deepEqual(res.json().data.map((item) => item.name), ['成都市']);
 });
 
 testWithServer('trip save and item note update use awaited user lookup and frontend route shape', async ({ server, db }) => {

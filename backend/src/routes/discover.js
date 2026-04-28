@@ -1,15 +1,18 @@
 /**
  * 随机玩推荐路由
  * POST /api/discover/recommend
+ * POST /api/discover/random (alias)
  */
 import { getRecommendations } from '../services/discoverService.js';
+import { ok } from '../utils/response.js';
 
 export default async function discoverRoutes(fastify) {
-  fastify.post('/recommend', async (request, reply) => {
+
+  const handler = async (request) => {
     const { current_location, days, budget, preferences } = request.body || {};
 
     if (!preferences || !Array.isArray(preferences)) {
-      return reply.code(400).send({ error: 'preferences is required and must be an array' });
+      return { code: 10001, message: '缺少 preferences 参数，必须是数组' };
     }
 
     try {
@@ -20,10 +23,13 @@ export default async function discoverRoutes(fastify) {
         preferences,
       });
 
-      return { success: true, data: { recommendations }, ts: Date.now() };
+      return ok({ recommendations }, 'success');
     } catch (err) {
       request.log.error(err);
-      return reply.code(500).send({ error: '推荐服务异常', details: err.message });
+      return { code: 50001, message: '推荐服务异常', data: null };
     }
-  });
+  };
+
+  fastify.post('/recommend', handler);
+  fastify.post('/random', handler); // alias for backward compatibility
 }
