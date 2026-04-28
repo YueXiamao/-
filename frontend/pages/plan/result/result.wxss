@@ -1,13 +1,13 @@
 /* pages/plan/result/result.wxss */
 
-/* ── Page ── */
-.container {
+/* ── Page (replaces .container) ── */
+.page {
   min-height: 100vh;
   background-color: var(--color-bg);
   background-repeat: no-repeat;
   background-position: top center;
   background-size: 100% auto;
-  padding: 24rpx 28rpx 120rpx;
+  padding: 0 0 120rpx;
 }
 
 /* ── Card base ── */
