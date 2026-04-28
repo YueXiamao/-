@@ -1,5 +1,5 @@
 // 小程序入口
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = 'http://192.168.20.141:3000';
 
 App({
   onLaunch() {

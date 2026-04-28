@@ -21,7 +21,7 @@ Page({
     this.setData({ loading: true, error: null });
     try {
       const res = await wx.request({
-        url: 'http://localhost:3000/api/discover/recommend',
+        url: 'http://192.168.20.141:3000/api/discover/recommend',
         method: 'POST',
         data: {
           current_location: {

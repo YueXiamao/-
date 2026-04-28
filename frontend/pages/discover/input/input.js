@@ -54,7 +54,7 @@ Page({
   async loadProvinces() {
     return new Promise((resolve) => {
       wx.request({
-        url: 'http://localhost:3000/api/destinations/provinces',
+        url: 'http://192.168.20.141:3000/api/destinations/provinces',
         method: 'GET',
         timeout: 10000,
         success: (res) => {
@@ -70,7 +70,7 @@ Page({
   async loadCities(code) {
     return new Promise((resolve) => {
       wx.request({
-        url: `http://localhost:3000/api/destinations/cities/${code}`,
+        url: `http://192.168.20.141:3000/api/destinations/cities/${code}`,
         method: 'GET',
         timeout: 10000,
         success: (res) => resolve(Array.isArray(res.data) ? res.data : []),
@@ -82,7 +82,7 @@ Page({
   async loadDistricts(code) {
     return new Promise((resolve) => {
       wx.request({
-        url: `http://localhost:3000/api/destinations/districts/${code}`,
+        url: `http://192.168.20.141:3000/api/destinations/districts/${code}`,
         method: 'GET',
         timeout: 10000,
         success: (res) => resolve(Array.isArray(res.data) ? res.data : []),
