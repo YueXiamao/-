@@ -1,5 +1,5 @@
 // 小程序入口
-const BASE_URL = 'http://localhost:3000';
+import { api } from './services/api.js';
 
 App({
   onLaunch() {
@@ -21,16 +21,12 @@ App({
     wx.login({
       success: (res) => {
         if (!res.code) return;
-        wx.request({
-          url: `${BASE_URL}/api/auth/login`,
-          method: 'POST',
-          data: { code: res.code },
-          success: (r) => {
-            if (r.data && r.data.openid) {
-              this.setOpenid(r.data.openid);
-            }
-          }
-        });
+        // 复用 api.post，内部自动处理 Base URL
+        api.post('/api/auth/login', { code: res.code }, { silent: true })
+          .then(data => {
+            if (data?.openid) this.setOpenid(data.openid);
+          })
+          .catch(err => console.warn('登录失败', err));
       }
     });
   },

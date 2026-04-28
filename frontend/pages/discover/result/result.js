@@ -1,10 +1,11 @@
 // pages/discover/result/result.js
+import discoverApi from '../../../services/discover.js';
+
 Page({
   data: {
     loading: true,
     error: null,
     recommendations: [],
-    currentIndex: 0,
   },
 
   onLoad() {
@@ -20,46 +21,19 @@ Page({
   async fetchRecommendations(params) {
     this.setData({ loading: true, error: null });
     try {
-      const res = await wx.request({
-        url: 'http://localhost:3000/api/discover/recommend',
-        method: 'POST',
-        data: {
-          current_location: {
-            city: params.city || '',
-            province: params.province || '',
-          },
-          days: parseInt(params.days) || 2,
-          budget: params.budget || '1000-2000',
-          preferences: params.preferences || [],
-        },
-        header: { 'Content-Type': 'application/json' },
-        timeout: 30000,
+      const recs = await discoverApi.recommend({
+        current_location: { city: params.city || '', province: params.province || '' },
+        days: parseInt(params.days) || 2,
+        budget: params.budget || '1000-2000',
+        preferences: params.preferences || [],
       });
-
-      if (res.statusCode === 200 && res.data) {
-        // discover API 返回: { success: true, data: { recommendations: [...] } }
-        const payload = res.data.data || res.data;
-        const recs = Array.isArray(payload) ? payload
-          : Array.isArray(payload?.recommendations) ? payload.recommendations
-          : [];
-
-        this.setData({
-          loading: false,
-          recommendations: recs,
-        });
-
-        if (recs.length === 0) {
-          this.setData({ error: '暂未找到合适的目的地，请尝试调整条件' });
-        }
-      } else {
-        throw new Error(`请求失败 (${res.statusCode}): ${res.errMsg || ''}`);
+      this.setData({ loading: false, recommendations: Array.isArray(recs) ? recs : [] });
+      if (!recs || recs.length === 0) {
+        this.setData({ error: '暂未找到合适的目的地，请尝试调整条件' });
       }
     } catch (err) {
-      console.error('推荐接口失败', err, err.message);
-      this.setData({
-        loading: false,
-        error: '网络异常，请重试',
-      });
+      console.error('推荐接口失败', err);
+      this.setData({ loading: false, error: '网络异常，请重试' });
     }
   },
 
@@ -68,9 +42,7 @@ Page({
     if (params) this.fetchRecommendations(params);
   },
 
-  onBack() {
-    wx.navigateBack();
-  },
+  onBack() { wx.navigateBack(); },
 
   onViewDetail(e) {
     const { name } = e.currentTarget.dataset;
@@ -88,7 +60,6 @@ Page({
       const dd = String(d.getDate()).padStart(2, '0');
       return `${y}-${m}-${dd}`;
     };
-
     wx.navigateTo({
       url: `/pages/plan/result/result?destination=${encodeURIComponent(name)}&city=${encodeURIComponent(city || name)}&province=${encodeURIComponent(province || '')}&days=${days}&start_date=${fmt(startDate)}&preferences=${encodeURIComponent(JSON.stringify(params.preferences || []))}`,
     });

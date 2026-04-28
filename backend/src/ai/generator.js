@@ -274,20 +274,26 @@ export function mergeEnhancedItinerary(skeleton, aiResult) {
 }
 
 function parseJSON(text) {
-  const cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  // 移除 Markdown 代码块
+  let cleaned = text.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+  // 移除 MiniMax/DeepSeek 思考标签
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  // 移除所有 <!-- --> 注释
+  cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '').trim();
   try {
     return JSON.parse(cleaned);
   } catch (e) {
+    // 尝试提取数组
     const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
     if (arrayMatch) {
       try { return JSON.parse(arrayMatch[0]); } catch {}
     }
-
+    // 尝试提取对象
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) {
       try { return JSON.parse(match[0]); } catch {}
     }
-    throw Errors.AI_ERROR('AI返回格式解析失败');
+    throw Errors.AI_ERROR(`AI返回格式解析失败: ${e.message}`);
   }
 }
 
@@ -298,16 +304,28 @@ async function callMiniMax(prompt, systemPrompt) {
     baseURL: config.ai.baseUrl
   });
 
-  const response = await client.chat.completions.create({
-    model: config.ai.model,
-    max_tokens: 2048,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt }
-    ]
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
 
-  return response.choices[0].message.content;
+  try {
+    const response = await client.chat.completions.create({
+      model: config.ai.model,
+      max_tokens: 2048,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ],
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    return response.choices[0].message.content;
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError' || err.message?.includes('aborted')) {
+      throw Errors.AI_ERROR('AI请求超时（25秒）');
+    }
+    throw Errors.AI_ERROR('AI服务调用失败: ' + err.message);
+  }
 }
 
 async function generateTrip(params) {
