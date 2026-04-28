@@ -9,7 +9,7 @@
   </view>
 
   <!-- 位置卡片 -->
-  <view class="section-card">
+  <view class="section-card {{locationError ? 'section-card-error' : ''}}">
     <text class="section-label">当前位置</text>
     <view class="loc-bar" wx:if="{{locationText}}">
       <view class="loc-info">
@@ -20,7 +20,7 @@
         {{locationMode === 'loc' ? 'GPS' : '手动'}}
       </view>
     </view>
-    <view class="loc-empty" wx:if="{{!locationText}}">
+    <view class="loc-empty {{locationError ? 'loc-empty-error' : ''}}" wx:if="{{!locationText}}">
       <text class="loc-empty-text">请选择您的位置</text>
     </view>
     <view class="loc-row">
@@ -49,7 +49,7 @@
   </view>
 
   <!-- 预算 -->
-  <view class="section-card">
+  <view class="section-card {{budgetError ? 'section-card-error' : ''}}">
     <text class="section-label">人均预算</text>
     <view class="budget-grid">
       <view

@@ -21,6 +21,11 @@ Page({
     preferenceOptions: PREFERENCE_OPTIONS,
 
     budgetOptions: BUDGET_OPTIONS,
+
+    // 校验状态
+    locationError: false,
+    budgetError: false,
+    prefsError: false,
   },
 
   onLoad() {
@@ -167,20 +172,28 @@ Page({
     this.setData({ showPicker: false });
   },
 
+  // ========== 位置/预算/偏好选择时清除错误标记 ==========
+  clearErrors() {
+    this.setData({ locationError: false, budgetError: false, prefsError: false });
+  },
+
   // ========== 天数 ==========
   onDaysChange(e) {
+    this.clearErrors();
     const delta = parseInt(e.currentTarget.dataset.delta);
     this.setData({ days: Math.max(1, Math.min(7, this.data.days + delta)) });
   },
 
   // ========== 预算 ==========
   onBudgetTap(e) {
+    this.clearErrors();
     const { value } = e.currentTarget.dataset;
     this.setData({ budget: this.data.budget === value ? '' : value });
   },
 
   // ========== 偏好 ==========
   onPrefTap(e) {
+    this.clearErrors();
     const { value } = e.currentTarget.dataset;
     const prefs = this.data.preferences;
     const idx = prefs.indexOf(value);
@@ -194,22 +207,32 @@ Page({
 
   // ========== 开始 ==========
   onRecommend() {
-    const { currentProvince, currentCity, budget } = this.data;
+    const { currentProvince, currentCity, budget, preferences } = this.data;
+
+    // 位置校验
     if (!currentProvince && !currentCity) {
+      this.setData({ locationError: true });
       wx.showToast({ title: '请先选择位置', icon: 'none' });
       return;
     }
+    // 预算校验
     if (!budget) {
+      this.setData({ locationError: false, budgetError: true });
       wx.showToast({ title: '请选择人均预算', icon: 'none' });
       return;
     }
+    // 偏好提示（可选，不强制）
+    if (preferences.length === 0) {
+      wx.showToast({ title: '建议至少选一个游玩偏好，体验更佳', icon: 'none' });
+    }
+
     const params = {
       location_mode: this.data.locationMode,
       province: currentProvince?.name || '',
       city: currentCity?.name || '',
       days: this.data.days,
       budget,
-      preferences: this.data.preferences,
+      preferences,
     };
     wx.setStorageSync('discover_params', params);
     wx.navigateTo({ url: '/pages/discover/result/result' });

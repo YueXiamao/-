@@ -602,3 +602,18 @@
   font-size: var(--font-base);
   color: var(--color-text-hint);
 }
+
+/* ===== 校验错误状态 ===== */
+.section-card-error {
+  border: 2rpx solid #FF3B30 !important;
+  background-color: #FFF8F8 !important;
+}
+
+.loc-empty-error {
+  border: 2rpx dashed #FF3B30 !important;
+  background-color: #FFF8F8 !important;
+}
+
+.loc-empty-error .loc-empty-text {
+  color: #FF3B30 !important;
+}
