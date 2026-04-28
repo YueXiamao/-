@@ -819,13 +819,44 @@ Hermes 在本轮 UI 优化中不得做以下事情：
 
 UI 优化完成需满足：
 
-- [ ] 所有主要页面共享一致的页面骨架和间距节奏。
-- [ ] 首页、规划、随机玩、结果、我的页面看起来属于同一个产品。
-- [ ] 行程结果页像一份可执行路线单。
-- [ ] 随机玩结果页解释“为什么适合”，而不仅是排名。
-- [ ] 运行时 UI 中没有 emoji 或占位符符号。
-- [ ] 加载、空态、错误态精致且明确。
-- [ ] 固定底部栏尊重 safe area，不遮挡内容。
+- [x] 所有主要页面共享一致的页面骨架和间距节奏。
+  → **完成**：`app.wxss` 新增 `.page/.page-hero/.page-content` 骨架系统，7 个页面统一 `.page .page-bg` 根节点，页面左右 padding = 32rpx。
+- [x] 首页、规划、随机玩、结果、我的页面看起来属于同一个产品。
+  → **完成**：统一 `.page-hero` → `.page-kicker/.page-title/.page-subtitle` 系统；统一按钮（`.btn/.btn-primary/.btn-secondary/.btn-ghost`）+ 底部栏（`.bottom-bar`）；统一状态区块（`.state-block/.state-mark[loading|empty|error]`）。
+- [x] 行程结果页像一份可执行路线单。
+  → **完成**：result.wxml 完全重写（726→173 行），删除 553 行重复模板；三段 spot/food/hotel 合并为统一 `.route-item` 时间线结构；`.item-icon` 保留中文（景/食/住）；换/删操作内联到 item 右上角。
+- [x] 随机玩结果页解释"为什么适合"，而不仅是排名。
+  → **完成**：discover/result.wxml 重写，新增"推荐依据/适合人群/行程安排"详情区段，`.meta-chip` 元信息系统替代 emoji。
+- [x] 运行时 UI 中没有 emoji 或占位符符号。
+  → **完成**：全量扫描所有 `.wxml`，emoji 零残留；`✓` 字符为 Unicode 符号（非图片 emoji）；`hero-` / `.container` WXML 零残留。
+- [x] 加载、空态、错误态精致且明确。
+  → **完成**：全部 result 页面使用 `.state-block` + `.state-mark[loading|empty|error]`；discover/result 骨架屏 shimmer 动画（P2-1）。
+- [x] 固定底部栏尊重 safe area，不遮挡内容。
+  → **完成**：所有 `.bottom-bar` 使用 `calc(var(--sp-4) + env(safe-area-inset-bottom))`。
 - [ ] `frontend` 测试通过。
-- [ ] 实现仍保持微信原生小程序代码。
+  → **待验证**：需在微信开发者工具中运行。
+- [x] 实现仍保持微信原生小程序代码。
+  → **完成**：全程仅改 WXML/WXSS 文件，JS 逻辑零改动。
+
+---
+
+## 11. Sign-off（UI-Task 1~7 验收记录）
+
+| Task | 文件 | 改动 |
+|------|------|------|
+| Task 1 | `app.wxss` | 新增 9 大全局类系统（骨架/面板/状态/元信息/路线/按钮/底部栏/偏好网格/步骤条），共约 300 行 |
+| Task 2 | destination/params/discover-input WXML+WXSS | `.container`→`.page`，`hero-*`→`.page-kicker/.page-title/.page-subtitle`；WXSS 删除 15+ 无用 hero 块 |
+| Task 3 | `plan/result.wxml` | 完全重写（726→173 行，-553 行）；三段重复模板合并为 `.route-item`；`.item-icon` 保留景/食/住中文；换/删内联 |
+| Task 4 | `discover/result.wxml+wxss` | 完全重写（148→218 行 WXML；593→215 行 WXSS）；`.top-bar` 移除，标题→`.page-hero`；`.state-block` 错态/空态；删除 378 行废弃样式 |
+| Task 5 | `discover/input.wxss` | 完全重写（655→520 行）；清理行 11-30 破损空 `}` 块；`.container`→`.page`；`.bottom-bar button`→`.btn-primary`；`.budget-on/.pref-on`→`.selected` |
+| Task 6 | `index/index.wxml+wxss`，`profile.wxml+wxss` | 根节点统一；index WXSS 完全重写（287→180 行），删除全部 hero 样式；profile WXSS `.container`→`.page` |
+| Task 7 | QA 验收 | 全量扫描：7 页面根节点统一 `.page .page-bg`，hero-/container WXML 零残留，emoji 零残留，WXSS 硬编码颜色均属合理场景（对比度/渐变/动画） |
+
+**Commit 历史：**
+- `codex/trip-generation-snapshot-20260424` 分支
+- UI-Task1~7 各自独立 commit，可选择性 merge
+
+**剩余未完成项：**
+- 微信开发者工具运行时验证（Task 7 第 8 项）
+- 后续 Task（params/destination 样式对齐、profile 卡片设计、UI 动效）未在本次执行范围内
 
