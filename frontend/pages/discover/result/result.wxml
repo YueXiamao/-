@@ -5,10 +5,18 @@
     <text class="top-bar-title">随机游</text>
   </view>
 
-  <!-- 加载状态 -->
-  <view wx:if="{{loading}}" class="loading-wrap">
-    <view class="loading-spinner"></view>
-    <text class="loading-text">探索中...</text>
+  <!-- 骨架屏 -->
+  <view wx:if="{{loading}}" class="skeleton-wrap">
+    <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="i">
+      <view class="skeleton-line long"></view>
+      <view class="skeleton-line medium"></view>
+      <view class="skeleton-line short none"></view>
+      <view class="skeleton-row">
+        <view class="skeleton-chip"></view>
+        <view class="skeleton-chip"></view>
+        <view class="skeleton-chip"></view>
+      </view>
+    </view>
   </view>
 
   <!-- 离线/网络错误状态 -->
