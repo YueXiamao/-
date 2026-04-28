@@ -21,7 +21,7 @@ Page({
     this.setData({ loading: true, error: null });
     try {
       const res = await wx.request({
-        url: 'http://192.168.20.141:3000/api/discover/recommend',
+        url: 'http://localhost:3000/api/discover/recommend',
         method: 'POST',
         data: {
           current_location: {
@@ -52,10 +52,10 @@ Page({
           this.setData({ error: '暂未找到合适的目的地，请尝试调整条件' });
         }
       } else {
-        throw new Error(`请求失败 (${res.statusCode})`);
+        throw new Error(`请求失败 (${res.statusCode}): ${res.errMsg || ''}`);
       }
     } catch (err) {
-      console.error('推荐接口失败', err);
+      console.error('推荐接口失败', err, err.message);
       this.setData({
         loading: false,
         error: '网络异常，请重试',

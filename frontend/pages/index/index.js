@@ -22,7 +22,7 @@ Page({
   async checkBackendHealth() {
     try {
       const res = await wx.request({
-        url: 'http://192.168.20.141:3000/health',
+        url: 'http://localhost:3000/health',
         method: 'GET',
         timeout: 3000,
       });
