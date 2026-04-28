@@ -1,6 +1,6 @@
 import { API_TEST_URL } from '../constants/index.js';
 
-const BASE_URL = API_TEST_URL || 'http://192.168.3.37:3000';
+const BASE_URL = API_TEST_URL || 'http://localhost:3000';
 
 function request(url, method, data, header = {}) {
   return new Promise((resolve, reject) => {
