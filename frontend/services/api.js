@@ -1,16 +1,25 @@
 // API 请求封装
 import { API_BASE_URL, API_TEST_URL } from '../constants/index.js';
 
-// 根据环境切换 Base URL
-// 开发环境用 localhost，生产用真实域名
 const BASE_URL = API_TEST_URL || API_BASE_URL;
+
+// 解析 wx.request 失败错误类型
+function parseRequestError(err = {}) {
+  const msg = String(err.errMsg || '');
+  if (msg.includes('timeout') || msg.includes('超时')) {
+    return { type: 'timeout', message: '请求超时，请检查网络' };
+  }
+  if (msg.includes('econnrefused') || msg.includes('unable to connect') || msg.includes('request:fail')) {
+    return { type: 'offline', message: '无法连接服务器，请确保后端已启动' };
+  }
+  return { type: 'network', message: '网络异常，请检查网络连接' };
+}
 
 class ApiService {
   constructor() {
     this.baseUrl = BASE_URL;
   }
 
-  // 获取 OpenID
   getOpenid() {
     return wx.getStorageSync('openid');
   }
@@ -29,14 +38,10 @@ class ApiService {
           'X-OpenID': openid || '',
           ...header
         },
+        timeout: 15000,
         success: (res) => {
           if (res.statusCode === 200) {
-            // 兼容三种格式：
-            // 1. { code: 0, data: [...] }         — 标准业务格式
-            // 2. { success: true, data: {...} }   — discover/discover等API格式
-            // 3. [...]                             — 直接返回数组
             if (typeof res.data === 'object' && !Array.isArray(res.data)) {
-              // 有 code 字段（标准业务格式）
               if ('code' in res.data) {
                 if (res.data.code === 0) {
                   resolve(res.data.data !== undefined ? res.data.data : res.data);
@@ -47,75 +52,42 @@ class ApiService {
                   reject({ ...res.data, statusCode: res.statusCode });
                 }
               } else {
-                // 无 code 字段，有 success 字段（discover等格式）
-                // data 直接就是结果对象/数组
                 resolve(res.data.data !== undefined ? res.data.data : res.data);
               }
             } else {
-              // 直接返回数组
               resolve(res.data);
             }
           } else if (res.statusCode === 401) {
-            // 未登录，清除 openid 重新登录
             wx.removeStorageSync('openid');
             if (!options.silent) {
               wx.showToast({ title: '请重新登录', icon: 'none' });
             }
-            reject({
-              ...(typeof res.data === 'object' && res.data ? res.data : {}),
-              statusCode: res.statusCode
-            });
+            reject({ ...(typeof res.data === 'object' && res.data ? res.data : {}), statusCode: res.statusCode });
           } else {
             if (!options.silent) {
-              wx.showToast({
-                title: `网络错误 (${res.statusCode})`,
-                icon: 'none'
-              });
+              wx.showToast({ title: `服务器错误 (${res.statusCode})`, icon: 'none' });
             }
-            reject({
-              ...(typeof res.data === 'object' && res.data ? res.data : {}),
-              statusCode: res.statusCode
-            });
+            reject({ ...(typeof res.data === 'object' && res.data ? res.data : {}), statusCode: res.statusCode });
           }
         },
         fail: (err) => {
+          const parsed = parseRequestError(err);
           if (!options.silent) {
-            wx.showToast({
-              title: '网络错误，请检查网络',
-              icon: 'none'
-            });
+            wx.showToast({ title: parsed.message, icon: 'none' });
           }
-          reject(err);
+          reject({ ...err, _apiErrorType: parsed.type, _apiErrorMsg: parsed.message });
         }
       });
     });
   }
 
-  // GET 请求
-  get(path, data, options) {
-    return this.request(path, data, 'GET', {}, options);
-  }
-
-  // POST 请求
-  post(path, data, options) {
-    return this.request(path, data, 'POST', {}, options);
-  }
-
-  // PATCH 请求
-  patch(path, data, options) {
-    return this.request(path, data, 'PATCH', {}, options);
-  }
-
-  // DELETE 请求
-  delete(path, data, options) {
-    return this.request(path, data, 'DELETE', {}, options);
-  }
+  get(path, data, options) { return this.request(path, data, 'GET', {}, options); }
+  post(path, data, options) { return this.request(path, data, 'POST', {}, options); }
+  patch(path, data, options) { return this.request(path, data, 'PATCH', {}, options); }
+  delete(path, data, options) { return this.request(path, data, 'DELETE', {}, options); }
 }
 
-// 导出单例
 export const api = new ApiService();
-
-// 导出常用请求方法
 export const get = (path, data, options) => api.get(path, data, options);
 export const post = (path, data, options) => api.post(path, data, options);
 export const patch = (path, data, options) => api.patch(path, data, options);

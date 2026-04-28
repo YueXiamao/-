@@ -395,3 +395,48 @@
   padding: 16rpx 40rpx;
   margin-top: 8rpx;
 }
+
+/* ===== 错误状态 ===== */
+.error-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 60rpx;
+  gap: 16rpx;
+}
+
+.error-icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background-color: #FFF3E0;
+  color: #FF9500;
+  font-size: 48rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.error-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1A1A1A;
+  text-align: center;
+}
+
+.error-sub {
+  font-size: 26rpx;
+  color: #888888;
+  text-align: center;
+}
+
+.btn-ghost-sm {
+  font-size: 26rpx;
+  color: #888888;
+  background: none;
+  border: none;
+  padding: 8rpx 20rpx;
+  margin-top: 8rpx;
+}

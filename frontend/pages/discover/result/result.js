@@ -1,10 +1,12 @@
 // pages/discover/result/result.js
 import discoverApi from '../../../services/discover.js';
+import { isBackendUnavailableError } from '../../../services/backend-health.js';
 
 Page({
   data: {
     loading: true,
     error: null,
+    isOffline: false,
     recommendations: [],
   },
 
@@ -19,7 +21,7 @@ Page({
   },
 
   async fetchRecommendations(params) {
-    this.setData({ loading: true, error: null });
+    this.setData({ loading: true, error: null, isOffline: false });
     try {
       const recs = await discoverApi.recommend({
         current_location: { city: params.city || '', province: params.province || '' },
@@ -33,7 +35,14 @@ Page({
       }
     } catch (err) {
       console.error('推荐接口失败', err);
-      this.setData({ loading: false, error: '网络异常，请重试' });
+      const isOffline = isBackendUnavailableError(err);
+      this.setData({
+        loading: false,
+        isOffline,
+        error: isOffline
+          ? '本地后端服务未启动，请先启动 backend 服务后再重试'
+          : '网络异常，请稍后重试'
+      });
     }
   },
 

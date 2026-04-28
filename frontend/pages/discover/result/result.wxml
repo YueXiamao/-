@@ -11,6 +11,15 @@
     <text class="loading-text">探索中...</text>
   </view>
 
+  <!-- 离线/网络错误状态 -->
+  <view wx:elif="{{isOffline || error}}" class="error-wrap">
+    <text class="error-icon">!</text>
+    <text class="error-title">{{isOffline ? '后端服务未启动' : error}}</text>
+    <text class="error-sub">{{isOffline ? '请在电脑端启动 backend 服务' : '请检查网络后重试'}}</text>
+    <button class="btn-secondary" bindtap="onRetry">重新加载</button>
+    <button class="btn-ghost-sm" bindtap="onBack">重新选择</button>
+  </view>
+
   <!-- 空状态 -->
   <view wx:elif="{{!recommendations || recommendations.length === 0}}" class="empty-wrap">
     <text class="empty-icon">?</text>
