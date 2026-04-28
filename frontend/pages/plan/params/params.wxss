@@ -1,7 +1,7 @@
 /* pages/plan/params/params.wxss */
 
 /* ── Page ── */
-.container {
+.page {
   min-height: 100vh;
   background-color: var(--color-bg);
   background-repeat: no-repeat;

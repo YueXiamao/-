@@ -1,7 +1,7 @@
 /* pages/plan/destination/destination.wxss */
 
 /* ── Page ── */
-.container {
+.page {
   min-height: 100vh;
   background-color: var(--color-bg);
   background-repeat: no-repeat;
@@ -10,20 +10,7 @@
   padding: 0 0 160rpx 0;
 }
 
-/* ── Hero ── */
-}
-
-}
-
-}
-
-}
-
-}
-
-}
-
-}
+/* ── Content ── */
 
 /* ── Content ── */
 .content-wrap {
