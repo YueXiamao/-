@@ -95,12 +95,12 @@
                   <view class="item-body">
                     <view class="item-name">{{tripItem.name}}</view>
                     <view class="item-meta-row" wx:if="{{tripItem.best_time || tripItem.duration || tripItem.ticket_info}}">
-                      <text class="item-meta-chip" wx:if="{{tripItem.best_time}}">🕘 {{tripItem.best_time}}</text>
-                      <text class="item-meta-chip" wx:if="{{tripItem.duration}}">⏱ {{tripItem.duration}}</text>
-                      <text class="item-meta-chip" wx:if="{{tripItem.ticket_info}}">🎫 {{tripItem.ticket_info}}</text>
+                      <text class="item-meta-chip" wx:if="{{tripItem.best_time}}">时间 {{tripItem.best_time}}</text>
+                      <text class="item-meta-chip" wx:if="{{tripItem.duration}}">时长 {{tripItem.duration}}</text>
+                      <text class="item-meta-chip" wx:if="{{tripItem.ticket_info}}">门票 {{tripItem.ticket_info}}</text>
                     </view>
                     <view class="item-address" wx:if="{{tripItem.address}}">
-                      <text class="item-address-text">📍 {{tripItem.address}}</text>
+                      <text class="item-address-text">{{tripItem.address}}</text>
                     </view>
                     <view class="item-desc-block" wx:if="{{tripItem.description}}">
                       <text class="item-desc-text">{{tripItem.description}}</text>
@@ -144,11 +144,11 @@
                   <view class="item-body">
                     <view class="item-name">{{tripItem.name}}</view>
                     <view class="item-meta-row" wx:if="{{tripItem.budget || tripItem.cuisine_type}}">
-                      <text class="item-meta-chip item-meta-amber" wx:if="{{tripItem.budget}}">💰 {{tripItem.budget}}</text>
-                      <text class="item-meta-chip item-meta-amber" wx:if="{{tripItem.cuisine_type}}">🍜 {{tripItem.cuisine_type}}</text>
+                      <text class="item-meta-chip item-meta-amber" wx:if="{{tripItem.budget}}">预算 {{tripItem.budget}}</text>
+                      <text class="item-meta-chip item-meta-amber" wx:if="{{tripItem.cuisine_type}}">菜系 {{tripItem.cuisine_type}}</text>
                     </view>
                     <view class="item-address" wx:if="{{tripItem.address}}">
-                      <text class="item-address-text">📍 {{tripItem.address}}</text>
+                      <text class="item-address-text">{{tripItem.address}}</text>
                     </view>
                     <view class="item-rec-block" wx:if="{{tripItem.recommend}}">
                       <text class="item-rec-label">招牌菜：</text>
@@ -189,11 +189,11 @@
                   <view class="item-body">
                     <view class="item-name">{{tripItem.name}}</view>
                     <view class="item-meta-row" wx:if="{{tripItem.budget || tripItem.highlights}}">
-                      <text class="item-meta-chip item-meta-purple" wx:if="{{tripItem.budget}}">💰 {{tripItem.budget}}</text>
-                      <text class="item-meta-chip item-meta-purple" wx:if="{{tripItem.highlights}}">⭐ {{tripItem.highlights}}</text>
+                      <text class="item-meta-chip item-meta-purple" wx:if="{{tripItem.budget}}">预算 {{tripItem.budget}}</text>
+                      <text class="item-meta-chip item-meta-purple" wx:if="{{tripItem.highlights}}">亮点 {{tripItem.highlights}}</text>
                     </view>
                     <view class="item-address" wx:if="{{tripItem.address}}">
-                      <text class="item-address-text">📍 {{tripItem.address}}</text>
+                      <text class="item-address-text">{{tripItem.address}}</text>
                     </view>
                     <view class="item-reason-block" wx:if="{{tripItem.reason}}">
                       <text class="item-reason-label">推荐理由：</text>

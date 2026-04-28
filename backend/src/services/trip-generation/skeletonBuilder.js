@@ -1,3 +1,5 @@
+// ─── 工具函数 ────────────────────────────────────────────────────────────────
+
 function getDestinationName(request, index) {
   const destination = request.destinations[index % request.destinations.length];
   return typeof destination === 'string' ? destination : destination?.name || '目的地';
@@ -5,10 +7,6 @@ function getDestinationName(request, index) {
 
 function hasEnglishNarrative(value) {
   return typeof value === 'string' && /[A-Za-z]{2,}/.test(value);
-}
-
-function useChineseNarrative(value, fallback) {
-  return value && !hasEnglishNarrative(value) ? value : fallback;
 }
 
 function formatDay(startDate, offset) {
@@ -27,13 +25,63 @@ function formatDateDisplay(dateStr) {
   return `${parseInt(m)}月${parseInt(d)}日`;
 }
 
-// 提取POI已有信息，填充到骨架字段
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// ─── 可信字段注入 ───────────────────────────────────────────────────────────
+
+/**
+ * 判断单个字段的可信等级
+ * 有真实数据（来源明确，非默认值）→ verified
+ * 使用规则估算的默认值 → estimated
+ */
+function fieldConfidence(candidate, field, defaultValue) {
+  const real = candidate?.[field];
+  if (real !== undefined && real !== null && real !== '' && real !== defaultValue) {
+    return 'verified';
+  }
+  return 'estimated';
+}
+
+/**
+ * 统一的可信字段注入
+ * @param {object} base - 原始 POI 数据（来自高德/数据库）
+ * @param {object} defaults - 各字段的默认值（用于判断是否使用了默认值）
+ */
+function addConfidenceFields(base, defaults = {}) {
+  const hasRating = base?.rating != null;
+  const hasReviewCount = base?.review_count != null && base.review_count > 0;
+  const hasOpenTime = base?.open_time && base.open_time !== '未知' && base.open_time !== '';
+  const hasTicketInfo = base?.ticket_info && base.ticket_info !== '未知' && base.ticket_info !== '';
+
+  return {
+    // 数据来源
+    source: base?.source || 'amap',
+    // 可信等级：rating存在→verified，否则→estimated（骨架默认项均为估算）
+    confidence_level: hasRating ? 'verified' : 'estimated',
+    // 最后验证时间
+    last_verified_at: base?.last_verified_at || today(),
+    // 评分（有真实数据才展示，不伪造）
+    ...(hasRating ? { rating: base.rating } : {}),
+    // 评论数
+    ...(hasReviewCount ? { review_count: base.review_count } : {}),
+    // 营业时间
+    ...(hasOpenTime ? { open_time: base.open_time } : {}),
+    // 门票信息
+    ...(hasTicketInfo ? { ticket_info: base.ticket_info } : {}),
+  };
+}
+
+// ─── POI enrichment ─────────────────────────────────────────────────────────
+
 function enrichSpot(candidate, destinationName, dayNumber) {
+  const defaults = { duration: '2-3小时' };
   const base = {
     type: 'spot',
     name: candidate?.name || `${destinationName}核心景点`,
     address: candidate?.address || destinationName,
-    duration: candidate?.duration || '2-3小时',
+    duration: candidate?.duration || defaults.duration,
     description: candidate?.description || '',
     reason: candidate?.reason || `第${dayNumber}天的主要游览目标，知名度高、游玩价值突出`,
     best_time: candidate?.best_time || '',
@@ -42,7 +90,7 @@ function enrichSpot(candidate, destinationName, dayNumber) {
     transport_to_next: candidate?.transport_to_next || '步行5-10分钟即可到达附近餐饮',
   };
 
-  // 如果POI有评分/标签，注入reason
+  // 有评分时注入更有信息量的 reason
   if (candidate?.rating && !base.reason.includes('评分')) {
     base.reason = `第${dayNumber}天游玩首选，评分${candidate.rating}分，口碑稳定，适合作为当日游览主轴。`;
   }
@@ -53,7 +101,7 @@ function enrichSpot(candidate, destinationName, dayNumber) {
     base.tips = `关键词：${tagList}。${base.tips}`;
   }
 
-  return base;
+  return { ...base, ...addConfidenceFields(candidate, defaults) };
 }
 
 function enrichFood(candidate, destinationName) {
@@ -78,7 +126,7 @@ function enrichFood(candidate, destinationName) {
     if (cuisine) base.cuisine_type = cuisine;
   }
 
-  return base;
+  return { ...base, ...addConfidenceFields(candidate) };
 }
 
 function enrichHotel(candidate, destinationName) {
@@ -101,10 +149,17 @@ function enrichHotel(candidate, destinationName) {
     base.highlights = `评分${candidate.rating}`;
   }
 
-  return base;
+  return { ...base, ...addConfidenceFields(candidate) };
 }
 
+// ─── 骨架构建器 ─────────────────────────────────────────────────────────────
+
 export class TripSkeletonBuilder {
+  /**
+   * @param {object} request - 行程请求
+   * @param {object} candidates - { spots, foods, hotels }
+   * @returns {{ itinerary, warnings }}
+   */
   build(request, candidates = {}) {
     const spots = Array.isArray(candidates.spots) ? candidates.spots : [];
     const foods = Array.isArray(candidates.foods) ? candidates.foods : [];
@@ -116,85 +171,100 @@ export class TripSkeletonBuilder {
     }
 
     // 每天安排：上午景点 + 午间美食 + 下午/傍晚景点 + 晚餐 + 住宿
-    // 每天2个景点(上午+下午) + 2家餐厅(午餐+晚餐) + 1家酒店
     const itinerary = Array.from({ length: request.days }, (_, index) => {
       const dayNumber = index + 1;
       const destinationName = getDestinationName(request, index);
       const date = formatDay(request.start_date, index);
       const dateDisplay = formatDateDisplay(date);
 
-      const morningSpot = spots[(index * 2) % Math.max(spots.length, 1)];
-      const afternoonSpot = spots[(index * 2 + 1) % Math.max(spots.length, 1)];
-      const lunchFood = foods[(index * 2) % Math.max(foods.length, 1)];
-      const dinnerFood = foods[(index * 2 + 1) % Math.max(foods.length, 1)];
-      const hotel = hotels[index % Math.max(hotels.length, 1)];
+      // 有效 POI 才参与编排；空数组时安全地取 undefined（跳过但发警告）
+      const morningSpot = spots.length > 0 ? spots[(index * 2) % spots.length] : null;
+      const afternoonSpot = spots.length > 0 ? spots[(index * 2 + 1) % spots.length] : null;
+      const lunchFood = foods.length > 0 ? foods[(index * 2) % foods.length] : null;
+      const dinnerFood = foods.length > 0 ? foods[(index * 2 + 1) % foods.length] : null;
+      const hotel = hotels.length > 0 ? hotels[index % hotels.length] : null;
 
       const items = [];
 
-      // 上午景点（必有）
+      // 上午景点
       if (morningSpot) {
+        items.push({ ...enrichSpot(morningSpot, destinationName, dayNumber), period: 'morning', period_label: '上午' });
+      } else {
         items.push({
-          ...enrichSpot(morningSpot, destinationName, dayNumber),
-          period: 'morning',
-          period_label: '上午',
+          type: 'spot', name: `${destinationName}推荐景点`, address: destinationName,
+          duration: '2-3小时', description: '根据您的偏好推荐，具体景点待补充',
+          reason: `第${dayNumber}天上午安排`, transport_to_next: '步行可达周边餐饮',
+          period: 'morning', period_label: '上午',
+          source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
         });
       }
 
-      // 午餐（必有）
+      // 午餐
       if (lunchFood) {
+        items.push({ ...enrichFood(lunchFood, destinationName), period: 'lunch', period_label: '午餐' });
+      } else {
         items.push({
-          ...enrichFood(lunchFood, destinationName),
-          period: 'lunch',
-          period_label: '午餐',
+          type: 'food', name: `${destinationName}推荐餐饮`, address: destinationName,
+          budget: '', recommend: '根据您的偏好推荐', reason: '午间用餐安排',
+          cuisine_type: '', reservation_tips: '',
+          period: 'lunch', period_label: '午餐',
+          source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
         });
       }
 
-      // 下午景点（尽量有，超过3天行程时第二天下午安排）
+      // 下午景点
       if (afternoonSpot && index < request.days - 1) {
+        items.push({ ...enrichSpot(afternoonSpot, destinationName, dayNumber), period: 'afternoon', period_label: '下午' });
+      } else if (index < request.days - 1) {
+        // 无POI数据但不是最后一天
         items.push({
-          ...enrichSpot(afternoonSpot, destinationName, dayNumber),
-          period: 'afternoon',
-          period_label: '下午',
+          type: 'spot', name: `${destinationName}推荐景点`, address: destinationName,
+          duration: '2-3小时', description: '根据您的偏好推荐，具体景点待补充',
+          reason: `第${dayNumber}天下午安排`, transport_to_next: '游览后返程',
+          period: 'afternoon', period_label: '下午',
+          source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
         });
-      } else if (afternoonSpot) {
-        // 最后一天下午改为自由活动
+      } else {
+        // 最后一天下午 → 自由活动
         items.push({
-          type: 'spot',
-          name: `${destinationName}自由活动/返程准备`,
-          address: destinationName,
-          duration: '2-3小时',
-          description: '最后一天下午以轻松活动为主，可根据返程时间灵活安排。',
+          type: 'spot', name: `${destinationName}自由活动/返程准备`, address: destinationName,
+          duration: '2-3小时', description: '最后一天下午以轻松活动为主，可根据返程时间灵活安排。',
           reason: '行程尾声，轻松收尾，留出充足时间准备返程。',
           tips: '建议提前确认返程交通，预留足够时间。',
-          period: 'afternoon',
-          period_label: '下午',
+          period: 'afternoon', period_label: '下午',
+          source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
         });
       }
 
-      // 晚餐（必有，超过1天的行程才有）
-      if (request.days > 1 && dinnerFood) {
-        items.push({
-          ...enrichFood(dinnerFood, destinationName),
-          period: 'dinner',
-          period_label: '晚餐',
-        });
-      }
-
-      // 住宿（第一天和倒数第二天晚上安排，中间可跳过）
-      if (hotel && (index === 0 || index === request.days - 2)) {
-        items.push({
-          ...enrichHotel(hotel, destinationName),
-          period: 'night',
-          period_label: '住宿',
-        });
-      } else if (index === request.days - 1) {
-        // 最后一晚住宿（若有）
-        const lastHotel = hotels[(request.days - 1) % Math.max(hotels.length, 1)];
-        if (lastHotel) {
+      // 晚餐（超过1天才有）
+      if (request.days > 1) {
+        if (dinnerFood) {
+          items.push({ ...enrichFood(dinnerFood, destinationName), period: 'dinner', period_label: '晚餐' });
+        } else {
           items.push({
-            ...enrichHotel(lastHotel, destinationName),
-            period: 'night',
-            period_label: '住宿',
+            type: 'food', name: `${destinationName}推荐晚餐`, address: destinationName,
+            budget: '', recommend: '根据您的偏好推荐', reason: '当日晚餐安排',
+            cuisine_type: '', reservation_tips: '',
+            period: 'dinner', period_label: '晚餐',
+            source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
+          });
+        }
+      }
+
+      // 住宿
+      if (hotel && (index === 0 || index === request.days - 2)) {
+        items.push({ ...enrichHotel(hotel, destinationName), period: 'night', period_label: '住宿' });
+      } else if (index === request.days - 1) {
+        const lastHotel = hotels.length > 0 ? hotels[(request.days - 1) % hotels.length] : null;
+        if (lastHotel) {
+          items.push({ ...enrichHotel(lastHotel, destinationName), period: 'night', period_label: '住宿' });
+        } else {
+          items.push({
+            type: 'hotel', name: `${destinationName}推荐住宿`, address: destinationName,
+            budget: '', reason: '当日住宿安排', check_in_tips: '建议提前预订',
+            highlights: '',
+            period: 'night', period_label: '住宿',
+            source: 'rule_based', confidence_level: 'estimated', last_verified_at: today(),
           });
         }
       }

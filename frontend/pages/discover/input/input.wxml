@@ -13,7 +13,7 @@
     <text class="section-label">当前位置</text>
     <view class="loc-bar" wx:if="{{locationText}}">
       <view class="loc-info">
-        <text class="loc-icon">[*]</text>
+        <view class="loc-icon-dot"></view>
         <text class="loc-name">{{locationText}}</text>
       </view>
       <view class="loc-mode-tag {{locationMode === 'loc' ? 'tag-gps' : 'tag-manual'}}">
@@ -25,11 +25,11 @@
     </view>
     <view class="loc-row">
       <view class="loc-btn loc-btn-gps" bindtap="onLocate">
-        <text class="loc-btn-ico">[*]</text>
+        <view class="loc-btn-ico-gps"></view>
         <text class="loc-btn-txt">微信定位</text>
       </view>
       <view class="loc-btn loc-btn-pick" bindtap="onManualLocation">
-        <text class="loc-btn-ico">[v]</text>
+        <view class="loc-btn-ico-check"></view>
         <text class="loc-btn-txt">选择位置</text>
       </view>
     </view>
@@ -110,7 +110,7 @@
     </view>
 
     <view class="picker-search-bar">
-      <text class="picker-search-ico">🔍</text>
+      <view class="picker-search-ico"></view>
       <input
         class="picker-search-input"
         placeholder="{{pickerStep === 'province' ? '搜索省份' : pickerStep === 'city' ? '搜索城市' : '搜索区县'}}"
