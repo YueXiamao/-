@@ -13,6 +13,10 @@ export function isBackendUnavailableError(error = {}) {
 }
 
 export function getGenerationErrorMessage(error = {}) {
+  if (error?._apiErrorType === 'timeout') {
+    return '行程生成耗时较长，请稍后重试或减少目的地和天数';
+  }
+
   if (isBackendUnavailableError(error)) {
     return BACKEND_OFFLINE_MESSAGE;
   }

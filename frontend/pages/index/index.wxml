@@ -11,14 +11,14 @@
   <!-- Entry Cards -->
   <view class="entry-stage">
 
-    <!-- PLAN -->
+    <!-- 行程规划 -->
     <view class="entry-card entry-plan" bindtap="goPlan">
       <view class="entry-head">
         <view class="entry-mark-wrap">
-          <text class="entry-mark">PLAN</text>
+          <text class="entry-mark">规划</text>
           <text class="entry-tagline">行程规划</text>
         </view>
-        <text class="entry-arrow">›</text>
+        <view class="entry-arrow"><view class="entry-arrow-icon"></view></view>
       </view>
       <view class="entry-body">
         <text class="entry-title">已经想好去哪</text>
@@ -32,14 +32,14 @@
       </view>
     </view>
 
-    <!-- RND -->
+    <!-- 随机探索 -->
     <view class="entry-card entry-discover" bindtap="goDiscover">
       <view class="entry-head">
         <view class="entry-mark-wrap">
-          <text class="entry-mark">RND</text>
+          <text class="entry-mark">探索</text>
           <text class="entry-tagline">随机玩</text>
         </view>
-        <text class="entry-arrow">›</text>
+        <view class="entry-arrow"><view class="entry-arrow-icon"></view></view>
       </view>
       <view class="entry-body">
         <text class="entry-title">还没想好去哪</text>
@@ -62,7 +62,7 @@
     </view>
     <view class="home-footer-item">
       <view class="home-footer-dot"></view>
-      <text class="home-footer-text">推荐内容完全过滤广告，真实好玩</text>
+      <text class="home-footer-text">围绕位置、天数和预算筛选灵感</text>
     </view>
   </view>
 

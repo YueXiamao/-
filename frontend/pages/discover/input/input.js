@@ -18,7 +18,7 @@ Page({
     days: 2,
     budget: '',
     preferences: [],
-    preferenceOptions: PREFERENCE_OPTIONS,
+    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
 
     budgetOptions: BUDGET_OPTIONS,
 
@@ -197,11 +197,25 @@ Page({
     const { value } = e.currentTarget.dataset;
     const prefs = this.data.preferences;
     const idx = prefs.indexOf(value);
+
     if (idx >= 0) {
-      this.setData({ preferences: prefs.filter(p => p !== value) });
+      // 取消选中
+      const preferenceOptions = this.data.preferenceOptions.map(item =>
+        item.value === value ? { ...item, selected: false } : item
+      );
+      this.setData({
+        preferences: prefs.filter(p => p !== value),
+        preferenceOptions,
+      });
     } else {
       if (prefs.length >= 3) { wx.showToast({ title: '最多选3个', icon: 'none' }); return; }
-      this.setData({ preferences: [...prefs, value] });
+      const preferenceOptions = this.data.preferenceOptions.map(item =>
+        item.value === value ? { ...item, selected: true } : item
+      );
+      this.setData({
+        preferences: [...prefs, value],
+        preferenceOptions,
+      });
     }
   },
 

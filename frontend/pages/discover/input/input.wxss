@@ -378,10 +378,13 @@
   box-shadow: 0 4rpx 12rpx rgba(13, 156, 110, 0.3);
 }
 
-.pref-check-icon {
-  font-size: 20rpx;
-  color: #fff;
-  font-weight: 700;
+.pref-check-mark {
+  width: 16rpx;
+  height: 10rpx;
+  border-left: 3rpx solid #fff;
+  border-bottom: 3rpx solid #fff;
+  transform: rotate(-45deg);
+  margin-top: -2rpx;
 }
 
 /* ── Bottom Bar (amber variant for discover) ── */
@@ -446,11 +449,20 @@
 }
 
 .picker-back {
-  font-size: 52rpx;
-  color: var(--color-text-secondary);
-  font-weight: 300;
-  padding: 0 8rpx;
-  line-height: 1;
+  width: 48rpx;
+  height: 48rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-back-icon {
+  width: 18rpx;
+  height: 18rpx;
+  border-left: 3rpx solid var(--color-text-secondary);
+  border-bottom: 3rpx solid var(--color-text-secondary);
+  transform: rotate(45deg);
+  margin-left: 8rpx;
 }
 
 .picker-title {
@@ -460,11 +472,28 @@
 }
 
 .picker-close {
-  font-size: 48rpx;
-  color: var(--color-text-hint);
-  font-weight: 300;
-  padding: 0 8rpx;
-  line-height: 1;
+  width: 48rpx;
+  height: 48rpx;
+  position: relative;
+}
+
+.picker-close-icon,
+.picker-close-icon::after {
+  position: absolute;
+  top: 23rpx;
+  left: 10rpx;
+  width: 28rpx;
+  height: 3rpx;
+  border-radius: 999rpx;
+  background: var(--color-text-hint);
+  content: '';
+  transform: rotate(45deg);
+}
+
+.picker-close-icon::after {
+  top: 0;
+  left: 0;
+  transform: rotate(90deg);
 }
 
 .picker-search-bar {
@@ -574,15 +603,36 @@
 }
 
 .picker-row-arrow {
-  font-size: 36rpx;
-  color: var(--color-text-hint);
-  font-weight: 300;
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-row-arrow-icon {
+  width: 14rpx;
+  height: 14rpx;
+  border-top: 3rpx solid var(--color-text-hint);
+  border-right: 3rpx solid var(--color-text-hint);
+  transform: rotate(45deg);
 }
 
 .picker-row-check {
-  font-size: 28rpx;
-  color: var(--color-primary);
-  font-weight: 700;
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.picker-row-check-mark {
+  width: 18rpx;
+  height: 11rpx;
+  border-left: 3rpx solid var(--color-primary);
+  border-bottom: 3rpx solid var(--color-primary);
+  transform: rotate(-45deg);
+  margin-top: -4rpx;
 }
 
 .picker-empty {

@@ -1,7 +1,10 @@
 // API 请求封装
 import { API_BASE_URL, API_TEST_URL } from '../constants/index.js';
 
-const BASE_URL = API_TEST_URL || API_BASE_URL;
+export function resolveApiBaseUrl(wxApi = globalThis.wx) {
+  const envVersion = wxApi?.getAccountInfoSync?.()?.miniProgram?.envVersion;
+  return envVersion === 'release' ? API_BASE_URL : API_TEST_URL;
+}
 
 // 解析 wx.request 失败错误类型
 function parseRequestError(err = {}) {
@@ -17,7 +20,7 @@ function parseRequestError(err = {}) {
 
 class ApiService {
   constructor() {
-    this.baseUrl = BASE_URL;
+    this.baseUrl = resolveApiBaseUrl();
   }
 
   getOpenid() {
@@ -38,7 +41,7 @@ class ApiService {
           'X-OpenID': openid || '',
           ...header
         },
-        timeout: 15000,
+        timeout: options.timeout || 15000,
         success: (res) => {
           if (res.statusCode === 200) {
             if (typeof res.data === 'object' && !Array.isArray(res.data)) {
@@ -88,6 +91,7 @@ class ApiService {
 }
 
 export const api = new ApiService();
+export { ApiService };
 export const get = (path, data, options) => api.get(path, data, options);
 export const post = (path, data, options) => api.post(path, data, options);
 export const patch = (path, data, options) => api.patch(path, data, options);

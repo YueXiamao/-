@@ -20,3 +20,13 @@ test('generation error message tells developers when the local backend is not ru
 
   assert.equal(message, BACKEND_OFFLINE_MESSAGE);
 });
+
+test('generation timeout message does not say the backend is offline', () => {
+  const message = getGenerationErrorMessage({
+    _apiErrorType: 'timeout',
+    errMsg: 'request:fail timeout'
+  });
+
+  assert.notEqual(message, BACKEND_OFFLINE_MESSAGE);
+  assert.equal(message.includes('生成'), true);
+});

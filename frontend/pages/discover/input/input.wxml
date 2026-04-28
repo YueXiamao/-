@@ -84,7 +84,7 @@
         </view>
         <text class="pref-name">{{item.label}}</text>
         <view class="pref-check" wx:if="{{item.selected}}">
-          <text class="pref-check-icon">✓</text>
+          <view class="pref-check-mark"></view>
         </view>
       </view>
     </view>
@@ -102,11 +102,15 @@
   <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
 
     <view class="picker-topbar">
-      <text class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">‹</text>
+      <view class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">
+        <view class="picker-back-icon"></view>
+      </view>
       <text class="picker-title">
         {{pickerStep === 'province' ? '选择省份' : pickerStep === 'city' ? '选择城市' : '选择区县'}}
       </text>
-      <text class="picker-close" bindtap="onPickerClose">×</text>
+      <view class="picker-close" bindtap="onPickerClose">
+        <view class="picker-close-icon"></view>
+      </view>
     </view>
 
     <view class="picker-search-bar">
@@ -136,7 +140,7 @@
           wx:for="{{filteredList}}" wx:key="code"
           bindtap="onProvinceSelect" data-code="{{item.code}}" data-name="{{item.name}}">
           <text class="picker-row-name">{{item.name}}</text>
-          <text class="picker-row-arrow">›</text>
+          <view class="picker-row-arrow"><view class="picker-row-arrow-icon"></view></view>
         </view>
       </block>
       <block wx:if="{{pickerStep === 'city'}}">
@@ -144,7 +148,7 @@
           wx:for="{{filteredList}}" wx:key="code"
           bindtap="onCitySelect" data-code="{{item.code}}" data-name="{{item.name}}">
           <text class="picker-row-name {{currentCity && item.code === currentCity.code ? 'row-name-on' : ''}}">{{item.name}}</text>
-          <text class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}">✓</text>
+          <view class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}"><view class="picker-row-check-mark"></view></view>
         </view>
       </block>
       <block wx:if="{{pickerStep === 'district'}}">
@@ -152,7 +156,7 @@
           wx:for="{{filteredList}}" wx:key="code"
           bindtap="onDistrictSelect" data-code="{{item.code}}" data-name="{{item.name}}">
           <text class="picker-row-name {{currentDistrict && item.code === currentDistrict.code ? 'row-name-on' : ''}}">{{item.name}}</text>
-          <text class="picker-row-check" wx:if="{{currentDistrict && item.code === currentDistrict.code}}">✓</text>
+          <view class="picker-row-check" wx:if="{{currentDistrict && item.code === currentDistrict.code}}"><view class="picker-row-check-mark"></view></view>
         </view>
       </block>
 

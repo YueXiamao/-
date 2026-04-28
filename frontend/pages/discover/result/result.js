@@ -3,6 +3,12 @@ import discoverApi from '../../../services/discover.js';
 import { isBackendUnavailableError } from '../../../services/backend-health.js';
 import { track, EVENT_TYPES } from '../../../services/analytics.js';
 
+export function normalizeDiscoverRecommendations(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.recommendations)) return payload.recommendations;
+  return [];
+}
+
 Page({
   data: {
     loading: true,
@@ -26,12 +32,13 @@ Page({
   async fetchRecommendations(params) {
     this.setData({ loading: true, error: null, isOffline: false });
     try {
-      const recs = await discoverApi.recommend({
+      const recPayload = await discoverApi.recommend({
         current_location: { city: params.city || '', province: params.province || '' },
         days: parseInt(params.days) || 2,
         budget: params.budget || '1000-2000',
         preferences: params.preferences || [],
       });
+      const recs = normalizeDiscoverRecommendations(recPayload);
       this.setData({ loading: false, recommendations: Array.isArray(recs) ? recs : [] });
       // 曝光埋点
       if (Array.isArray(recs) && recs.length > 0) {

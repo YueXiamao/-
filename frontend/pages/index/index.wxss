@@ -69,10 +69,20 @@
 }
 
 .entry-arrow {
-  font-size: 40rpx;
-  color: var(--color-text-secondary);
-  font-weight: 300;
-  line-height: 1;
+  width: 40rpx;
+  height: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.entry-arrow-icon {
+  width: 15rpx;
+  height: 15rpx;
+  border-top: 3rpx solid var(--color-text-secondary);
+  border-right: 3rpx solid var(--color-text-secondary);
+  transform: rotate(45deg);
 }
 
 .entry-body {
