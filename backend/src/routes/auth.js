@@ -2,6 +2,11 @@
 import { userService } from '../services/userService.js';
 import { Errors } from '../middleware/errorHandler.js';
 
+// 统一响应格式
+function ok(data) {
+  return { code: 0, message: 'success', data };
+}
+
 export default async function authRoutes(fastify) {
   // 微信 code 登录
   fastify.post('/login', async (req) => {
@@ -35,6 +40,6 @@ export default async function authRoutes(fastify) {
     }
 
     const userId = userService.upsertUser(openid);
-    return { user_id: userId, openid };
+    return ok({ user_id: userId, openid, is_new_user: false });
   });
 }

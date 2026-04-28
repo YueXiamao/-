@@ -1,5 +1,6 @@
 // 小程序入口
 import { api } from './services/api.js';
+import { authApi } from './services/auth.js';
 
 App({
   onLaunch() {
@@ -11,24 +12,28 @@ App({
     openid: null
   },
 
-  doLogin() {
-    const openid = wx.getStorageSync('openid');
-    if (openid) {
-      this.globalData.openid = openid;
+  async doLogin() {
+    // 已有 openid 直接恢复
+    const existing = wx.getStorageSync('openid');
+    if (existing) {
+      this.globalData.openid = existing;
       return;
     }
 
-    wx.login({
-      success: (res) => {
-        if (!res.code) return;
-        // 复用 api.post，内部自动处理 Base URL
-        api.post('/api/auth/login', { code: res.code }, { silent: true })
-          .then(data => {
-            if (data?.openid) this.setOpenid(data.openid);
-          })
-          .catch(err => console.warn('登录失败', err));
+    // 调用微信 wx.login 获取 code
+    const { code } = await new Promise(wx.login);
+    if (!code) return;
+
+    try {
+      // 通过 services/api.js 统一入口，api.js 会自动解析返回 data 部分
+      const data = await authApi.login(code);
+      const openid = data?.openid;
+      if (openid) {
+        this.setOpenid(openid);
       }
-    });
+    } catch (err) {
+      console.warn('登录失败（非致命）', err);
+    }
   },
 
   setOpenid(openid) {
