@@ -49,24 +49,38 @@ export class TripCandidateService {
       hotels: []
     };
 
-    if (process.env.SKIP_EXTERNAL_POI !== 'true') {
-      for (const destination of request.destinations) {
-        const name = normalizeDestinationName(destination);
-        const city = destination?.city || name;
+    if (process.env.SKIP_EXTERNAL_POI === 'true') {
+      return {
+        spots: [],
+        foods: [],
+        hotels: [],
+        coverage: { level: 'weak', counts: { spots: 0, foods: 0, hotels: 0 } }
+      };
+    }
 
-        try {
-          const [spots, foods, hotels] = await Promise.all([
-            this.poiService.search({ keyword: name, type: 'spot', city, limit: 20 }),
-            this.poiService.search({ keyword: name, type: 'food', city, limit: 10 }),
-            this.poiService.search({ keyword: name, type: 'hotel', city, limit: 5 })
-          ]);
+    // Timeout wrapper: abort if any single POI call takes > 12s
+    const withTimeout = (promise, ms = 12000) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`POI call timeout ${ms}ms`)), ms))
+      ]);
 
-          collected.spots.push(...(Array.isArray(spots) ? spots : []));
-          collected.foods.push(...(Array.isArray(foods) ? foods : []));
-          collected.hotels.push(...(Array.isArray(hotels) ? hotels : []));
-        } catch (error) {
-          console.error(`POI candidate preparation failed for ${name}:`, error.message);
-        }
+    for (const destination of request.destinations) {
+      const name = normalizeDestinationName(destination);
+      const city = destination?.city || name;
+
+      try {
+        const [spots, foods, hotels] = await Promise.all([
+          withTimeout(this.poiService.search({ keyword: name, type: 'spot', city, limit: 20 }).catch(() => [])),
+          withTimeout(this.poiService.search({ keyword: name, type: 'food', city, limit: 10 }).catch(() => [])),
+          withTimeout(this.poiService.search({ keyword: name, type: 'hotel', city, limit: 5 }).catch(() => []))
+        ]);
+
+        collected.spots.push(...(Array.isArray(spots) ? spots : []));
+        collected.foods.push(...(Array.isArray(foods) ? foods : []));
+        collected.hotels.push(...(Array.isArray(hotels) ? hotels : []));
+      } catch (error) {
+        console.error(`POI candidate preparation failed for ${name}:`, error.message);
       }
     }
 

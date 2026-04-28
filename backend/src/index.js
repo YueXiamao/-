@@ -10,6 +10,7 @@ import { errorHandler } from './middleware/errorHandler.js';
 // 路由
 import authRoutes from './routes/auth.js';
 import destinationRoutes from './routes/destinations.js';
+import locationRoutes from './routes/location.js';
 import poiRoutes from './routes/pois.js';
 import tripRoutes from './routes/trip.js';
 import discoverRoutes from './routes/discover.js';
@@ -40,6 +41,7 @@ fastify.setErrorHandler(errorHandler);
 // 注册路由
 fastify.register(authRoutes, { prefix: '/api/auth' });
 fastify.register(destinationRoutes, { prefix: '/api/destinations' });
+fastify.register(locationRoutes, { prefix: '/api/location' });
 fastify.register(poiRoutes, { prefix: '/api/pois' });
 fastify.register(tripRoutes, { prefix: '/api/trip' });
 fastify.register(discoverRoutes, { prefix: '/api/discover' });

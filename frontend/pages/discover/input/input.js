@@ -1,6 +1,7 @@
 // pages/discover/input/input.js
 import { BUDGET_OPTIONS, PREFERENCE_OPTIONS } from '../../../constants/index.js';
-import { getLocalProvinces, getLocalCities, getLocalDistricts } from '../../../services/region-db.js';
+import { getLocalProvinces, getLocalCities } from '../../../services/region-db.js';
+import { locationApi } from '../../../services/location.js';
 
 Page({
   data: {
@@ -68,34 +69,25 @@ Page({
   async doReverseGeocode(lat, lng) {
     wx.showLoading({ title: '识别位置...', mask: true });
     try {
-      const res = await wx.request({
-        url: `https://restapi.amap.com/v3/geocode/regeo?key=d6a104130c5e6169d1e455991987eb79&location=${lng},${lat}&extensions=base`,
-        method: 'GET',
-        timeout: 8000,
-      });
+      const data = await locationApi.reverseGeocode(lat, lng);
       wx.hideLoading();
-      if (res.statusCode === 200 && res.data && res.data.status === '1') {
-        const comp = res.data.regeocode.addressComponent;
-        const rawProvince = comp.province;
-        const rawCity = comp.city || comp.province;
-        const provinces = getLocalProvinces();
-        const matched = provinces.find(p =>
-          rawProvince.includes(p.name) || p.name.includes(rawProvince)
-        ) || null;
-        const data = {
-          locationMode: 'loc',
-          currentProvince: matched,
-          currentCity: { code: '', name: rawCity },
-          locationText: matched ? matched.name + ' ' + rawCity : rawProvince + ' ' + rawCity,
-        };
-        this.setData(data);
-        this.saveLocation(data);
-        wx.showToast({ title: '定位成功', icon: 'success' });
-      } else {
-        wx.showToast({ title: '位置识别失败，请手动选择', icon: 'none' });
-        this.openPicker();
-      }
-    } catch (e) {
+      if (!data) throw new Error('no data');
+      const { province, city } = data;
+      const provinces = getLocalProvinces();
+      const matched = provinces.find(p =>
+        (province && (province.includes(p.name) || p.name.includes(province))) ||
+        (province && province === p.name)
+      ) || null;
+      const locationData = {
+        locationMode: 'loc',
+        currentProvince: matched,
+        currentCity: { code: '', name: city || province || '' },
+        locationText: province && city ? province + ' ' + city : (province || city || ''),
+      };
+      this.setData(locationData);
+      this.saveLocation(locationData);
+      wx.showToast({ title: '定位成功', icon: 'success' });
+    } catch (err) {
       wx.hideLoading();
       wx.showToast({ title: '位置识别失败，请手动选择', icon: 'none' });
       this.openPicker();
