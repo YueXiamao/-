@@ -6,9 +6,9 @@ class DestinationService {
     return getDb();
   }
 
-  // 获取所有省份
+  // 获取所有省份（按常用旅游顺序排列）
   async getProvinces() {
-    return this.db.all("SELECT code, name, lat, lng FROM region_data WHERE level = 1 ORDER BY name");
+    return this.db.all("SELECT code, name, lat, lng FROM region_data WHERE level = 1 ORDER BY sort_order, name");
   }
 
   // 获取地级市

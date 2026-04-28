@@ -4,14 +4,40 @@ import { AppError, Errors } from '../middleware/errorHandler.js';
 
 const TRIP_SYSTEM = `你是一名资深中国旅游规划师。只推荐真实存在、口碑好的景点、餐厅和酒店，不输出任何广告或推广内容。
 
-要求：
+输出规范：
 1. 只推荐真实存在、有具体名称和地址的地方
-2. 每天2-4个景点、1-2家餐厅、1家酒店
-3. 景点之间给出交通提示（步行X分钟/打车X分钟）和游览时长
-4. 餐厅给出推荐菜和人均消费
-5. 住宿给出推荐理由
-6. 总字数精简，每日报程控制在300字以内
-7. 输出纯JSON，不要任何markdown格式`;
+2. 每天3-5个景点（上午1-2个 + 下午1-2个）、2家餐厅（午餐+晚餐）、1家住宿
+3. 每个景点必须包含：名称、地址、游览时长（X小时）、游览建议（游玩路线/拍照点/避坑提示）、最佳游览时间、门票信息
+4. 餐厅必须包含：名称、地址、人均消费、推荐菜2-3道、订座提示（如需）
+5. 住宿必须包含：名称、地址、价位区间、入住贴士（停车/入住时间/周边环境）
+6. 景点之间必须给出交通衔接说明（步行X分钟 / 打车X元）
+7. 每项 item 的 recommend / reason / tips / description 字段必须中文、详细、具体，禁止空洞套话
+8. 输出纯JSON，不要任何markdown格式`;
+
+const TRIP_USER_TEMPLATE = `目的地：{{destNames}}
+出发日期：{{start_date}}
+游玩天数：{{days}}天
+游玩方式：{{preferences}}
+补充说明：{{extra_notes}}
+
+可用POI候选（可参考，也可按需增补真实景点）：
+{{poiText}}
+
+请按日期生成{{days}}天详细行程，返回纯JSON数组：
+[
+  {
+    "day": 1,
+    "date": "YYYY-MM-DD",
+    "summary": "X月X日 · 目的地 · N项安排（上午/下午/住宿）",
+    "items": [
+      {"type": "spot", "period": "morning", "period_label": "上午", "name": "景点名", "address": "地址", "duration": "2-3小时", "best_time": "9:00-12:00", "ticket_info": "门票信息/免费", "description": "游览路线建议和看点描述", "reason": "为什么推荐这个景点", "tips": "拍照点/避坑/注意事项", "transport_to_next": "步行8分钟或打车15元"},
+      {"type": "food", "period": "lunch", "period_label": "午餐", "name": "餐厅名", "address": "地址", "budget": "人均60元", "cuisine_type": "川菜/火锅等", "recommend": "招牌菜1、招牌菜2、招牌菜3", "reservation_tips": "建议提前预约/无需预约", "reason": "为什么适合当天午餐"},
+      {"type": "spot", "period": "afternoon", "period_label": "下午", "name": "景点名", "address": "地址", "duration": "2-3小时", "best_time": "14:00-17:00", "ticket_info": "门票信息/免费", "description": "游览路线建议和看点描述", "reason": "为什么放在下午", "tips": "拍照点/避坑/注意事项", "transport_to_next": "步行5分钟"},
+      {"type": "food", "period": "dinner", "period_label": "晚餐", "name": "餐厅名", "address": "地址", "budget": "人均80元", "cuisine_type": "本地菜", "recommend": "招牌菜1、招牌菜2、招牌菜3", "reservation_tips": "建议提前预约", "reason": "为什么适合当天晚餐"},
+      {"type": "hotel", "period": "night", "period_label": "住宿", "name": "酒店名", "address": "地址", "budget": "300-500元/晚", "highlights": "评分4.5/近景区/含早", "check_in_tips": "建议18:00前入住/免费停车", "reason": "为什么推荐这家住宿"}
+    ]
+  }
+]`;
 
 const RECOMMEND_SYSTEM = `你是一名熟悉中国旅游的行程规划师，根据用户的位置、预算、天数和偏好，推荐最合适的旅游目的地。只推荐国内目的地。`;
 
@@ -24,15 +50,27 @@ const ALLOWED_ENHANCEMENT_FIELDS = [
   'duration',
   'budget',
   'transport_to_next',
-  'notes'
+  'notes',
+  // 新增详细字段
+  'best_time',
+  'ticket_info',
+  'tips',
+  'period',
+  'period_label',
+  'cuisine_type',
+  'reservation_tips',
+  'highlights',
+  'check_in_tips',
+  'summary',
+  'date_display',
 ];
 
 function buildTripPrompt({ destinations, start_date, days, preferences, extra_notes, pois }) {
   const destNames = destinations.map(d => typeof d === 'string' ? d : d.name).join('、');
 
-  const poiText = `景点：${pois.spots.map(s => `- ${s.name}(${s.address}) 评分:${s.rating || '无'}`).join('\n')}
-餐厅：${pois.foods.map(f => `- ${f.name}(${f.address}) 人均:${f.price ? f.price + '元' : '无'}`).join('\n')}
-酒店：${pois.hotels.map(h => `- ${h.name}(${h.address})`).join('\n')}`;
+  const poiText = `景点候选：${pois.spots.map(s => `- ${s.name}(${s.address || '地址不详'}) 评分:${s.rating || '无'} 游览时长:${s.duration || '待估算'} 标签:${(s.tags || []).slice(0, 3).join('/')}`).join('\n')}
+餐厅候选：${pois.foods.map(f => `- ${f.name}(${f.address || '地址不详'}) 人均:${f.price ? f.price + '元' : '待查'} 菜系:${(f.tags || [])[0] || '本地菜'}`).join('\n')}
+酒店候选：${pois.hotels.map(h => `- ${h.name}(${h.address || '地址不详'}) 价格:${h.price ? h.price + '元/晚' : '待查'} 评分:${h.rating || '待查'}`).join('\n')}`;
 
   return `目的地：${destNames}
 出发日期：${start_date}
@@ -40,18 +78,21 @@ function buildTripPrompt({ destinations, start_date, days, preferences, extra_no
 游玩方式：${(preferences || []).join('、')}
 补充：${extra_notes || '无'}
 
-可用POI：
+可用POI候选（可直接引用，也可按需增补真实景点）：
 ${poiText}
 
-按日期生成${days}天行程，返回JSON数组（不要markdown格式）：
+请按日期生成${days}天详细行程，返回纯JSON数组：
 [
   {
     "day": 1,
     "date": "YYYY-MM-DD",
+    "summary": "X月X日 · 目的地 · N项安排",
     "items": [
-      {"type": "spot", "name": "景点名", "address": "地址", "duration": "1-2小时", "description": "一句话描述", "transport_to_next": "步行5分钟"},
-      {"type": "food", "name": "餐厅名", "address": "地址", "budget": "人均X元", "recommend": "推荐菜1、推荐菜2"},
-      {"type": "hotel", "name": "酒店名", "address": "地址", "budget": "X-Y元/晚", "reason": "推荐理由"}
+      {"type": "spot", "period": "morning", "period_label": "上午", "name": "景点名", "address": "地址", "duration": "2-3小时", "best_time": "9:00-12:00", "ticket_info": "门票信息/免费", "description": "游览路线建议和看点描述", "reason": "为什么推荐这个景点", "tips": "拍照点/避坑/注意事项", "transport_to_next": "步行8分钟"},
+      {"type": "food", "period": "lunch", "period_label": "午餐", "name": "餐厅名", "address": "地址", "budget": "人均60元", "cuisine_type": "川菜", "recommend": "招牌菜1、招牌菜2、招牌菜3", "reservation_tips": "建议提前预约", "reason": "为什么适合当天午餐"},
+      {"type": "spot", "period": "afternoon", "period_label": "下午", "name": "景点名", "address": "地址", "duration": "2-3小时", "best_time": "14:00-17:00", "ticket_info": "门票信息/免费", "description": "游览路线建议和看点描述", "reason": "为什么放在下午", "tips": "拍照点/避坑/注意事项", "transport_to_next": "步行5分钟"},
+      {"type": "food", "period": "dinner", "period_label": "晚餐", "name": "餐厅名", "address": "地址", "budget": "人均80元", "cuisine_type": "本地菜", "recommend": "招牌菜1、招牌菜2", "reservation_tips": "建议提前预约", "reason": "为什么适合当天晚餐"},
+      {"type": "hotel", "period": "night", "period_label": "住宿", "name": "酒店名", "address": "地址", "budget": "300-500元/晚", "highlights": "近景区/含早", "check_in_tips": "建议18:00前入住", "reason": "为什么推荐这家住宿"}
     ]
   }
 ]`;
