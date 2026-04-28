@@ -1,10 +1,6 @@
 // 位置相关路由
 import { locationService } from '../services/locationService.js';
-
-// 统一响应格式
-function ok(data) {
-  return { code: 0, message: 'success', data };
-}
+import { ok } from '../utils/response.js';
 
 function fail(code, message) {
   return { code, message };

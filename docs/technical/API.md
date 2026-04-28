@@ -77,13 +77,14 @@ GET /api/destinations/provinces
 ### 3.2 获取地级市列表
 
 ```
-GET /api/destinations/cities?province_code=510000
+GET /api/destinations/cities/:provinceCode
 ```
 
-**参数：**
+**参数（路径参数）：**
+
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| province_code | string | 是 | 省份代码 |
+| provinceCode | string | 是 | 省份代码，如 `510000` |
 
 **响应：**
 ```json
@@ -99,13 +100,14 @@ GET /api/destinations/cities?province_code=510000
 ### 3.3 获取区县列表
 
 ```
-GET /api/destinations/districts?city_code=510100
+GET /api/destinations/districts/:cityCode
 ```
 
-**参数：**
+**参数（路径参数）：**
+
 | 参数 | 类型 | 必填 | 说明 |
 |---|---|---|---|
-| city_code | string | 是 | 城市代码 |
+| cityCode | string | 是 | 城市代码，如 `510100` |
 
 **响应：**
 ```json

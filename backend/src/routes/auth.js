@@ -1,11 +1,7 @@
 // 微信登录
 import { userService } from '../services/userService.js';
 import { Errors } from '../middleware/errorHandler.js';
-
-// 统一响应格式
-function ok(data) {
-  return { code: 0, message: 'success', data };
-}
+import { ok } from '../utils/response.js';
 
 export default async function authRoutes(fastify) {
   // 微信 code 登录

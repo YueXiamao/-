@@ -1,7 +1,7 @@
 // 用户行为分析路由
 import { analyticsService } from '../services/analyticsService.js';
+import { ok } from '../utils/response.js';
 
-function ok(data) { return { code: 0, message: 'success', data }; }
 function fail(code, message) { return { code, message }; }
 
 export default async function analyticsRoutes(fastify) {
