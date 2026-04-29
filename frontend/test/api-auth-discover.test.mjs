@@ -13,16 +13,34 @@ test('api base url switches to production url in release environment', async () 
   assert.equal(baseUrl, 'https://api.travel.com');
 });
 
-test('api base url uses loopback ip in development to avoid localhost timeout', async () => {
+test('api base url uses loopback ip in desktop devtools development', async () => {
   const { resolveApiBaseUrl } = await import('../services/api.js');
 
   const baseUrl = resolveApiBaseUrl({
     getAccountInfoSync() {
       return { miniProgram: { envVersion: 'develop' } };
+    },
+    getSystemInfoSync() {
+      return { platform: 'windows' };
     }
   });
 
   assert.equal(baseUrl, 'http://127.0.0.1:3000');
+});
+
+test('api base url uses LAN ip on mobile development builds', async () => {
+  const { resolveApiBaseUrl } = await import('../services/api.js');
+
+  const baseUrl = resolveApiBaseUrl({
+    getAccountInfoSync() {
+      return { miniProgram: { envVersion: 'develop' } };
+    },
+    getSystemInfoSync() {
+      return { platform: 'android' };
+    }
+  });
+
+  assert.equal(baseUrl, 'http://192.168.20.141:3000');
 });
 
 test('auth ensureLogin reuses stored openid before calling wx.login', async () => {

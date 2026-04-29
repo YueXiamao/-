@@ -7,7 +7,7 @@ const AMAP_BASE = 'https://restapi.amap.com/v3';
 
 // 高德 type -> 我们内部 type 的映射
 const TYPE_MAP = {
-  spot: '',
+  spot: '风景名胜',
   food: '餐饮服务',
   hotel: '住宿'
 };

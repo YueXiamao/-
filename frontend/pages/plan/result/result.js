@@ -2,6 +2,7 @@ import { formatDate, copyToClipboard } from '../../../utils/index.js';
 import tripApi from '../../../services/trip.js';
 import { getCityBackground } from '../../../constants/index.js';
 import { normalizeGenerationState } from './generation-state.js';
+import { consumeTripResultEntry, createRetryParamsStore } from './entry-state.js';
 import { getGenerationErrorMessage } from '../../../services/backend-health.js';
 import { track, EVENT_TYPES } from '../../../services/analytics.js';
 
@@ -24,25 +25,30 @@ Page({
   },
 
   onLoad(options = {}) {
-    if (options.trip_id) {
-      this.loadTripDetail(options.trip_id);
+    this._retryParamsStore = createRetryParamsStore();
+    const entry = consumeTripResultEntry({
+      options,
+      getStorageSync: (key) => wx.getStorageSync(key),
+      removeStorageSync: (key) => wx.removeStorageSync(key)
+    });
+
+    if (entry.mode === 'detail') {
+      this.loadTripDetail(entry.tripId);
       return;
     }
 
-    const generatedTrip = wx.getStorageSync('pre_generated_trip');
-    if (generatedTrip) {
-      wx.removeStorageSync('pre_generated_trip');
-      this.setTripState(generatedTrip, generatedTrip.trip_id);
+    if (entry.mode === 'generated') {
+      this.setTripState(entry.trip, entry.trip?.trip_id);
       return;
     }
 
-    const params = wx.getStorageSync('trip_params');
-    if (!params) {
-      wx.navigateBack();
+    if (entry.mode === 'generate') {
+      this._retryParamsStore.set(entry.params);
+      this.generateTrip(entry.params);
       return;
     }
 
-    this.generateTrip(params);
+    wx.navigateBack();
   },
 
   setTripState(trip, tripId = null) {
@@ -108,25 +114,30 @@ Page({
       bannerText: '',
       generatingText: '正在搜索景点与餐饮...'
     });
+    let enhancingTimer = null;
     try {
       await tripApi.health();
-      await new Promise((resolve) => setTimeout(resolve, 300));
       this.setData({
         step: 'building_skeleton',
         generatingText: '正在安排每日节奏...'
       });
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      this.setData({
-        step: 'enhancing',
-        generatingText: '正在补充推荐内容...'
-      });
+      enhancingTimer = setTimeout(() => {
+        if (!this.data.loading) return;
+        this.setData({
+          step: 'enhancing',
+          generatingText: '正在补充推荐内容...'
+        });
+      }, 1200);
       const trip = await tripApi.generate(params);
+      this._retryParamsStore?.clear();
+      clearTimeout(enhancingTimer);
       this.setTripState(trip, trip.trip_id);
       track(EVENT_TYPES.TRIP_GENERATE_SUCCESS, {
         targetType: 'trip', targetId: trip.trip_id,
         payload: { days: params.days, destinations: params.destinations }
       });
     } catch (error) {
+      if (enhancingTimer) clearTimeout(enhancingTimer);
       console.error('Failed to generate trip:', error);
       this.setData({
         loading: false,
@@ -141,14 +152,15 @@ Page({
   },
 
   onRetry() {
-    if (this.data.tripId && !wx.getStorageSync('trip_params')) {
+    const retryParams = this._retryParamsStore?.get();
+
+    if (this.data.tripId && !retryParams) {
       this.loadTripDetail(this.data.tripId);
       return;
     }
 
-    const params = wx.getStorageSync('trip_params');
-    if (params) {
-      this.generateTrip(params);
+    if (retryParams) {
+      this.generateTrip(retryParams);
     }
   },
 
@@ -412,6 +424,14 @@ Page({
     });
   },
 
+  async onReferenceLinkTap(e) {
+    const { url } = e.currentTarget.dataset;
+    if (!url) return;
+
+    await copyToClipboard(url);
+    wx.showToast({ title: '链接已复制', icon: 'success' });
+  },
+
   async onSave() {
     if (!this.data.trip) return;
 
@@ -450,7 +470,18 @@ Page({
           text += `[H] ${item.name}\n   ${item.address || ''}\n   ${item.budget || ''}\n`;
         }
 
+        if (item.reference_links?.length) {
+          text += `   参考：${item.reference_links.map((link) => link.url).join(' | ')}\n`;
+        }
+
         if (item.notes) text += `   note: ${item.notes}\n`;
+      }
+
+      if (day.alternative_spots?.length) {
+        text += `   备选景点：${day.alternative_spots.map((item) => item.name).join(' / ')}\n`;
+      }
+      if (day.alternative_foods?.length) {
+        text += `   备选美食：${day.alternative_foods.map((item) => item.name).join(' / ')}\n`;
       }
       text += '\n';
     }

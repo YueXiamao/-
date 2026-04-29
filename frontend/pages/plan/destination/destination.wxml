@@ -92,7 +92,8 @@
       <text class="section-title" wx:if="{{step === 2}}">选择 {{selectedProvince.name}} 的城市</text>
       <text class="section-title" wx:if="{{step === 3}}">选择 {{selectedCity.name}} 的区县</text>
       <text class="section-hint" wx:if="{{step === 1}}">先定一个大的方向，再往下细化。</text>
-      <text class="section-hint" wx:if="{{step === 2}}">点进城市继续选区县，也可以直接把整座城市加入行程。</text>
+      <text class="section-hint" wx:if="{{step === 2 && !selectedProvinceRequiresDistrict}}">非直辖市选到城市即可，点击城市会直接加入目的地。</text>
+      <text class="section-hint" wx:if="{{step === 2 && selectedProvinceRequiresDistrict}}">直辖市建议继续选择区县，行程范围会更准确。</text>
       <text class="section-hint" wx:if="{{step === 3}}">点击区县即可加入已选列表，可以继续多选。</text>
     </view>
     <view class="back-chip" bindtap="onBackStep" wx:if="{{step > 1}}">返回上一步</view>
@@ -127,10 +128,9 @@
       >
         <view class="item-copy">
           <text class="item-name">{{item.name}}</text>
-          <text class="item-subtitle">进入区县，或直接整座城市加入</text>
+          <text class="item-subtitle">{{selectedProvinceRequiresDistrict ? '进入区县继续细化' : '点击后直接加入整座城市'}}</text>
         </view>
         <view class="item-right">
-          <text class="item-confirm-btn" catchtap="onCityConfirm" data-code="{{item.code}}" data-name="{{item.name}}">直接加入</text>
           <text class="item-arrow">›</text>
         </view>
       </view>

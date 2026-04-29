@@ -1,5 +1,37 @@
 import { poiService as defaultPoiService } from '../poiService.js';
 
+const TRAVEL_SPOT_HINTS = [
+  '风景名胜',
+  '公园',
+  '博物馆',
+  '纪念馆',
+  '美术馆',
+  '文化宫',
+  '古迹',
+  '寺',
+  '祠',
+  '街区',
+  '步行街',
+  '旅游景点',
+  '休闲场所',
+  '广场'
+];
+
+const NON_TRAVEL_SPOT_HINTS = [
+  '政府机构',
+  '政府机关',
+  '社会团体',
+  '学校',
+  '中学',
+  '小学',
+  '公司',
+  '写字楼',
+  '商务住宅',
+  '产业园',
+  '机关',
+  '停车场'
+];
+
 function normalizeDestinationName(destination) {
   return typeof destination === 'string' ? destination : destination?.name || '';
 }
@@ -35,6 +67,25 @@ function dedupeItems(items = []) {
     seen.add(key);
     return true;
   });
+}
+
+function textIncludesAny(value, hints) {
+  return hints.some((hint) => value.includes(hint));
+}
+
+function isTravelSpot(item) {
+  const tags = Array.isArray(item?.tags) ? item.tags : [];
+  const searchable = [
+    item?.name || '',
+    item?.address || '',
+    ...tags
+  ].join(' ');
+
+  if (textIncludesAny(searchable, NON_TRAVEL_SPOT_HINTS)) {
+    return false;
+  }
+
+  return tags.length === 0 || textIncludesAny(searchable, TRAVEL_SPOT_HINTS);
 }
 
 export class TripCandidateService {
@@ -84,7 +135,7 @@ export class TripCandidateService {
       }
     }
 
-    const spots = dedupeItems(collected.spots);
+    const spots = dedupeItems(collected.spots).filter(isTravelSpot);
     const foods = dedupeItems(collected.foods);
     const hotels = dedupeItems(collected.hotels);
 

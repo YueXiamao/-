@@ -39,6 +39,12 @@ function buildRetryableGenerationError() {
   return failure;
 }
 
+function timeoutAfter(ms, reason) {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve({ skipped: true, reason }), ms);
+  });
+}
+
 export class TripGenerationOrchestrator {
   constructor({
     tripService,
@@ -46,7 +52,8 @@ export class TripGenerationOrchestrator {
     skeletonBuilder,
     fallbackTemplateProvider,
     aiEnhancer,
-    resultValidator
+    resultValidator,
+    enhancementTimeoutMs = 18000
   }) {
     this.tripService = tripService;
     this.candidateService = candidateService;
@@ -54,6 +61,7 @@ export class TripGenerationOrchestrator {
     this.fallbackTemplateProvider = fallbackTemplateProvider;
     this.aiEnhancer = aiEnhancer;
     this.resultValidator = resultValidator;
+    this.enhancementTimeoutMs = enhancementTimeoutMs;
   }
 
   async generate(input) {
@@ -130,11 +138,14 @@ export class TripGenerationOrchestrator {
     }
 
     try {
-      const enhancedGeneration = await this.aiEnhancer.enhance({
-        request,
-        skeleton: generation.itinerary,
-        candidates
-      });
+      const enhancedGeneration = await Promise.race([
+        this.aiEnhancer.enhance({
+          request,
+          skeleton: generation.itinerary,
+          candidates
+        }),
+        timeoutAfter(this.enhancementTimeoutMs, 'ai_enhancement_timeout')
+      ]);
 
       if (!enhancedGeneration || enhancedGeneration.skipped) {
         return {

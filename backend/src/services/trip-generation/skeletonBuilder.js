@@ -152,6 +152,64 @@ function enrichHotel(candidate, destinationName) {
   return { ...base, ...addConfidenceFields(candidate) };
 }
 
+function buildReferenceLinks(keyword, destinationName) {
+  const query = encodeURIComponent(`${destinationName} ${keyword} 攻略`);
+  const mapQuery = encodeURIComponent(keyword);
+  const city = encodeURIComponent(destinationName);
+
+  return [
+    {
+      label: '小红书参考',
+      url: `https://www.xiaohongshu.com/search_result?keyword=${query}`
+    },
+    {
+      label: '高德地图搜索',
+      url: `https://uri.amap.com/search?keyword=${mapQuery}&city=${city}`
+    }
+  ];
+}
+
+function itemName(item) {
+  return String(item?.name || '').trim();
+}
+
+function buildAlternatives(candidates, usedNames, destinationName, type, count = 5) {
+  const selected = [];
+
+  for (const candidate of candidates) {
+    const name = itemName(candidate);
+    if (!name || usedNames.has(name)) continue;
+
+    usedNames.add(name);
+    const tags = Array.isArray(candidate.tags) ? candidate.tags.slice(0, 3) : [];
+    selected.push({
+      type,
+      name,
+      address: candidate.address || destinationName,
+      reason: candidate.rating
+        ? `评分${candidate.rating}，适合作为主线之外的备选。`
+        : '可作为主线之外的弹性选择，适合按当天体力和天气替换。',
+      tags,
+      budget: candidate.price ? `人均约${candidate.price}元` : '',
+      reference_links: buildReferenceLinks(name, destinationName),
+      source: candidate.source || 'amap',
+      confidence_level: candidate.rating ? 'verified' : 'estimated',
+      ...(candidate.rating ? { rating: candidate.rating } : {})
+    });
+
+    if (selected.length >= count) break;
+  }
+
+  return selected;
+}
+
+function attachReferenceLinks(item, destinationName) {
+  return {
+    ...item,
+    reference_links: buildReferenceLinks(item.name, destinationName)
+  };
+}
+
 // ─── 骨架构建器 ─────────────────────────────────────────────────────────────
 
 export class TripSkeletonBuilder {
@@ -185,10 +243,12 @@ export class TripSkeletonBuilder {
       const hotel = hotels.length > 0 ? hotels[index % hotels.length] : null;
 
       const items = [];
+      const usedSpotNames = new Set([itemName(morningSpot), itemName(afternoonSpot)].filter(Boolean));
+      const usedFoodNames = new Set([itemName(lunchFood), itemName(dinnerFood)].filter(Boolean));
 
       // 上午景点
       if (morningSpot) {
-        items.push({ ...enrichSpot(morningSpot, destinationName, dayNumber), period: 'morning', period_label: '上午' });
+        items.push(attachReferenceLinks({ ...enrichSpot(morningSpot, destinationName, dayNumber), period: 'morning', period_label: '上午' }, destinationName));
       } else {
         items.push({
           type: 'spot', name: `${destinationName}推荐景点`, address: destinationName,
@@ -201,7 +261,7 @@ export class TripSkeletonBuilder {
 
       // 午餐
       if (lunchFood) {
-        items.push({ ...enrichFood(lunchFood, destinationName), period: 'lunch', period_label: '午餐' });
+        items.push(attachReferenceLinks({ ...enrichFood(lunchFood, destinationName), period: 'lunch', period_label: '午餐' }, destinationName));
       } else {
         items.push({
           type: 'food', name: `${destinationName}推荐餐饮`, address: destinationName,
@@ -214,7 +274,7 @@ export class TripSkeletonBuilder {
 
       // 下午景点
       if (afternoonSpot && index < request.days - 1) {
-        items.push({ ...enrichSpot(afternoonSpot, destinationName, dayNumber), period: 'afternoon', period_label: '下午' });
+        items.push(attachReferenceLinks({ ...enrichSpot(afternoonSpot, destinationName, dayNumber), period: 'afternoon', period_label: '下午' }, destinationName));
       } else if (index < request.days - 1) {
         // 无POI数据但不是最后一天
         items.push({
@@ -239,7 +299,7 @@ export class TripSkeletonBuilder {
       // 晚餐（超过1天才有）
       if (request.days > 1) {
         if (dinnerFood) {
-          items.push({ ...enrichFood(dinnerFood, destinationName), period: 'dinner', period_label: '晚餐' });
+          items.push(attachReferenceLinks({ ...enrichFood(dinnerFood, destinationName), period: 'dinner', period_label: '晚餐' }, destinationName));
         } else {
           items.push({
             type: 'food', name: `${destinationName}推荐晚餐`, address: destinationName,
@@ -253,11 +313,11 @@ export class TripSkeletonBuilder {
 
       // 住宿
       if (hotel && (index === 0 || index === request.days - 2)) {
-        items.push({ ...enrichHotel(hotel, destinationName), period: 'night', period_label: '住宿' });
+        items.push(attachReferenceLinks({ ...enrichHotel(hotel, destinationName), period: 'night', period_label: '住宿' }, destinationName));
       } else if (index === request.days - 1) {
         const lastHotel = hotels.length > 0 ? hotels[(request.days - 1) % hotels.length] : null;
         if (lastHotel) {
-          items.push({ ...enrichHotel(lastHotel, destinationName), period: 'night', period_label: '住宿' });
+          items.push(attachReferenceLinks({ ...enrichHotel(lastHotel, destinationName), period: 'night', period_label: '住宿' }, destinationName));
         } else {
           items.push({
             type: 'hotel', name: `${destinationName}推荐住宿`, address: destinationName,
@@ -269,12 +329,19 @@ export class TripSkeletonBuilder {
         }
       }
 
+      const enrichedItems = items.map((item) => (
+        Array.isArray(item.reference_links) ? item : attachReferenceLinks(item, destinationName)
+      ));
+
       return {
         day: dayNumber,
         date,
         date_display: dateDisplay,
-        summary: `${dateDisplay} · ${destinationName} · ${items.length}项安排`,
-        items,
+        summary: `${dateDisplay} · ${destinationName} · ${enrichedItems.length}项安排`,
+        alternative_spots: buildAlternatives(spots, usedSpotNames, destinationName, 'spot', 6),
+        alternative_foods: buildAlternatives(foods, usedFoodNames, destinationName, 'food', 6),
+        reference_links: buildReferenceLinks(destinationName, destinationName),
+        items: enrichedItems,
       };
     });
 

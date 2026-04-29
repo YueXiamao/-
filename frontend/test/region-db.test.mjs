@@ -29,6 +29,17 @@ const sampleRecords = [
   { code: 'd1', name: 'District One', level: 3, parentCode: 'c1' }
 ];
 
+const rankingRecords = [
+  { code: '510000', name: 'Sichuan', level: 1, parentCode: '' },
+  { code: '110000', name: 'Beijing', level: 1, parentCode: '' },
+  { code: '990000', name: 'Alpha Province', level: 1, parentCode: '' },
+  { code: '510300', name: 'Zigong', level: 2, parentCode: '510000' },
+  { code: '510100', name: 'Chengdu', level: 2, parentCode: '510000' },
+  { code: '510700', name: 'Mianyang', level: 2, parentCode: '510000' },
+  { code: '990300', name: 'Gamma City', level: 2, parentCode: '990000' },
+  { code: '990100', name: 'Alpha City', level: 2, parentCode: '990000' }
+];
+
 test('region database builds table indexes for province city and district lookups', () => {
   const db = createRegionDatabase(sampleRecords);
 
@@ -62,4 +73,12 @@ test('region store rebuilds when a stored database version is stale', () => {
   const store = createRegionStore({ records: sampleRecords, storage });
 
   assert.deepEqual(store.getProvinces().map((item) => item.code), ['p1']);
+});
+
+test('region database ranks popular provinces and cities before alphabetical fallback', () => {
+  const db = createRegionDatabase(rankingRecords);
+
+  assert.deepEqual(db.tables.provinces.map((item) => item.code), ['110000', '510000', '990000']);
+  assert.deepEqual(db.tables.citiesByProvince['510000'].map((item) => item.code), ['510100', '510700', '510300']);
+  assert.deepEqual(db.tables.citiesByProvince['990000'].map((item) => item.code), ['990100', '990300']);
 });

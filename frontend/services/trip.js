@@ -7,7 +7,7 @@ export default {
   },
 
   generate(params) {
-    return api.post('/api/trip/generate', params, { timeout: 60000 });
+    return api.post('/api/trip/generate', params, { timeout: 90000, silent: true });
   },
 
   save(params) {

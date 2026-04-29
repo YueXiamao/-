@@ -305,7 +305,8 @@ async function callMiniMax(prompt, systemPrompt) {
   });
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25000);
+  const timeoutMs = Number(config.ai.timeout) || 15000;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
     const response = await client.chat.completions.create({
@@ -314,15 +315,23 @@ async function callMiniMax(prompt, systemPrompt) {
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: prompt }
-      ],
-      signal: controller.signal
+      ]
+    }, {
+      signal: controller.signal,
+      timeout: timeoutMs
     });
     clearTimeout(timeout);
     return response.choices[0].message.content;
   } catch (err) {
     clearTimeout(timeout);
-    if (err.name === 'AbortError' || err.message?.includes('aborted')) {
-      throw Errors.AI_ERROR('AI请求超时（25秒）');
+    if (
+      err.name === 'AbortError'
+      || err.name === 'APIConnectionTimeoutError'
+      || err.code === 'ETIMEDOUT'
+      || err.message?.includes('aborted')
+      || err.message?.includes('timed out')
+    ) {
+      throw Errors.AI_ERROR(`AI请求超时（${Math.round(timeoutMs / 1000)}秒）`);
     }
     throw Errors.AI_ERROR('AI服务调用失败: ' + err.message);
   }

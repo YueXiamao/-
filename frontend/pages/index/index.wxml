@@ -1,69 +1,82 @@
-<view class="page page-bg">
+<view class="page page-bg home-page">
+  <view class="home-hero">
+    <text class="page-kicker">旅行助手</text>
+    <text class="home-greeting">{{username}}，下一段出发从这里开始</text>
+    <text class="home-subtitle">先定方向，再做安排。知道去哪就直接排路线，没想法就先找灵感。</text>
 
-  <!-- Hero Banner -->
-  <view class="page-hero" style="padding: 64rpx 32rpx 48rpx">
-    <text class="page-kicker">TRAVEL PLANNER</text>
-    <text class="page-title">今天怎么出发</text>
-    <view style="height: 4rpx; background: linear-gradient(90deg, var(--color-primary), var(--color-secondary)); border-radius: 2rpx; margin: 24rpx 0;"></view>
-    <text class="page-subtitle">选一个入口，开启你的下一段旅程。</text>
+    <view class="home-scenic-grid">
+      <image class="scenic-large" src="/assets/backgrounds/city-coast.png" mode="aspectFill" />
+      <view class="scenic-stack">
+        <image class="scenic-small" src="/assets/backgrounds/city-urban.png" mode="aspectFill" />
+        <image class="scenic-small" src="/assets/backgrounds/city-mountain.png" mode="aspectFill" />
+      </view>
+      <view class="home-floating-badge glass-card">
+        <text class="home-floating-number">{{hasRecentTrips ? recentTripCount : 2}}</text>
+        <text class="home-floating-copy">{{hasRecentTrips ? '份历史草案' : '种出发方式'}}</text>
+      </view>
+    </view>
+
+    <view class="hero-status-row">
+      <view class="hero-status-item surface-card">
+        <text class="hero-status-label">适合现在</text>
+        <text class="hero-status-value">周末短逃</text>
+      </view>
+      <view class="hero-status-item surface-card">
+        <text class="hero-status-label">推荐节奏</text>
+        <text class="hero-status-value">轻松直达</text>
+      </view>
+      <view class="hero-status-item surface-card">
+        <text class="hero-status-label">你的状态</text>
+        <text class="hero-status-value">{{hasRecentTrips ? '可继续编辑' : '可以新建一份'}}</text>
+      </view>
+    </view>
   </view>
 
-  <!-- Entry Cards -->
-  <view class="entry-stage">
-
-    <!-- 行程规划 -->
+  <view class="page-content home-content">
     <view class="entry-card entry-plan" bindtap="goPlan">
-      <view class="entry-head">
-        <view class="entry-mark-wrap">
-          <text class="entry-mark">规划</text>
-          <text class="entry-tagline">行程规划</text>
-        </view>
+      <view class="entry-card-top">
+        <text class="entry-tag badge-green">有目的地</text>
+        <view class="entry-card-icon entry-card-icon-plan"></view>
+      </view>
+      <text class="entry-title">行程规划</text>
+      <text class="entry-brief">目的地、日期、偏好</text>
+      <view class="entry-metrics">
+        <text class="entry-metric">多地组合</text>
+        <text class="entry-metric">每日节奏</text>
+        <text class="entry-metric">可继续编辑</text>
+      </view>
+      <view class="entry-card-tail">
+        <text class="entry-tail-copy">更适合已经有出发方向</text>
         <view class="entry-arrow"><view class="entry-arrow-icon"></view></view>
-      </view>
-      <view class="entry-body">
-        <text class="entry-title">已经想好去哪</text>
-        <text class="entry-desc">把路线和节奏安排清楚，直接开做。</text>
-      </view>
-      <view class="entry-tags">
-        <text class="entry-tag"><text class="entry-tag-dot"></text>市 + 区县混合</text>
-        <text class="entry-tag"><text class="entry-tag-dot"></text>轻松度假</text>
-        <text class="entry-tag"><text class="entry-tag-dot"></text>网红打卡</text>
-        <text class="entry-tag"><text class="entry-tag-dot"></text>美食之旅</text>
       </view>
     </view>
 
-    <!-- 随机探索 -->
     <view class="entry-card entry-discover" bindtap="goDiscover">
-      <view class="entry-head">
-        <view class="entry-mark-wrap">
-          <text class="entry-mark">探索</text>
-          <text class="entry-tagline">随机玩</text>
-        </view>
-        <view class="entry-arrow"><view class="entry-arrow-icon"></view></view>
+      <view class="entry-card-top">
+        <text class="entry-tag badge-amber">没定目的地</text>
+        <view class="entry-card-icon entry-card-icon-discover"></view>
       </view>
-      <view class="entry-body">
-        <text class="entry-title">还没想好去哪</text>
-        <text class="entry-desc">告诉系统你的位置、天数和预算，马上出灵感。</text>
+      <text class="entry-title">随机玩</text>
+      <text class="entry-brief">位置、预算、偏好</text>
+      <view class="entry-metrics">
+        <text class="entry-metric warm">先筛目的地</text>
+        <text class="entry-metric warm">再生成行程</text>
+        <text class="entry-metric warm">适合临时起意</text>
       </view>
-      <view class="entry-tags">
-        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>当前位置推荐</text>
-        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>按预算筛选</text>
-        <text class="entry-tag entry-tag-warm"><text class="entry-tag-dot"></text>马上出攻略</text>
+      <view class="entry-card-tail">
+        <text class="entry-tail-copy">更适合快速找方向</text>
+        <view class="entry-arrow warm"><view class="entry-arrow-icon warm"></view></view>
       </view>
     </view>
 
-  </view>
-
-  <!-- Footer hints -->
-  <view class="home-footer">
-    <view class="home-footer-item">
-      <view class="home-footer-dot"></view>
-      <text class="home-footer-text">目的地精确到区县，支持市 + 区县组合</text>
+    <view class="home-strip surface-card" wx:if="{{hasRecentTrips}}">
+      <text class="home-strip-title">最近有 {{recentTripCount}} 份草案</text>
+      <text class="home-strip-copy">可以去“我的”继续查看、保存和整理。</text>
     </view>
-    <view class="home-footer-item">
-      <view class="home-footer-dot"></view>
-      <text class="home-footer-text">围绕位置、天数和预算筛选灵感</text>
+
+    <view class="home-tip-row">
+      <text class="home-tip">先出一版，再微调，通常更快。</text>
+      <text class="home-tip">灵感和执行，走两条不同的入口。</text>
     </view>
   </view>
-
 </view>

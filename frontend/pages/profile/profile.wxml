@@ -1,50 +1,76 @@
-<view class="page page-bg">
-  <view class="user-section glass-card">
-    <view class="user-info">
-      <view class="user-avatar">ME</view>
-      <view class="user-text">
-        <text class="user-id">用户 {{openid ? openid.slice(0, 8) : '未登录'}}</text>
-        <text class="user-hint" wx:if="{{openid}}">微信授权用户</text>
-        <text class="user-hint" wx:else>登录后可保存与查看历史行程</text>
+<view class="page page-bg profile-page">
+  <view class="page-hero profile-hero">
+    <view class="profile-identity surface-card">
+      <view class="profile-identity-cover"></view>
+      <view class="profile-identity-row">
+        <view class="profile-avatar">行</view>
+        <view class="profile-copy">
+          <text class="page-kicker">我的行程</text>
+          <text class="profile-title">{{openid ? '你的旅行草案都在这里' : '登录后查看你的行程'}}</text>
+          <text class="profile-subtitle">{{openid ? '继续查看、删除和回看之前保存的安排。' : '完成登录后，才会同步你的历史行程。'}}</text>
+        </view>
       </view>
     </view>
   </view>
 
-  <view class="trips-section">
-    <view class="section-title">我的行程</view>
-
-    <view class="loading" wx:if="{{loading}}">
-      <text>加载中...</text>
+  <view class="page-content profile-content">
+    <view class="profile-summary surface-card">
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">登录状态</text>
+        <text class="profile-summary-value {{openid ? 'is-active' : ''}}">{{openid ? '已连接' : '未连接'}}</text>
+      </view>
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">当前列表</text>
+        <text class="profile-summary-value">{{loading ? '加载中' : empty ? '暂无行程' : tripList.length + ' 份草案'}}</text>
+      </view>
+      <view class="profile-summary-item">
+        <text class="profile-summary-label">适合动作</text>
+        <text class="profile-summary-value">{{openid ? '继续整理' : '先登录'}}</text>
+      </view>
     </view>
 
-    <view class="empty-state glass-card" wx:elif="{{empty}}">
-      <text class="empty-icon">PLAN</text>
-      <text class="empty-text">还没有行程</text>
-      <text class="empty-hint">去首页创建一个新的安排吧</text>
-      <button class="btn-secondary" bindtap="goHome">去规划</button>
+    <view class="profile-login-panel surface-card" wx:if="{{loginRequired && !openid}}">
+      <text class="profile-login-title">登录后再继续查看</text>
+      <text class="profile-login-copy">完成登录后，才能同步你的历史行程和之前保存的草案。</text>
+      <button class="btn btn-primary profile-login-button" bindtap="onLoginTap">授权登录</button>
     </view>
 
-    <view class="trip-list" wx:else>
+    <view class="loading-state surface-card" wx:if="{{loading}}">
+      <view class="loading-line long"></view>
+      <view class="loading-line medium"></view>
+      <view class="loading-line short"></view>
+    </view>
+
+    <view class="empty-state surface-card" wx:elif="{{!loginRequired && empty}}">
+      <view class="empty-state-icon"></view>
+      <text class="empty-state-title">还没有保存过行程</text>
+      <text class="empty-state-copy">先去首页生成一份草案，再回来慢慢整理。</text>
+      <button class="btn btn-primary empty-state-button" bindtap="goHome">去开始规划</button>
+    </view>
+
+    <view class="trip-list" wx:elif="{{!loginRequired}}">
       <view
-        class="trip-item glass-card"
+        class="trip-card surface-card"
         wx:for="{{tripList}}"
         wx:key="id"
         bindtap="onTripTap"
         data-trip-id="{{item.id}}"
       >
-        <view class="trip-item-header">
-          <text class="trip-item-title">{{item.title}}</text>
-          <text class="trip-item-status {{item.status}}">{{item.status === 'published' ? '已发布' : item.status}}</text>
+        <view class="trip-card-head">
+          <view class="trip-card-main">
+            <text class="trip-card-title">{{item.title}}</text>
+            <text class="trip-card-date">{{item.start_date}} · {{item.days}} 天</text>
+          </view>
+          <text class="trip-card-source">{{item.source === 'plan' ? '规划' : '探索'}}</text>
         </view>
-        <view class="trip-item-meta">
-          <text>{{item.start_date}} · {{item.days}}天</text>
-          <text>来源：{{item.source === 'plan' ? '行程规划' : '随机玩'}}</text>
+
+        <view class="trip-card-tags">
+          <text class="trip-card-tag" wx:for="{{item.destinations}}" wx:for-item="d" wx:key="name">{{d.name}}</text>
         </view>
-        <view class="trip-item-dests">
-          <text class="dest-tag" wx:for="{{item.destinations}}" wx:for-item="d">{{d.name}}</text>
-        </view>
-        <view class="trip-item-actions">
-          <text class="action-text" bindtap="onTripDelete" catchtap data-trip-id="{{item.id}}">删除</text>
+
+        <view class="trip-card-footer">
+          <text class="trip-card-status">{{item.status === 'published' ? '已保存' : item.status || '草稿'}}</text>
+          <text class="trip-card-delete" bindtap="onTripDelete" catchtap data-trip-id="{{item.id}}">删除</text>
         </view>
       </view>
     </view>

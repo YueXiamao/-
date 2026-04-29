@@ -1,150 +1,126 @@
-<!-- pages/plan/result/result.wxml -->
-<view class="page page-bg"
-  style="background-image: linear-gradient(180deg, rgba(255,255,255,0.72), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+<view class="page page-bg trip-page"
+  style="background-image: linear-gradient(180deg, rgba(255,249,241,0.5), rgba(245,241,232,0.97) 420rpx, #f5f1e8 100%), url('{{pageBackground}}');">
 
-  <!-- Loading -->
-  <view wx:if="{{loading}}" class="state-block">
+  <view wx:if="{{loading}}" class="state-block state-block-rich">
     <view class="state-mark loading">
-      <text style="font-size:32rpx;font-weight:800;color:var(--color-primary)">PLAN</text>
+      <view class="state-plan-icon"></view>
     </view>
-    <text class="state-title">行程生成中</text>
+    <text class="state-title">正在整理这次出发安排</text>
     <text class="state-text">{{generatingText}}</text>
-    <view class="loading-dots" style="margin-top:8rpx">
+    <view class="loading-dots">
       <view class="dot"></view>
       <view class="dot"></view>
       <view class="dot"></view>
     </view>
   </view>
 
-  <!-- Error -->
-  <view wx:elif="{{error}}" class="state-block">
+  <view wx:elif="{{error}}" class="state-block state-block-rich">
     <view class="state-mark error">
-      <text style="font-size:28rpx;font-weight:800;color:var(--color-danger)">ERR</text>
+      <view class="state-error-icon"></view>
     </view>
-    <text class="state-title">生成失败了</text>
+    <text class="state-title">这次行程还没顺利生成</text>
     <text class="state-text">{{error}}</text>
     <view class="state-action">
       <button class="btn btn-secondary" bindtap="onRetry">重新生成</button>
     </view>
   </view>
 
-  <!-- Result -->
-  <view class="trip-result" wx:else>
-
-    <!-- Trip Header -->
-    <view class="page-hero" style="padding-left:0;padding-right:0">
-      <view class="surface-panel" style="padding:32rpx 32rpx 28rpx;margin-bottom:20rpx;position:relative;overflow:hidden">
-        <view style="position:absolute;top:0;left:0;right:0;height:6rpx;background:linear-gradient(90deg,var(--color-primary),var(--color-secondary))"></view>
-        <text class="page-title" style="margin-bottom:16rpx">{{trip.title || '行程规划'}}</text>
-        <view style="display:flex;flex-wrap:wrap;gap:10rpx;margin-bottom:16rpx">
-          <view class="meta-chip">
-            <text class="meta-chip-label">日期</text>
-            <text class="meta-chip-value">{{trip.start_date}}</text>
+  <view wx:else class="trip-result">
+    <view class="page-hero trip-hero">
+      <view class="trip-cover surface-card">
+        <view class="trip-cover-image" style="background-image: url('{{pageBackground}}');"></view>
+        <view class="trip-cover-body">
+          <text class="page-kicker">行程草案</text>
+          <text class="trip-summary-title">{{trip.title || '这次旅行安排'}}</text>
+          <view class="trip-top-meta">
+            <view class="trip-top-meta-item">
+              <text class="trip-top-meta-label">出发</text>
+              <text class="trip-top-meta-value">{{trip.start_date}}</text>
+            </view>
+            <view class="trip-top-meta-item">
+              <text class="trip-top-meta-label">时长</text>
+              <text class="trip-top-meta-value">{{trip.days}} 天</text>
+            </view>
+            <view class="trip-top-meta-item">
+              <text class="trip-top-meta-label">站点</text>
+              <text class="trip-top-meta-value">{{trip.itinerary.length}} 日</text>
+            </view>
           </view>
-          <view class="meta-chip">
-            <text class="meta-chip-label">天数</text>
-            <text class="meta-chip-value">{{trip.days}}天</text>
+          <view class="trip-destinations">
+            <text class="trip-destination" wx:for="{{trip.destinations}}" wx:key="name">{{item.name}}</text>
           </view>
-          <view class="meta-chip" wx:if="{{trip.preferences && trip.preferences.length > 0}}" wx:for="{{trip.preferences}}" wx:key="i">
-            <text class="meta-chip-value">{{item}}</text>
+          <view class="trip-meta-chips" wx:if="{{trip.preferences && trip.preferences.length > 0}}">
+            <view class="meta-chip" wx:for="{{trip.preferences}}" wx:key="i">
+              <text class="meta-chip-value">{{item}}</text>
+            </view>
           </view>
-        </view>
-        <view style="display:flex;flex-wrap:wrap;gap:10rpx">
-          <view class="badge-green" wx:for="{{trip.destinations}}" wx:key="name" style="font-size:var(--font-xs);font-weight:600;padding:5rpx 14rpx;border-radius:var(--r-full)">{{item.name}}</view>
         </view>
       </view>
 
-      <!-- Generation Banner -->
-      <view wx:if="{{bannerText}}" class="generation-banner" style="margin-bottom:20rpx;padding:20rpx 24rpx;border-radius:var(--r-lg);background:linear-gradient(135deg,rgba(13,156,110,0.06),rgba(13,156,110,0.03));border:1rpx solid rgba(13,156,110,0.12)">
-        <text style="display:block;font-size:var(--font-xs);color:var(--color-primary);font-weight:700;margin-bottom:6rpx">{{bannerLabel}}</text>
-        <text style="display:block;font-size:var(--font-sm);line-height:1.6;color:var(--color-text-secondary)">{{bannerText}}</text>
+      <view wx:if="{{bannerText}}" class="generation-banner surface-card">
+        <text class="generation-banner-label">{{bannerLabel}}</text>
+        <text class="generation-banner-text">{{bannerText}}</text>
       </view>
 
-      <!-- Action Bar -->
-      <view style="display:flex;justify-content:center;gap:64rpx;margin-bottom:20rpx;padding:22rpx 28rpx;background:var(--color-surface);border-radius:var(--r-xl);border:1rpx solid var(--color-border);box-shadow:var(--shadow-card)">
-        <view bindtap="onSave" style="display:flex;flex-direction:column;align-items:center;gap:6rpx;background:none;border:none;padding:0">
-          <text style="font-size:var(--font-kicker);font-weight:800;color:var(--color-text);letter-spacing:1.5rpx">SAVE</text>
-          <text style="font-size:var(--font-xs);color:var(--color-text-secondary);font-weight:500">保存</text>
+      <view class="action-strip surface-card">
+        <view class="action-strip-item" bindtap="onSave">
+          <view class="action-strip-icon action-save-icon"></view>
+          <text class="action-strip-label">保存</text>
         </view>
-        <view bindtap="onCopy" style="display:flex;flex-direction:column;align-items:center;gap:6rpx;background:none;border:none;padding:0">
-          <text style="font-size:var(--font-kicker);font-weight:800;color:var(--color-text);letter-spacing:1.5rpx">COPY</text>
-          <text style="font-size:var(--font-xs);color:var(--color-text-secondary);font-weight:500">复制</text>
+        <view class="action-strip-item" bindtap="onCopy">
+          <view class="action-strip-icon action-copy-icon"></view>
+          <text class="action-strip-label">复制</text>
         </view>
-        <button open-type="share" style="display:flex;flex-direction:column;align-items:center;gap:6rpx;background:none;border:none;padding:0;line-height:1.5">
-          <text style="font-size:var(--font-kicker);font-weight:800;color:var(--color-text);letter-spacing:1.5rpx">SHARE</text>
-          <text style="font-size:var(--font-xs);color:var(--color-text-secondary);font-weight:500">分享</text>
+        <button class="action-strip-item action-strip-button" open-type="share">
+          <view class="action-strip-icon action-share-icon"></view>
+          <text class="action-strip-label">分享</text>
         </button>
       </view>
     </view>
 
-    <!-- Days -->
-    <view class="days" style="padding:0 32rpx 120rpx">
-      <view wx:for="{{trip.itinerary}}" wx:for-index="dayIndex" wx:key="day"
-        class="day-section"
-        style="margin-bottom:20rpx;border-radius:var(--r-xl);overflow:hidden;box-shadow:var(--shadow-sm);border:1rpx solid var(--color-border)">
-
-        <!-- Day Header -->
-        <view bindtap="onDayTap" data-index="{{dayIndex}}"
-          style="display:flex;justify-content:space-between;align-items:center;padding:26rpx 28rpx;background:var(--color-surface);transition:background 0.15s">
-          <view style="display:flex;align-items:baseline;gap:16rpx">
-            <text style="font-size:var(--font-lg);font-weight:800;color:var(--color-primary)">DAY {{item.day || item.day_number}}</text>
-            <text style="font-size:var(--font-sm);color:var(--color-text-hint)">{{item.date_display || item.date}}</text>
+    <view class="days">
+      <view wx:for="{{trip.itinerary}}" wx:for-index="dayIndex" wx:key="day" class="day-card surface-card">
+        <view bindtap="onDayTap" data-index="{{dayIndex}}" class="day-card-head">
+          <view class="day-card-main">
+            <view class="day-card-title-row">
+              <text class="day-card-title">第 {{item.day || item.day_number}} 天</text>
+              <text class="day-card-count">{{item.items ? item.items.length : 0}} 个安排</text>
+            </view>
+            <text class="day-card-date">{{item.date_display || item.date}}</text>
           </view>
-          <text style="font-size:40rpx;color:{{currentDay === dayIndex ? 'var(--color-primary)' : 'var(--color-text-hint)'}};font-weight:300;transition:transform 0.22s cubic-bezier(0.16,1,0.3,1);transform:rotate({{currentDay === dayIndex ? 90 : 0}}deg)">›</text>
+          <view class="day-card-toggle {{currentDay === dayIndex ? 'expanded' : ''}}">
+            <view class="day-card-toggle-icon"></view>
+          </view>
         </view>
 
-        <!-- Day Content -->
-        <view wx:if="{{currentDay === dayIndex}}"
-          style="background:var(--color-surface);border-top:1rpx solid var(--color-border)">
-
-          <!-- Day Summary -->
-          <view wx:if="{{item.summary}}"
-            style="padding:20rpx 28rpx 0;font-size:var(--font-sm);color:var(--color-text-secondary);line-height:1.6">
-            {{item.summary}}
+        <view wx:if="{{currentDay === dayIndex}}" class="day-card-body">
+          <view wx:if="{{item.summary}}" class="day-overview">
+            <text class="day-overview-copy">{{item.summary}}</text>
           </view>
 
-          <!-- Items -->
-          <view wx:if="{{item.items && item.items.length > 0}}"
-            style="display:flex;flex-direction:column">
-
+          <view wx:if="{{item.items && item.items.length > 0}}" class="route-list">
             <block wx:for="{{item.items}}" wx:for-item="tripItem" wx:for-index="itemIndex" wx:key="itemKey">
-
-              <!-- ── Route Item (统一结构) ── -->
-              <view style="display:flex;gap:20rpx;padding:22rpx 0;border-bottom:1rpx solid var(--color-border)">
-
-                <!-- Left: type badge + time -->
-                <view style="display:flex;flex-direction:column;align-items:center;width:56rpx;flex-shrink:0;padding-top:4rpx">
-
-                  <!-- Period badge -->
-                  <view wx:if="{{tripItem.period_label}}"
-                    style="padding:4rpx 8rpx;border-radius:6rpx;font-size:18rpx;font-weight:700;white-space:nowrap;margin-bottom:8rpx;background:{{tripItem.type === 'spot' ? 'var(--color-primary-light)' : tripItem.type === 'food' ? 'rgba(232,129,10,0.12)' : 'rgba(124,92,252,0.12)'}};color:{{tripItem.type === 'spot' ? 'var(--color-primary)' : tripItem.type === 'food' ? 'var(--color-secondary)' : 'var(--color-purple)'}}">
+              <view class="route-row">
+                <view class="route-rail">
+                  <view wx:if="{{tripItem.period_label}}" class="route-period-badge route-period-{{tripItem.type}}">
                     {{tripItem.period_label}}
                   </view>
-
-                  <!-- Type badge -->
-                  <view style="width:48rpx;height:48rpx;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;font-size:18rpx;font-weight:800;flex-shrink:0;background:{{tripItem.type === 'spot' ? 'linear-gradient(135deg,#D1FAE5,#A7F3D0)' : tripItem.type === 'food' ? 'linear-gradient(135deg,#FEF3C7,#FDE68A)' : 'linear-gradient(135deg,#EDE9FE,#DDD6FE)'}};color:{{tripItem.type === 'spot' ? '#059669' : tripItem.type === 'food' ? '#D97706' : '#7C5CFC'}}">
-                    {{tripItem.type === 'spot' ? '景' : tripItem.type === 'food' ? '食' : '住'}}
+                  <view class="route-type route-type-{{tripItem.type}}">
+                    {{tripItem.type === 'spot' ? '景点' : tripItem.type === 'food' ? '餐饮' : '住宿'}}
                   </view>
                 </view>
 
-                <!-- Right: content -->
-                <view style="flex:1;min-width:0">
-
-                  <!-- Name row -->
-                  <view style="display:flex;align-items:baseline;justify-content:space-between;gap:12rpx;margin-bottom:6rpx">
-                    <text style="font-size:var(--font-base);font-weight:700;color:var(--color-text);line-height:1.4;flex:1;word-break:break-word">{{tripItem.name}}</text>
-                    <!-- Item actions (top-right) -->
-                    <view style="display:flex;gap:8rpx;flex-shrink:0;align-items:center">
-                      <text catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}"
-                        style="min-width:48rpx;padding:6rpx 12rpx;border-radius:var(--r-full);background:var(--color-primary-light);color:var(--color-primary);font-size:20rpx;font-weight:600;text-align:center">换</text>
-                      <text catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}"
-                        style="min-width:48rpx;padding:6rpx 12rpx;border-radius:var(--r-full);background:var(--color-danger-light);color:var(--color-danger);font-size:20rpx;font-weight:600;text-align:center">删</text>
+                <view class="route-panel">
+                  <view class="route-head">
+                    <text class="route-name">{{tripItem.name}}</text>
+                    <view class="route-quick-actions">
+                      <text catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-accent">换</text>
+                      <text catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-note">备注</text>
+                      <text catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-danger">删</text>
                     </view>
                   </view>
 
-                  <!-- Meta chips row -->
-                  <view wx:if="{{tripItem.best_time || tripItem.duration || tripItem.ticket_info || tripItem.budget || tripItem.cuisine_type || tripItem.highlights}}"
-                    style="display:flex;flex-wrap:wrap;gap:8rpx;margin-bottom:6rpx">
+                  <view class="meta-grid" wx:if="{{tripItem.best_time || tripItem.duration || tripItem.ticket_info || tripItem.budget || tripItem.cuisine_type || tripItem.highlights}}">
                     <view wx:if="{{tripItem.best_time}}" class="meta-chip">
                       <text class="meta-chip-label">时间</text>
                       <text class="meta-chip-value">{{tripItem.best_time}}</text>
@@ -162,71 +138,108 @@
                       <text class="meta-chip-value">{{tripItem.budget}}</text>
                     </view>
                     <view wx:if="{{tripItem.cuisine_type}}" class="meta-chip">
-                      <text class="meta-chip-value" style="color:var(--color-secondary)">{{tripItem.cuisine_type}}</text>
+                      <text class="meta-chip-value">{{tripItem.cuisine_type}}</text>
                     </view>
                     <view wx:if="{{tripItem.highlights}}" class="meta-chip">
-                      <text class="meta-chip-value" style="color:var(--color-purple)">{{tripItem.highlights}}</text>
+                      <text class="meta-chip-value">{{tripItem.highlights}}</text>
                     </view>
                   </view>
 
-                  <!-- Address -->
-                  <view wx:if="{{tripItem.address}}"
-                    style="font-size:var(--font-xs);color:var(--color-text-hint);margin-bottom:4rpx;line-height:1.5">
-                    {{tripItem.address}}
+                  <text wx:if="{{tripItem.address}}" class="route-copy route-address">{{tripItem.address}}</text>
+                  <text wx:if="{{tripItem.description}}" class="route-copy">{{tripItem.description}}</text>
+                  <text wx:if="{{tripItem.recommend}}" class="route-copy route-copy-amber">推荐：{{tripItem.recommend}}</text>
+                  <text wx:if="{{tripItem.reason}}" class="route-copy route-copy-primary">理由：{{tripItem.reason}}</text>
+                  <text wx:if="{{tripItem.tips}}" class="route-copy">提示：{{tripItem.tips}}</text>
+                  <text wx:if="{{tripItem.reservation_tips}}" class="route-copy">预约：{{tripItem.reservation_tips}}</text>
+                  <text wx:if="{{tripItem.check_in_tips}}" class="route-copy">入住：{{tripItem.check_in_tips}}</text>
+
+                  <view wx:if="{{tripItem.transport_to_next}}" class="route-transport">
+                    <view class="route-transport-icon"></view>
+                    <text class="route-transport-text">{{tripItem.transport_to_next}}</text>
                   </view>
 
-                  <!-- Description -->
-                  <view wx:if="{{tripItem.description}}"
-                    style="font-size:var(--font-sm);color:var(--color-text-secondary);line-height:1.6;margin-bottom:4rpx">
-                    {{tripItem.description}}
+                  <view wx:if="{{tripItem.notes}}" class="route-note">
+                    <text class="route-note-label">备注</text>
+                    <text class="route-note-text">{{tripItem.notes}}</text>
                   </view>
 
-                  <!-- Recommend / reason -->
-                  <view wx:if="{{tripItem.recommend}}"
-                    style="font-size:var(--font-xs);color:var(--color-secondary);font-weight:600;margin-bottom:4rpx">
-                    招牌菜：{{tripItem.recommend}}
-                  </view>
-                  <view wx:if="{{tripItem.reason}}"
-                    style="font-size:var(--font-xs);color:var(--color-purple);margin-bottom:4rpx">
-                    推荐理由：{{tripItem.reason}}
-                  </view>
-
-                  <!-- Tips -->
-                  <view wx:if="{{tripItem.tips || tripItem.reservation_tips || tripItem.check_in_tips}}"
-                    style="font-size:var(--font-xs);color:var(--color-text-secondary);line-height:1.55;margin-bottom:4rpx">
-                    <text wx:if="{{tripItem.tips}}">游玩贴士：{{tripItem.tips}}</text>
-                    <text wx:if="{{tripItem.reservation_tips}}">订座提示：{{tripItem.reservation_tips}}</text>
-                    <text wx:if="{{tripItem.check_in_tips}}">入住贴士：{{tripItem.check_in_tips}}</text>
-                  </view>
-
-                  <!-- Transport to next -->
-                  <view wx:if="{{tripItem.transport_to_next}}"
-                    style="display:inline-flex;align-items:center;gap:6rpx;font-size:var(--font-xs);color:var(--color-primary);font-weight:500;padding:4rpx 10rpx;background:var(--color-primary-light);border-radius:6rpx;margin-top:8rpx">
-                    <text>→</text>
-                    <text>{{tripItem.transport_to_next}}</text>
-                  </view>
-
-                  <!-- Notes -->
-                  <view wx:if="{{tripItem.notes}}"
-                    style="display:inline-block;font-size:20rpx;color:var(--color-text-secondary);background:var(--color-bg);padding:5rpx 12rpx;border-radius:var(--r-xs);margin-top:8rpx;border:1rpx solid var(--color-border)">
-                    {{tripItem.notes}}
+                  <view wx:if="{{tripItem.reference_links && tripItem.reference_links.length > 0}}" class="reference-links">
+                    <view class="reference-link-list">
+                      <text
+                        class="reference-link"
+                        wx:for="{{tripItem.reference_links}}"
+                        wx:for-item="link"
+                        wx:key="url"
+                        catchtap="onReferenceLinkTap"
+                        data-url="{{link.url}}"
+                      >{{link.label}}</text>
+                    </view>
                   </view>
                 </view>
               </view>
-              <!-- ── End Route Item ── -->
-
             </block>
           </view>
 
-          <!-- Empty Day -->
-          <view wx:if="{{!item.items || item.items.length === 0}}"
-            style="padding:48rpx 0;text-align:center;font-size:var(--font-base);color:var(--color-text-hint)">
-            当天暂无安排
+          <view wx:if="{{item.alternative_spots && item.alternative_spots.length > 0}}" class="option-section">
+            <text class="option-section-title">可替换景点</text>
+            <view class="option-grid">
+              <view class="option-card" wx:for="{{item.alternative_spots}}" wx:for-item="option" wx:key="name">
+                <text class="option-name">{{option.name}}</text>
+                <text wx:if="{{option.address}}" class="option-meta">{{option.address}}</text>
+                <text wx:if="{{option.reason}}" class="option-copy">{{option.reason}}</text>
+                <view wx:if="{{option.reference_links && option.reference_links.length > 0}}" class="reference-link-list compact">
+                  <text
+                    class="reference-link"
+                    wx:for="{{option.reference_links}}"
+                    wx:for-item="link"
+                    wx:key="url"
+                    catchtap="onReferenceLinkTap"
+                    data-url="{{link.url}}"
+                  >{{link.label}}</text>
+                </view>
+              </view>
+            </view>
           </view>
 
+          <view wx:if="{{item.alternative_foods && item.alternative_foods.length > 0}}" class="option-section">
+            <text class="option-section-title">可替换餐饮</text>
+            <view class="option-grid">
+              <view class="option-card" wx:for="{{item.alternative_foods}}" wx:for-item="option" wx:key="name">
+                <text class="option-name">{{option.name}}</text>
+                <text wx:if="{{option.address || option.budget}}" class="option-meta">{{option.address}}{{option.budget ? ' · ' + option.budget : ''}}</text>
+                <text wx:if="{{option.reason}}" class="option-copy">{{option.reason}}</text>
+                <view wx:if="{{option.reference_links && option.reference_links.length > 0}}" class="reference-link-list compact">
+                  <text
+                    class="reference-link"
+                    wx:for="{{option.reference_links}}"
+                    wx:for-item="link"
+                    wx:key="url"
+                    catchtap="onReferenceLinkTap"
+                    data-url="{{link.url}}"
+                  >{{link.label}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
+
+          <view wx:if="{{item.reference_links && item.reference_links.length > 0}}" class="day-reference">
+            <view class="reference-link-list">
+              <text
+                class="reference-link"
+                wx:for="{{item.reference_links}}"
+                wx:for-item="link"
+                wx:key="url"
+                catchtap="onReferenceLinkTap"
+                data-url="{{link.url}}"
+              >{{link.label}}</text>
+            </view>
+          </view>
+
+          <view wx:if="{{!item.items || item.items.length === 0}}" class="empty-day">
+            <text class="empty-day-text">这一天还没有排入具体项目</text>
+          </view>
         </view>
       </view>
     </view>
-
   </view>
 </view>

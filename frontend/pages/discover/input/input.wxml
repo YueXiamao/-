@@ -1,170 +1,178 @@
-<!-- pages/discover/input/input.wxml -->
-<view class="page page-bg">
-  <view class="page-hero">
+<view class="page page-bg discover-input-page">
+  <view class="page-hero discover-input-hero">
     <text class="page-kicker">随机玩</text>
-    <text class="page-title">不知道去哪，先出发</text>
-    <text class="page-subtitle">根据你的位置和预算，精选周末灵感</text>
+    <text class="page-title">先圈定范围，再挑目的地</text>
+    <text class="page-subtitle">你给位置、预算和偏好，我来先筛出更值得出发的方向。</text>
+
+    <view class="discover-mood-band">
+      <image class="mood-wide" src="/assets/backgrounds/city-coast.png" mode="aspectFill" />
+      <image class="mood-small" src="/assets/backgrounds/city-water.png" mode="aspectFill" />
+      <view class="mood-chip glass-card">
+        <text class="mood-chip-label">适合</text>
+        <text class="mood-chip-value">周末快出发</text>
+      </view>
+    </view>
   </view>
 
   <view class="page-content">
+    <view class="section-card {{locationError ? 'section-card-error' : ''}}">
+      <view class="section-label-row">
+        <text class="section-label">从哪里出发</text>
+        <text class="section-hint">{{locationMode === 'loc' ? '已定位' : locationText ? '已选择' : '未选择'}}</text>
+      </view>
+      <view class="loc-bar" wx:if="{{locationText}}">
+        <view class="loc-info">
+          <view class="loc-icon-dot"></view>
+          <text class="loc-name">{{locationText}}</text>
+        </view>
+        <view class="loc-mode-tag {{locationMode === 'loc' ? 'tag-gps' : 'tag-manual'}}">
+          {{locationMode === 'loc' ? 'GPS' : '手动'}}
+        </view>
+      </view>
+      <view class="loc-empty {{locationError ? 'loc-empty-error' : ''}}" wx:if="{{!locationText}}">
+        <text class="loc-empty-text">选择一个出发位置</text>
+      </view>
+      <view class="loc-row">
+        <view class="loc-btn loc-btn-gps" bindtap="onLocate">
+          <view class="loc-btn-ico-gps"></view>
+          <text class="loc-btn-txt">微信定位</text>
+        </view>
+        <view class="loc-btn loc-btn-pick" bindtap="onManualLocation">
+          <view class="loc-btn-ico-check"></view>
+          <text class="loc-btn-txt">手动选择</text>
+        </view>
+      </view>
+    </view>
 
-  <!-- 位置卡片 -->
-  <view class="section-card {{locationError ? 'section-card-error' : ''}}">
-    <text class="section-label">当前位置</text>
-    <view class="loc-bar" wx:if="{{locationText}}">
-      <view class="loc-info">
-        <view class="loc-icon-dot"></view>
-        <text class="loc-name">{{locationText}}</text>
+    <view class="quick-grid">
+      <view class="section-card">
+        <text class="section-label">玩几天</text>
+        <view class="days-row">
+          <view class="days-btn" bindtap="onDaysChange" data-delta="-1"><view class="days-minus"></view></view>
+          <view class="days-center">
+            <text class="days-num">{{days}}</text>
+            <text class="days-unit">天</text>
+          </view>
+          <view class="days-btn" bindtap="onDaysChange" data-delta="1"><view class="days-plus"></view></view>
+        </view>
       </view>
-      <view class="loc-mode-tag {{locationMode === 'loc' ? 'tag-gps' : 'tag-manual'}}">
-        {{locationMode === 'loc' ? 'GPS' : '手动'}}
-      </view>
-    </view>
-    <view class="loc-empty {{locationError ? 'loc-empty-error' : ''}}" wx:if="{{!locationText}}">
-      <text class="loc-empty-text">请选择您的位置</text>
-    </view>
-    <view class="loc-row">
-      <view class="loc-btn loc-btn-gps" bindtap="onLocate">
-        <view class="loc-btn-ico-gps"></view>
-        <text class="loc-btn-txt">微信定位</text>
-      </view>
-      <view class="loc-btn loc-btn-pick" bindtap="onManualLocation">
-        <view class="loc-btn-ico-check"></view>
-        <text class="loc-btn-txt">选择位置</text>
-      </view>
-    </view>
-  </view>
 
-  <!-- 天数 -->
-  <view class="section-card">
-    <text class="section-label">游玩天数</text>
-    <view class="days-row">
-      <view class="days-btn" bindtap="onDaysChange" data-delta="-1">-</view>
-      <view class="days-center">
-        <text class="days-num">{{days}}</text>
-        <text class="days-unit">天</text>
-      </view>
-      <view class="days-btn" bindtap="onDaysChange" data-delta="1">+</view>
-    </view>
-  </view>
-
-  <!-- 预算 -->
-  <view class="section-card {{budgetError ? 'section-card-error' : ''}}">
-    <text class="section-label">人均预算</text>
-    <view class="budget-grid">
-      <view
-        class="budget-item {{budget === item.value ? 'selected' : ''}}"
-        wx:for="{{budgetOptions}}"
-        wx:key="value"
-        bindtap="onBudgetTap"
-        data-value="{{item.value}}"
-      >
-        <text class="budget-label">{{item.label}}</text>
-        <text class="budget-desc">{{item.desc}}</text>
+      <view class="section-card {{budgetError ? 'section-card-error' : ''}}">
+        <view class="section-label-row">
+          <text class="section-label">预算</text>
+          <text class="section-hint">人均</text>
+        </view>
+        <view class="budget-grid">
+          <view
+            class="budget-item {{budget === item.value ? 'selected' : ''}}"
+            wx:for="{{budgetOptions}}"
+            wx:key="value"
+            bindtap="onBudgetTap"
+            data-value="{{item.value}}"
+          >
+            <text class="budget-label">{{item.label}}</text>
+            <text class="budget-desc">{{item.desc}}</text>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- 游玩偏好（完全对齐 params 页写法） -->
-  <view class="section-card">
-    <view class="section-label-row">
-      <text class="section-label">游玩偏好</text>
-      <text class="section-hint">选1-3个</text>
-    </view>
-    <view class="pref-grid">
-      <view
-        class="pref-item {{item.selected ? 'selected' : ''}}"
-        wx:for="{{preferenceOptions}}"
-        wx:key="value"
-        bindtap="onPrefTap"
-        data-value="{{item.value}}"
-      >
-        <view class="pref-icon-wrap">
+    <view class="section-card">
+      <view class="section-label-row">
+        <text class="section-label">更想怎么玩</text>
+        <text class="section-hint">选 1-3 个更准</text>
+      </view>
+      <view class="pref-grid">
+        <view
+          class="pref-item {{item.selected ? 'selected' : ''}}"
+          wx:for="{{preferenceOptions}}"
+          wx:key="value"
+          bindtap="onPrefTap"
+          data-value="{{item.value}}"
+        >
           <image class="pref-icon" src="{{item.icon}}" mode="aspectFill" />
-        </view>
-        <text class="pref-name">{{item.label}}</text>
-        <view class="pref-check" wx:if="{{item.selected}}">
-          <view class="pref-check-mark"></view>
+          <text class="pref-name">{{item.label}}</text>
+          <view class="pref-check" wx:if="{{item.selected}}">
+            <view class="pref-check-mark"></view>
+          </view>
         </view>
       </view>
     </view>
-  </view>
 
-  <!-- 底部按钮 -->
-  <view class="bottom-bar">
-    <button class="btn-primary" bindtap="onRecommend">开始随机玩</button>
-  </view>
-
-  <!-- ========================================= -->
-  <!-- 位置选择器 -->
-  <!-- ========================================= -->
-  <view class="picker-overlay" wx:if="{{showPicker}}" bindtap="onPickerClose"></view>
-  <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
-
-    <view class="picker-topbar">
-      <view class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">
-        <view class="picker-back-icon"></view>
-      </view>
-      <text class="picker-title">
-        {{pickerStep === 'province' ? '选择省份' : pickerStep === 'city' ? '选择城市' : '选择区县'}}
-      </text>
-      <view class="picker-close" bindtap="onPickerClose">
-        <view class="picker-close-icon"></view>
-      </view>
+    <view class="bottom-bar">
+      <button class="btn btn-primary discover-submit" bindtap="onRecommend">开始筛目的地</button>
     </view>
 
-    <view class="picker-search-bar">
-      <view class="picker-search-ico"></view>
-      <input
-        class="picker-search-input"
-        placeholder="{{pickerStep === 'province' ? '搜索省份' : pickerStep === 'city' ? '搜索城市' : '搜索区县'}}"
-        value="{{searchValue}}"
-        bindinput="onPickerSearch"
-      />
-    </view>
-
-    <view class="picker-hot" wx:if="{{pickerStep === 'province'}}">
-      <text class="picker-hot-label">常用</text>
-      <view class="picker-hot-list">
-        <text class="picker-hot-item"
-          wx:for="{{['北京市','上海市','广东省','四川省','浙江省','江苏省']}}"
-          wx:key="this"
-          data-name="{{item}}"
-          bindtap="onProvinceQuick"> {{item}}</text>
+    <view class="picker-overlay" wx:if="{{showPicker}}" bindtap="onPickerClose"></view>
+    <view class="picker-drawer {{showPicker ? 'picker-drawer-open' : ''}}">
+      <view class="picker-topbar">
+        <view class="picker-back" wx:if="{{pickerStep !== 'province'}}" bindtap="onPickerBack">
+          <view class="picker-back-icon"></view>
+        </view>
+        <text class="picker-title">{{pickerStep === 'province' ? '选择省份' : '选择城市'}}</text>
+        <view class="picker-close" bindtap="onPickerClose">
+          <view class="picker-close-icon"></view>
+        </view>
       </view>
-    </view>
 
-    <scroll-view class="picker-list" scroll-y="{{true}}">
-      <block wx:if="{{pickerStep === 'province'}}">
-        <view class="picker-row"
-          wx:for="{{filteredList}}" wx:key="code"
-          bindtap="onProvinceSelect" data-code="{{item.code}}" data-name="{{item.name}}">
-          <text class="picker-row-name">{{item.name}}</text>
-          <view class="picker-row-arrow"><view class="picker-row-arrow-icon"></view></view>
-        </view>
-      </block>
-      <block wx:if="{{pickerStep === 'city'}}">
-        <view class="picker-row"
-          wx:for="{{filteredList}}" wx:key="code"
-          bindtap="onCitySelect" data-code="{{item.code}}" data-name="{{item.name}}">
-          <text class="picker-row-name {{currentCity && item.code === currentCity.code ? 'row-name-on' : ''}}">{{item.name}}</text>
-          <view class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}"><view class="picker-row-check-mark"></view></view>
-        </view>
-      </block>
-      <block wx:if="{{pickerStep === 'district'}}">
-        <view class="picker-row"
-          wx:for="{{filteredList}}" wx:key="code"
-          bindtap="onDistrictSelect" data-code="{{item.code}}" data-name="{{item.name}}">
-          <text class="picker-row-name {{currentDistrict && item.code === currentDistrict.code ? 'row-name-on' : ''}}">{{item.name}}</text>
-          <view class="picker-row-check" wx:if="{{currentDistrict && item.code === currentDistrict.code}}"><view class="picker-row-check-mark"></view></view>
-        </view>
-      </block>
-
-      <view class="picker-empty" wx:if="{{filteredList.length === 0}}">
-        <text class="picker-empty-text">未找到结果</text>
+      <view class="picker-search-bar">
+        <view class="picker-search-ico"></view>
+        <input
+          class="picker-search-input"
+          placeholder="{{pickerStep === 'province' ? '搜索省份' : '搜索城市'}}"
+          value="{{searchValue}}"
+          bindinput="onPickerSearch"
+        />
       </view>
-    </scroll-view>
-  </view>
 
+      <view class="picker-hot" wx:if="{{pickerStep === 'province'}}">
+        <text class="picker-hot-label">常用</text>
+        <view class="picker-hot-list">
+          <text
+            class="picker-hot-item"
+            wx:for="{{['北京市', '上海市', '广东省', '四川省', '浙江省', '江苏省']}}"
+            wx:key="this"
+            data-name="{{item}}"
+            bindtap="onProvinceQuick"
+          >{{item}}</text>
+        </view>
+      </view>
+
+      <scroll-view class="picker-list" scroll-y="{{true}}">
+        <block wx:if="{{pickerStep === 'province'}}">
+          <view
+            class="picker-row"
+            wx:for="{{filteredList}}"
+            wx:key="code"
+            bindtap="onProvinceSelect"
+            data-code="{{item.code}}"
+            data-name="{{item.name}}"
+          >
+            <text class="picker-row-name">{{item.name}}</text>
+            <view class="picker-row-arrow"><view class="picker-row-arrow-icon"></view></view>
+          </view>
+        </block>
+
+        <block wx:if="{{pickerStep === 'city'}}">
+          <view
+            class="picker-row"
+            wx:for="{{filteredList}}"
+            wx:key="code"
+            bindtap="onCitySelect"
+            data-code="{{item.code}}"
+            data-name="{{item.name}}"
+          >
+            <text class="picker-row-name {{currentCity && item.code === currentCity.code ? 'row-name-on' : ''}}">{{item.name}}</text>
+            <view class="picker-row-check" wx:if="{{currentCity && item.code === currentCity.code}}">
+              <view class="picker-row-check-mark"></view>
+            </view>
+          </view>
+        </block>
+
+        <view class="picker-empty" wx:if="{{filteredList.length === 0}}">
+          <text class="picker-empty-text">未找到结果</text>
+        </view>
+      </scroll-view>
+    </view>
   </view>
 </view>

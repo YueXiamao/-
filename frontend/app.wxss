@@ -1,104 +1,76 @@
-/* ================================================================
-   Global Design Tokens v2 — Premium Travel App
-   ================================================================ */
 page {
-  /* ── Palette ── */
-  --color-primary: #0D9C6E;
-  --color-primary-hover: #0A865E;
-  --color-primary-light: rgba(13, 156, 110, 0.12);
-  --color-primary-muted: rgba(13, 156, 110, 0.06);
-  --color-secondary: #E8810A;
-  --color-secondary-hover: #D47209;
-  --color-secondary-light: rgba(232, 129, 10, 0.12);
-  --color-secondary-muted: rgba(232, 129, 10, 0.06);
-  --color-purple: #7C5CFC;
-  --color-purple-light: rgba(124, 92, 252, 0.12);
-  --color-bg: #F2F5F1;
-  --color-bg-warm: #F7F5F0;
-  --color-surface: #FFFFFF;
-  --color-surface-soft: rgba(255, 255, 255, 0.82);
-  --color-surface-glass: rgba(255, 255, 255, 0.65);
-  --color-text: #18181B;
-  --color-text-secondary: rgba(24, 24, 27, 0.55);
-  --color-text-hint: rgba(24, 24, 27, 0.35);
-  --color-border: rgba(24, 24, 27, 0.07);
-  --color-border-strong: rgba(24, 24, 27, 0.13);
-  --color-danger: #DC2626;
-  --color-danger-light: rgba(220, 38, 38, 0.1);
-  --color-overlay: rgba(10, 14, 12, 0.45);
+  --color-primary: #14866f;
+  --color-primary-deep: #0f6b59;
+  --color-primary-soft: rgba(20, 134, 111, 0.12);
+  --color-secondary: #f08a2e;
+  --color-secondary-deep: #d97217;
+  --color-secondary-soft: rgba(240, 138, 46, 0.14);
+  --color-accent: #4f84f4;
+  --color-accent-soft: rgba(79, 132, 244, 0.12);
+  --color-bg: #f5f1e8;
+  --color-bg-soft: #fbf8f2;
+  --color-surface: #ffffff;
+  --color-surface-muted: rgba(255, 255, 255, 0.82);
+  --color-glass: rgba(255, 255, 255, 0.68);
+  --color-text: #1f2f2a;
+  --color-text-strong: #182521;
+  --color-text-secondary: rgba(31, 47, 42, 0.68);
+  --color-text-hint: rgba(31, 47, 42, 0.42);
+  --color-border: rgba(24, 37, 33, 0.08);
+  --color-border-strong: rgba(24, 37, 33, 0.15);
+  --color-danger: #cf4a40;
+  --color-danger-soft: rgba(207, 74, 64, 0.12);
+  --color-overlay: rgba(15, 26, 23, 0.42);
 
-  /* ── Typography ── */
-  --font-display: 52rpx;
-  --font-xxl:  44rpx;
-  --font-xl:   36rpx;
-  --font-lg:   30rpx;
+  --font-display: 56rpx;
+  --font-xxl: 46rpx;
+  --font-xl: 38rpx;
+  --font-lg: 31rpx;
   --font-base: 27rpx;
-  --font-sm:   24rpx;
-  --font-xs:   21rpx;
-  --font-kicker: 19rpx;
-  --tracking-tight: -0.5rpx;
-  --tracking-wide:  1.5rpx;
+  --font-sm: 24rpx;
+  --font-xs: 21rpx;
+  --font-mini: 19rpx;
 
-  /* ── Spacing ── */
-  --sp-1:  4rpx;
-  --sp-2:  8rpx;
-  --sp-3:  12rpx;
-  --sp-4:  16rpx;
-  --sp-5:  20rpx;
-  --sp-6:  24rpx;
-  --sp-8:  32rpx;
+  --sp-1: 4rpx;
+  --sp-2: 8rpx;
+  --sp-3: 12rpx;
+  --sp-4: 16rpx;
+  --sp-5: 20rpx;
+  --sp-6: 24rpx;
+  --sp-7: 28rpx;
+  --sp-8: 32rpx;
   --sp-10: 40rpx;
   --sp-12: 48rpx;
 
-  /* ── Border-radius ── */
-  --r-xs:  8rpx;
-  --r-sm:  12rpx;
-  --r-md:  18rpx;
-  --r-lg:  24rpx;
-  --r-xl:  36rpx;
-  --r-2xl: 48rpx;
+  --r-xs: 10rpx;
+  --r-sm: 14rpx;
+  --r-md: 20rpx;
+  --r-lg: 28rpx;
+  --r-xl: 36rpx;
+  --r-2xl: 44rpx;
   --r-full: 9999rpx;
 
-  /* ── Shadows (tinted to background) ── */
-  --shadow-xs: 0 2rpx 8rpx rgba(13, 156, 110, 0.05);
-  --shadow-sm: 0 4rpx 16rpx rgba(13, 156, 110, 0.08), 0 1rpx 4rpx rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 8rpx 32rpx rgba(13, 156, 110, 0.10), 0 2rpx 8rpx rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 16rpx 48rpx rgba(13, 156, 110, 0.12), 0 4rpx 12rpx rgba(0, 0, 0, 0.06);
-  --shadow-xl: 0 24rpx 64rpx rgba(13, 156, 110, 0.14), 0 6rpx 20rpx rgba(0, 0, 0, 0.07);
-  --shadow-card: 0 2rpx 8rpx rgba(0, 0, 0, 0.04), 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
-  --shadow-amber: 0 8rpx 24rpx rgba(232, 129, 10, 0.22);
+  --shadow-soft: 0 10rpx 30rpx rgba(54, 70, 61, 0.08);
+  --shadow-card: 0 4rpx 18rpx rgba(29, 43, 36, 0.05), 0 18rpx 44rpx rgba(29, 43, 36, 0.08);
+  --shadow-hero: 0 18rpx 40rpx rgba(20, 134, 111, 0.14);
 
-  /* ── Page base ── */
-  background-color: var(--color-bg);
-  font-size: var(--font-base);
+  background: var(--color-bg);
   color: var(--color-text);
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: var(--font-base);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── Reset ── */
-view, text, navigator, button, input, textarea {
+view,
+text,
+navigator,
+button,
+input,
+textarea,
+image {
   box-sizing: border-box;
 }
 
-/* ── Glass card (true frosted glass) ── */
-.glass-card {
-  background: var(--color-surface-glass);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1rpx solid rgba(255, 255, 255, 0.55);
-  box-shadow: var(--shadow-card);
-}
-
-/* ── Surface card (pure white) ── */
-.surface-card {
-  background: var(--color-surface);
-  border-radius: var(--r-lg);
-  border: 1rpx solid var(--color-border);
-  box-shadow: var(--shadow-card);
-}
-
-/* ── Button reset ── */
 button {
   padding: 0;
   margin: 0;
@@ -108,9 +80,18 @@ button {
   font-size: inherit;
   color: inherit;
 }
-button::after { border: none; }
 
-/* ── Background variants ── */
+button::after {
+  border: none;
+}
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+}
+
 .page-bg {
   min-height: 100vh;
   background-color: var(--color-bg);
@@ -119,444 +100,281 @@ button::after { border: none; }
   background-size: 100% auto;
 }
 
-/* ── Badge pill ── */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4rpx 14rpx;
-  border-radius: var(--r-full);
-  font-size: var(--font-xs);
-  font-weight: 600;
-  line-height: 1.6;
-}
-
-.badge-green {
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.badge-amber {
-  background: var(--color-secondary-light);
-  color: var(--color-secondary);
-}
-
-.badge-purple {
-  background: var(--color-purple-light);
-  color: var(--color-purple);
-}
-
-.badge-ghost {
-  background: rgba(24, 24, 27, 0.06);
-  color: var(--color-text-secondary);
-}
-
-/* ── Section label ── */
-.section-label {
-  font-size: var(--font-kicker);
-  font-weight: 700;
-  color: var(--color-text-secondary);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-}
-
-/* ── Safe bottom ── */
-.safe-bottom {
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* ── Utility colors ── */
-.text-primary { color: var(--color-primary); }
-.text-amber   { color: var(--color-secondary); }
-.text-purple  { color: var(--color-purple); }
-.text-secondary { color: var(--color-text-secondary); }
-.text-hint { color: var(--color-text-hint); }
-
-/* ═══════════════════════════════════════════════════════════
-   Page Skeleton System
-   统一页面结构：.page + .page-hero + .page-content
-   ═══════════════════════════════════════════════════════════ */
-
-.page {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--color-bg);
-}
-
 .page-hero {
-  padding: var(--sp-8) var(--sp-8) var(--sp-6);
+  padding: 36rpx 32rpx 24rpx;
 }
 
 .page-kicker {
-  font-size: var(--font-kicker);
+  display: block;
+  font-size: var(--font-mini);
   font-weight: 700;
+  line-height: 1.5;
   color: var(--color-text-secondary);
-  letter-spacing: var(--tracking-wide);
-  text-transform: uppercase;
-  margin-bottom: var(--sp-2);
+  letter-spacing: 1rpx;
+  margin-bottom: 10rpx;
 }
 
 .page-title {
+  display: block;
   font-size: var(--font-xxl);
+  line-height: 1.14;
   font-weight: 800;
-  color: var(--color-text);
-  letter-spacing: var(--tracking-tight);
-  line-height: 1.15;
-  margin-bottom: var(--sp-2);
+  color: var(--color-text-strong);
 }
 
 .page-subtitle {
-  font-size: var(--font-base);
+  display: block;
+  margin-top: 12rpx;
+  font-size: var(--font-sm);
+  line-height: 1.65;
   color: var(--color-text-secondary);
-  line-height: 1.6;
-  margin-top: var(--sp-2);
 }
 
 .page-badges {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-3);
+  gap: 10rpx;
+  margin-top: 18rpx;
 }
 
-.page-badge {
-  font-size: var(--font-xs);
-  font-weight: 600;
-  padding: 4rpx 14rpx;
+.page-badge,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40rpx;
+  padding: 0 16rpx;
   border-radius: var(--r-full);
+  font-size: var(--font-xs);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.badge-green {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.badge-amber {
+  background: var(--color-secondary-soft);
+  color: var(--color-secondary-deep);
+}
+
+.badge-blue {
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+}
+
+.badge-ghost {
+  background: rgba(24, 37, 33, 0.06);
+  color: var(--color-text-secondary);
 }
 
 .page-content {
   flex: 1;
-  padding: 0 var(--sp-8) var(--sp-8);
+  padding: 0 32rpx 40rpx;
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Content Panels
-   surface-panel: 主要内容区块（替代堆叠卡片）
-   field-panel:   表单分组
-   list-panel:    列表容器
-   route-panel:   行程日程区块
-   ═══════════════════════════════════════════════════════════ */
-
-.surface-panel {
+.surface-card {
   background: var(--color-surface);
   border-radius: var(--r-xl);
   border: 1rpx solid var(--color-border);
-  padding: var(--sp-6) var(--sp-6);
   box-shadow: var(--shadow-card);
 }
 
-.field-panel {
-  background: var(--color-surface);
-  border-radius: var(--r-lg);
-  padding: var(--sp-5) var(--sp-6);
+.glass-card {
+  background: var(--color-glass);
+  border-radius: var(--r-xl);
+  border: 1rpx solid rgba(255, 255, 255, 0.74);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-card);
 }
 
-.list-panel {
-  /* 列表容器：无额外背景，依靠分割线 */
-}
-
-.route-panel {
-  padding: var(--sp-4) 0;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   State Blocks
-   用于 loading / empty / error 整页状态
-   ═══════════════════════════════════════════════════════════ */
-
-.state-block {
+.meta-grid {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--sp-12) var(--sp-8);
-  gap: var(--sp-3);
+  flex-wrap: wrap;
+  gap: 10rpx;
 }
-
-.state-mark {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: var(--sp-3);
-}
-
-.state-mark.loading {
-  background: var(--color-primary-muted);
-}
-
-.state-mark.empty {
-  background: var(--color-bg);
-}
-
-.state-mark.error {
-  background: var(--color-danger-light);
-}
-
-.state-title {
-  font-size: var(--font-lg);
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.3;
-}
-
-.state-text {
-  font-size: var(--font-base);
-  color: var(--color-text-secondary);
-  line-height: 1.6;
-  max-width: 38ch;
-}
-
-.state-action {
-  margin-top: var(--sp-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
-  align-items: center;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Meta Chip System
-   用文本标签替代 emoji 元信息
-   ═══════════════════════════════════════════════════════════ */
 
 .meta-chip {
   display: inline-flex;
   align-items: center;
-  gap: 6rpx;
-  padding: 4rpx 10rpx;
-  background: rgba(24, 24, 27, 0.05);
-  border-radius: var(--r-sm);
+  gap: 8rpx;
+  padding: 8rpx 12rpx;
+  min-height: 44rpx;
+  border-radius: 16rpx;
+  background: rgba(24, 37, 33, 0.05);
 }
 
 .meta-chip-label {
   font-size: var(--font-xs);
-  font-weight: 600;
   color: var(--color-text-secondary);
+  font-weight: 600;
   white-space: nowrap;
 }
 
 .meta-chip-value {
   font-size: var(--font-xs);
   color: var(--color-text);
+  font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.meta-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-2);
+.section-label {
+  display: block;
+  font-size: var(--font-sm);
+  font-weight: 700;
+  color: var(--color-text-strong);
 }
 
-/* ═══════════════════════════════════════════════════════════
-   Route Item (Timeline Style for Trip Result)
-   行程结果页单路线项：时间线结构，无 emoji
-   ═══════════════════════════════════════════════════════════ */
-
-.route-item {
-  display: flex;
-  gap: var(--sp-4);
-  padding: var(--sp-4) 0;
-  border-bottom: 1rpx solid var(--color-border);
+.surface-panel {
+  background: var(--color-surface);
+  border-radius: var(--r-xl);
+  border: 1rpx solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  padding: 28rpx;
 }
 
-.route-item:last-child {
-  border-bottom: none;
-}
-
-.route-rail {
+.state-block {
+  min-height: 100vh;
+  padding: 0 32rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 56rpx;
-  flex-shrink: 0;
-  padding-top: 4rpx;
+  justify-content: center;
+  text-align: center;
 }
 
-.route-type {
-  width: 48rpx;
-  height: 48rpx;
-  border-radius: var(--r-md);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-  font-size: var(--font-xs);
-  font-weight: 700;
+.state-mark {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 34rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  margin-bottom: 18rpx;
 }
 
-.route-body {
-  flex: 1;
-  min-width: 0;
+.state-mark.loading {
+  background: var(--color-primary-soft);
 }
 
-.route-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--sp-3);
-  margin-bottom: var(--sp-2);
+.state-mark.empty {
+  background: rgba(24, 37, 33, 0.06);
 }
 
-.route-name {
-  font-size: var(--font-base);
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.4;
-  flex: 1;
-  word-break: break-word;
+.state-mark.error {
+  background: var(--color-danger-soft);
 }
 
-.route-period {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  flex-shrink: 0;
+.state-title {
+  display: block;
+  font-size: var(--font-lg);
+  line-height: 1.3;
+  font-weight: 800;
+  color: var(--color-text-strong);
 }
 
-.route-copy {
+.state-text {
+  display: block;
+  margin-top: 10rpx;
+  max-width: 34em;
   font-size: var(--font-sm);
+  line-height: 1.65;
   color: var(--color-text-secondary);
-  line-height: 1.55;
-  margin-top: var(--sp-1);
 }
 
-.route-actions {
+.state-action {
+  margin-top: 20rpx;
+  width: 100%;
   display: flex;
-  gap: var(--sp-4);
-  margin-top: var(--sp-3);
-  padding-top: var(--sp-3);
-  border-top: 1rpx dashed var(--color-border);
+  flex-direction: column;
+  gap: 12rpx;
+  align-items: center;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   Action Buttons
-   ═══════════════════════════════════════════════════════════ */
 
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--r-lg);
-  font-size: var(--font-lg);
-  font-weight: 700;
-  min-height: 88rpx;
-  padding: 0 var(--sp-6);
-  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-              opacity 0.15s ease,
-              box-shadow 0.15s ease;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  min-height: 90rpx;
+  padding: 0 26rpx;
+  border-radius: 24rpx;
+  font-size: var(--font-base);
+  font-weight: 800;
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.15s ease;
 }
 
 .btn:active {
-  transform: scale(0.97);
+  transform: scale(0.98);
 }
 
 .btn-primary {
   background: var(--color-primary);
-  color: #FFFFFF;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-primary:active {
-  background: var(--color-primary-hover);
-  box-shadow: none;
-  transform: scale(0.985);
+  color: #ffffff;
+  box-shadow: var(--shadow-hero);
 }
 
 .btn-secondary {
   background: var(--color-surface);
-  color: var(--color-text);
+  color: var(--color-text-strong);
   border: 1.5rpx solid var(--color-border-strong);
 }
 
-.btn-secondary:active {
-  background: var(--color-bg);
-  transform: scale(0.985);
-}
-
 .btn-ghost {
-  background: transparent;
+  background: rgba(24, 37, 33, 0.05);
   color: var(--color-text-secondary);
 }
 
-.btn-ghost:active {
-  background: rgba(24, 24, 27, 0.06);
-}
-
 .btn-danger-text {
-  background: transparent;
-  color: var(--color-danger);
-  font-size: var(--font-sm);
   min-height: 64rpx;
-  padding: 0 var(--sp-3);
+  padding: 0 18rpx;
+  border-radius: var(--r-full);
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+  font-size: var(--font-xs);
+  font-weight: 700;
 }
-
-.btn-danger-text:active {
-  background: var(--color-danger-light);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Bottom Bar
-   固定底部操作栏
-   ═══════════════════════════════════════════════════════════ */
 
 .bottom-bar {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.92);
+  bottom: 0;
+  z-index: 100;
+  display: flex;
+  gap: 12rpx;
+  padding: 18rpx 32rpx;
+  padding-bottom: calc(18rpx + env(safe-area-inset-bottom));
+  background: rgba(251, 248, 242, 0.92);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border-top: 1rpx solid var(--color-border);
-  padding: var(--sp-4) var(--sp-8);
-  padding-bottom: calc(var(--sp-4) + constant(safe-area-inset-bottom));
-  padding-bottom: calc(var(--sp-4) + env(safe-area-inset-bottom));
-  display: flex;
-  gap: var(--sp-3);
-  align-items: center;
+  border-top: 1rpx solid rgba(24, 37, 33, 0.08);
 }
 
-.bottom-bar .btn {
+.bottom-bar .btn,
+.bottom-bar button {
   flex: 1;
 }
-
-/* ═══════════════════════════════════════════════════════════
-   Preference Grid Item
-   偏好网格单元（行程参数页 + 随机玩输入页复用）
-   ═══════════════════════════════════════════════════════════ */
 
 .pref-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: var(--sp-3);
+  gap: 16rpx;
 }
 
 .pref-item {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--sp-2);
-  padding: var(--sp-4) var(--sp-3);
-  background: var(--color-surface);
-  border: 1.5rpx solid var(--color-border);
-  border-radius: var(--r-lg);
-  cursor: pointer;
-  transition: border-color 0.2s ease, background 0.2s ease,
-              transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  gap: 10rpx;
+  padding: 18rpx 10rpx;
+  border-radius: 24rpx;
+  border: 1.5rpx solid transparent;
+  background: rgba(24, 37, 33, 0.04);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.15s ease, background 0.15s ease;
 }
 
 .pref-item:active {
@@ -564,93 +382,20 @@ button::after { border: none; }
 }
 
 .pref-item.selected {
-  border-color: var(--color-primary);
-  background: var(--color-primary-muted);
+  background: var(--color-primary-soft);
+  border-color: rgba(20, 134, 111, 0.22);
 }
 
 .pref-icon {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: var(--r-md);
-  overflow: hidden;
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 22rpx;
 }
 
 .pref-label {
-  font-size: var(--font-sm);
-  font-weight: 600;
-  color: var(--color-text);
-  text-align: center;
+  font-size: var(--font-xs);
   line-height: 1.4;
-  max-height: 2.8em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-/* ═══════════════════════════════════════════════════════════
-   Step Indicator
-   步骤条（目的地页复用）
-   ═══════════════════════════════════════════════════════════ */
-
-.step-bar {
-  display: flex;
-  align-items: center;
-  padding: var(--sp-4) var(--sp-8);
-  gap: 0;
-}
-
-.step-node {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--sp-1);
-  flex-shrink: 0;
-}
-
-.step-circle {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--font-xs);
+  text-align: center;
+  color: var(--color-text);
   font-weight: 700;
-  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
-}
-
-.step-circle.done {
-  background: var(--color-primary);
-  color: #FFFFFF;
-}
-
-.step-circle.active {
-  background: var(--color-surface);
-  border: 2rpx solid var(--color-primary);
-  color: var(--color-primary);
-}
-
-.step-circle.pending {
-  background: var(--color-surface);
-  border: 2rpx solid var(--color-border-strong);
-  color: var(--color-text-hint);
-}
-
-.step-label {
-  font-size: var(--font-xs);
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-}
-
-.step-connector {
-  flex: 1;
-  height: 2rpx;
-  background: var(--color-border-strong);
-  margin: 0 var(--sp-2);
-  margin-bottom: 28rpx; /* 对齐 step-circle 底部 */
-}
-
-.step-connector.done {
-  background: var(--color-primary);
 }

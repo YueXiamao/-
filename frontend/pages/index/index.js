@@ -1,9 +1,8 @@
-// pages/index/index.js
-
 Page({
   data: {
     username: '旅行者',
     hasRecentTrips: false,
+    recentTripCount: 0
   },
 
   onLoad() {
@@ -19,9 +18,15 @@ Page({
   loadRecentTrips() {
     try {
       const trips = wx.getStorageSync('recent_trips') || [];
-      this.setData({ hasRecentTrips: trips.length > 0 });
+      this.setData({
+        hasRecentTrips: trips.length > 0,
+        recentTripCount: trips.length
+      });
     } catch (e) {
-      this.setData({ hasRecentTrips: false });
+      this.setData({
+        hasRecentTrips: false,
+        recentTripCount: 0
+      });
     }
   },
 
@@ -31,5 +36,5 @@ Page({
 
   goDiscover() {
     wx.navigateTo({ url: '/pages/discover/input/input' });
-  },
+  }
 });

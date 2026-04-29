@@ -1,7 +1,58 @@
 import { REGION_DATA } from '../constants/region-data.js';
 
-export const REGION_DB_VERSION = 'region-db-2026-04-27-v1';
+export const REGION_DB_VERSION = 'region-db-2026-04-29-v2';
 export const REGION_STORAGE_KEY = 'travel_region_db_v1';
+
+const POPULAR_PROVINCE_CODES = [
+  '110000',
+  '310000',
+  '440000',
+  '330000',
+  '320000',
+  '510000',
+  '500000',
+  '530000',
+  '460000',
+  '350000',
+  '610000',
+  '420000',
+  '430000',
+  '370000',
+  '410000',
+  '120000',
+  '130000',
+  '210000'
+];
+
+const POPULAR_CITY_CODES = [
+  '110100',
+  '310100',
+  '440100',
+  '440300',
+  '330100',
+  '320100',
+  '510100',
+  '500100',
+  '610100',
+  '420100',
+  '430100',
+  '320500',
+  '120100',
+  '370200',
+  '350200',
+  '460200',
+  '530100',
+  '530700',
+  '532900',
+  '450300',
+  '210200',
+  '370100',
+  '410100',
+  '340100'
+];
+
+const popularProvinceRank = new Map(POPULAR_PROVINCE_CODES.map((code, index) => [code, index]));
+const popularCityRank = new Map(POPULAR_CITY_CODES.map((code, index) => [code, index]));
 
 function normalizeCode(value) {
   return String(value || '');
@@ -18,6 +69,33 @@ function normalizeRecord(record) {
 function pushToTable(table, key, value) {
   if (!table[key]) table[key] = [];
   table[key].push(value);
+}
+
+function compareByNameThenCode(a, b) {
+  const byName = String(a.name || '').localeCompare(String(b.name || ''), 'zh-Hans-CN');
+  return byName || String(a.code || '').localeCompare(String(b.code || ''));
+}
+
+function compareWithPopularRank(rankMap) {
+  return (a, b) => {
+    const rankA = rankMap.has(a.code) ? rankMap.get(a.code) : Number.POSITIVE_INFINITY;
+    const rankB = rankMap.has(b.code) ? rankMap.get(b.code) : Number.POSITIVE_INFINITY;
+
+    if (rankA !== rankB) return rankA - rankB;
+    return compareByNameThenCode(a, b);
+  };
+}
+
+function sortTables(tables) {
+  tables.provinces.sort(compareWithPopularRank(popularProvinceRank));
+
+  for (const provinceCode of Object.keys(tables.citiesByProvince)) {
+    tables.citiesByProvince[provinceCode].sort(compareWithPopularRank(popularCityRank));
+  }
+
+  for (const cityCode of Object.keys(tables.districtsByCity)) {
+    tables.districtsByCity[cityCode].sort(compareByNameThenCode);
+  }
 }
 
 export function createRegionDatabase(records = REGION_DATA) {
@@ -38,6 +116,8 @@ export function createRegionDatabase(records = REGION_DATA) {
       pushToTable(tables.districtsByCity, record.parentCode, record);
     }
   }
+
+  sortTables(tables);
 
   return {
     version: REGION_DB_VERSION,

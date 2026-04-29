@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Travel Icon Generator</title>
+<script>p5.disableFriendlyErrors = true;</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.3/p5.min.js"></script>
+<style>
+  body { margin: 0; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; font-family: -apple-system, sans-serif; }
+  canvas { border-radius: 0; box-shadow: 0 8rpx 40rpx rgba(0,0,0,0.15); }
+  .controls { margin-top: 24px; display: flex; gap: 12px; }
+  button { padding: 12px 28px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+  button:hover { transform: translateY(-2px); box-shadow: 0 4px 16rpx rgba(0,0,0,0.15); }
+  .btn-green { background: #0D9A6E; color: #fff; }
+  .btn-amber { background: #E8810A; color: #fff; }
+  p { color: #666; font-size: 14px; margin: 12px 0 0; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="btn-green" onclick="savePNG()">下载 PNG</button>
+  <button class="btn-amber" onclick="saveSVG()">下载 SVG</button>
+</div>
+<p>按 S 键保存 PNG · 按 G 键保存 GIF · 按 R 键换随机种子</p>
+<script>
+// ── Icon Generator Config ──────────────────────────────────────────
+const SIZE = 1024;        // 小程序图标标准尺寸
+const SEED = 1700;        // 全局种子
+const PALETTE = {
+  bg:      '#FFFFFF',
+  green:   '#0D9A6E',
+  greenLt: '#D0EFE0',
+  amber:   '#E8810A',
+  amberLt: '#FEF3E2',
+  dark:    '#18181B',
+};
+
+// ── State ──────────────────────────────────────────────────────────
+let animT = 0;
+let particles = [];
+let font;
+
+function setup() {
+  createCanvas(SIZE, SIZE);
+  randomSeed(SEED);
+  noiseSeed(SEED);
+  colorMode(RGB, 255, 255, 255, 255);
+  noStroke();
+  frameRate(30);
+  initParticles();
+}
+
+function initParticles() {
+  particles = [];
+  const cx = SIZE / 2, cy = SIZE / 2;
+  for (let i = 0; i < 60; i++) {
+    const angle = random(TWO_PI);
+    const r = random(160, 380);
+    const baseAngle = angle + PI * 0.04 * sin(random(TWO_PI));
+    particles.push({
+      x: cx + cos(angle) * r,
+      y: cy + sin(angle) * r,
+      vx: cos(baseAngle) * random(0.3, 1.2),
+      vy: sin(baseAngle) * random(0.3, 1.2),
+      size: random(4, 14),
+      col: random() > 0.5 ? PALETTE.green : PALETTE.amber,
+      alpha: random(60, 180),
+      life: random(0.3, 1.0),
+    });
+  }
+}
+
+function draw() {
+  animT += 0.008;
+  drawIcon();
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  ICON DRAWING
+// ══════════════════════════════════════════════════════════════════
+
+function drawIcon() {
+  const cx = SIZE / 2, cy = SIZE / 2;
+
+  // ── 1. Background circle (white) ──
+  fill(PALETTE.bg);
+  noStroke();
+  ellipse(cx, cy, SIZE * 0.96, SIZE * 0.96);
+
+  // ── 2. Outer decorative ring (light green) ──
+  noFill();
+  stroke(PALETTE.greenLt);
+  strokeWeight(6);
+  ellipse(cx, cy, SIZE * 0.82, SIZE * 0.82);
+
+  // ── 3. Outer ring gradient dots ──
+  noStroke();
+  const dotCount = 24;
+  const dotR = SIZE * 0.41;
+  for (let i = 0; i < dotCount; i++) {
+    const a = (TWO_PI / dotCount) * i + animT * 0.05;
+    const x = cx + cos(a) * dotR;
+    const y = cy + sin(a) * dotR;
+    const s = 5 + 3 * sin(a * 3 + animT);
+    fill(lerpColor(color(PALETTE.green), color(PALETTE.amber), (i / dotCount)));
+    ellipse(x, y, s, s);
+  }
+
+  // ── 4. Animated route paths ──
+  strokeWeight(3.5);
+  noFill();
+  for (let p = 0; p < 3; p++) {
+    const pathAlpha = 80 + 40 * sin(animT * 1.5 + p * 2.1);
+    const col = p === 1 ? color(PALETTE.green) : color(PALETTE.amber);
+    col.setAlpha(pathAlpha);
+    stroke(col);
+    beginShape();
+    for (let t = 0; t <= 1; t += 0.04) {
+      const a = t * PI * 1.5 + p * 0.4 + animT * (p === 0 ? 0.3 : -0.2);
+      const r = 90 + t * 150 + 20 * sin(t * PI * 3 + p);
+      const x = cx + cos(a) * r;
+      const y = cy + sin(a) * r - 10;
+      curveVertex(x, y);
+    }
+    endShape();
+  }
+
+  // ── 5. Main compass body (green circle) ──
+  noStroke();
+  // Shadow
+  fill(0, 0, 0, 18);
+  ellipse(cx + 4, cy + 8, 380, 380);
+  // Main circle
+  fill(PALETTE.green);
+  ellipse(cx, cy, 370, 370);
+
+  // ── 6. Inner white ring ──
+  stroke(255, 255, 255, 180);
+  strokeWeight(8);
+  noFill();
+  ellipse(cx, cy, 290, 290);
+
+  // ── 7. Compass cardinal marks ──
+  noStroke();
+  const dirs = [
+    { a: -HALF_PI, label: 'N', isMain: true },
+    { a: 0,         label: 'E', isMain: false },
+    { a: HALF_PI,  label: 'S', isMain: false },
+    { a: PI,       label: 'W', isMain: false },
+  ];
+  for (const d of dirs) {
+    const x = cx + cos(d.a) * 105;
+    const y = cy + sin(d.a) * 105;
+    fill(d.isMain ? PALETTE.amber : '#FFFFFF');
+    ellipse(x, y, d.isMain ? 28 : 18, d.isMain ? 28 : 18);
+  }
+
+  // ── 8. Compass needle ──
+  // North needle (amber)
+  noStroke();
+  fill(PALETTE.amber);
+  beginShape();
+  vertex(cx, cy - 115);
+  vertex(cx - 20, cy);
+  vertex(cx, cy + 25);
+  vertex(cx + 20, cy);
+  endShape(CLOSE);
+
+  // South needle (white)
+  fill('#FFFFFF');
+  beginShape();
+  vertex(cx, cy + 115);
+  vertex(cx - 16, cy);
+  vertex(cx, cy - 25);
+  vertex(cx + 16, cy);
+  endShape(CLOSE);
+
+  // ── 9. Center pivot ──
+  fill(PALETTE.amber);
+  ellipse(cx, cy, 30, 30);
+  fill(PALETTE.bg);
+  ellipse(cx, cy, 16, 16);
+
+  // ── 10. Flying particle sparks ──
+  noStroke();
+  for (const pt of particles) {
+    pt.x += pt.vx;
+    pt.y += pt.vy;
+    pt.life -= 0.004;
+    const fadeAlpha = pt.life > 0.7
+      ? map(pt.life, 1, 0.7, 0, pt.alpha)
+      : map(pt.life, 0.7, 0, pt.alpha, 0);
+    const c = color(pt.col);
+    c.setAlpha(max(0, fadeAlpha));
+    fill(c);
+    ellipse(pt.x, pt.y, pt.size, pt.size);
+    if (pt.life <= 0 || pt.x < 0 || pt.x > SIZE || pt.y < 0 || pt.y > SIZE) {
+      const angle = random(TWO_PI);
+      const r = random(80, 180);
+      pt.x = cx + cos(angle) * r;
+      pt.y = cy + sin(angle) * r;
+      const baseAngle = angle + PI * 0.05 * sin(random(TWO_PI));
+      pt.vx = cos(baseAngle) * random(0.5, 1.5);
+      pt.vy = sin(baseAngle) * random(0.5, 1.5);
+      pt.life = random(0.8, 1.0);
+      pt.col = random() > 0.5 ? PALETTE.green : PALETTE.amber;
+    }
+  }
+
+  // ── 11. Location pin ring (subtle) ──
+  noFill();
+  stroke(PALETTE.greenLt);
+  strokeWeight(3);
+  const pinR = 175 + 8 * sin(animT * 2);
+  ellipse(cx, cy - 30, pinR, pinR);
+}
+
+// ══════════════════════════════════════════════════════════════════
+//  EXPORT
+// ══════════════════════════════════════════════════════════════════
+
+function keyPressed() {
+  if (key === 's' || key === 'S') savePNG();
+  if (key === 'g' || key === 'G') saveGif('travel-icon', 4);
+  if (key === 'r' || key === 'R') {
+    randomSeed(floor(random(99999)));
+    noiseSeed(floor(random(99999)));
+    initParticles();
+  }
+}
+
+function savePNG() {
+  saveCanvas('travel-app-icon-1024', 'png');
+}
+
+function saveSVG() {
+  // SVG export via createCanvas with SVG renderer
+  alert('SVG export: 请在 https://svgco.de/ 或 Inkscape 中导入 PNG');
+}
+
+function mousePressed() {
+  // Click to re-randomize
+  randomSeed(floor(random(99999)));
+  noiseSeed(floor(random(99999)));
+  initParticles();
+}
+</script>
+</body>
+</html>

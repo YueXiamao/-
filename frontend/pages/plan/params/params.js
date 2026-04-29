@@ -1,19 +1,18 @@
 import { PREFERENCE_OPTIONS, MIN_DAYS, MAX_DAYS, getCityBackground } from '../../../constants/index.js';
 import { isValidDate } from '../../../utils/index.js';
+import { loginGate } from '../../../services/login-gate.js';
+import { buildPlanParamsDraftState } from './draft-state.js';
 
 Page({
   data: {
     destinations: [],
-
     startDate: '',
     days: 2,
     preferences: [],
     extraNotes: '',
-
-    preferenceOptions: PREFERENCE_OPTIONS.map(item => ({ ...item, selected: false })),
+    preferenceOptions: PREFERENCE_OPTIONS.map((item) => ({ ...item, selected: false })),
     minDays: MIN_DAYS,
     maxDays: MAX_DAYS,
-
     loading: false,
     today: '',
     pageBackground: getCityBackground()
@@ -29,10 +28,19 @@ Page({
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const todayStr = tomorrow.toISOString().split('T')[0];
+    const draftState = buildPlanParamsDraftState({
+      destinations,
+      draftParams: wx.getStorageSync('trip_params'),
+      fallbackDate: todayStr
+    });
 
     this.setData({
       destinations,
-      startDate: todayStr,
+      startDate: draftState.startDate,
+      days: draftState.days,
+      preferences: draftState.preferences,
+      extraNotes: draftState.extraNotes,
+      preferenceOptions: draftState.preferenceOptions,
       today: todayStr,
       pageBackground: getCityBackground(destinations)
     });
@@ -43,7 +51,7 @@ Page({
   },
 
   onDaysChange(e) {
-    const delta = parseInt(e.currentTarget.dataset.delta);
+    const delta = parseInt(e.currentTarget.dataset.delta, 10);
     const days = Math.max(MIN_DAYS, Math.min(MAX_DAYS, this.data.days + delta));
     this.setData({ days });
   },
@@ -51,19 +59,15 @@ Page({
   onPreferenceTap(e) {
     const { value } = e.currentTarget.dataset;
     const { preferences } = this.data;
-    let nextPreferences;
-
-    if (preferences.includes(value)) {
-      nextPreferences = preferences.filter(p => p !== value);
-    } else {
-      nextPreferences = [...preferences, value];
-    }
+    const nextPreferences = preferences.includes(value)
+      ? preferences.filter((item) => item !== value)
+      : [...preferences, value];
 
     this.setData({
       preferences: nextPreferences,
-      preferenceOptions: PREFERENCE_OPTIONS.map(item => ({
+      preferenceOptions: PREFERENCE_OPTIONS.map((item) => ({
         ...item,
-        selected: nextPreferences.indexOf(item.value) >= 0
+        selected: nextPreferences.includes(item.value)
       }))
     });
   },
@@ -84,6 +88,14 @@ Page({
       wx.showToast({ title: '请至少选择一个游玩方式', icon: 'none' });
       return;
     }
+
+    const loginResult = await loginGate.ensureAuthorized({
+      title: '登录后生成行程',
+      content: '生成后的行程会和你的登录身份关联，方便后续保存、查看和继续调整。',
+      confirmText: '授权登录',
+      cancelText: '稍后再说'
+    });
+    if (!loginResult.authorized) return;
 
     const params = {
       destinations,

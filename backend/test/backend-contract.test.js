@@ -434,6 +434,161 @@ test('validator rejects English narrative copy while allowing English names and 
   );
 });
 
+test('trip generation returns rule_based itinerary when ai enhancement times out', async () => {
+  const { TripGenerationOrchestrator } = await import('../src/services/trip-generation/orchestrator.js');
+  const request = {
+    destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+    start_date: '2026-05-01',
+    days: 1,
+    preferences: ['Relaxed']
+  };
+  const skeleton = [{
+    day: 1,
+    date: '2026-05-01',
+    summary: 'Day 1',
+    items: [{ type: 'spot', name: 'Wide Alley', address: 'Chengdu', description: 'Visit slowly' }]
+  }];
+  const orchestrator = new TripGenerationOrchestrator({
+    tripService: {
+      buildGeneratedTripResponse(_request, generation) {
+        return generation;
+      }
+    },
+    candidateService: {
+      async prepare() {
+        return {};
+      }
+    },
+    skeletonBuilder: {
+      async build() {
+        return { itinerary: skeleton, warnings: [] };
+      }
+    },
+    fallbackTemplateProvider: {
+      provide() {
+        return { itinerary: skeleton, warnings: [] };
+      }
+    },
+    aiEnhancer: {
+      async enhance() {
+        return new Promise(() => {});
+      }
+    },
+    resultValidator: {
+      validate(itinerary) {
+        return {
+          valid: Array.isArray(itinerary) && itinerary.length === 1,
+          issues: []
+        };
+      }
+    },
+    enhancementTimeoutMs: 10
+  });
+
+  const startedAt = Date.now();
+  const result = await orchestrator.generate(request);
+
+  assert.equal(result.source, 'rule_based');
+  assert.equal(result.fallback_level, 'rule_based');
+  assert.deepEqual(result.generation_meta.warnings, ['ai_enhancement_timeout']);
+  assert.equal(Date.now() - startedAt < 2000, true);
+});
+
+test('trip skeleton includes richer alternatives and reference links', async () => {
+  const { TripSkeletonBuilder } = await import('../src/services/trip-generation/skeletonBuilder.js');
+  const spots = Array.from({ length: 10 }, (_, index) => ({
+    type: 'spot',
+    name: `Chengdu Spot ${index + 1}`,
+    address: `Address ${index + 1}`,
+    rating: index < 3 ? 4.8 : undefined,
+    tags: ['Local', 'Walk']
+  }));
+  const foods = Array.from({ length: 9 }, (_, index) => ({
+    type: 'food',
+    name: `Chengdu Food ${index + 1}`,
+    address: `Food Address ${index + 1}`,
+    price: 40 + index
+  }));
+
+  const result = new TripSkeletonBuilder().build({
+    destinations: [{ name: 'Chengdu', province: 'Sichuan', city: 'Chengdu' }],
+    start_date: '2026-05-01',
+    days: 1
+  }, {
+    spots,
+    foods,
+    hotels: []
+  });
+  const day = result.itinerary[0];
+
+  assert.equal(day.alternative_spots.length, 6);
+  assert.equal(day.alternative_foods.length, 6);
+  assert.equal(day.reference_links.some((link) => link.url.includes('xiaohongshu.com')), true);
+  assert.equal(day.items.every((item) => Array.isArray(item.reference_links)), true);
+});
+
+test('trip candidate preparation removes non-travel spot candidates', async () => {
+  const { TripCandidateService } = await import('../src/services/trip-generation/candidateService.js');
+  const previousSkipExternalPoi = process.env.SKIP_EXTERNAL_POI;
+  process.env.SKIP_EXTERNAL_POI = 'false';
+  const candidateService = new TripCandidateService({
+    poiService: {
+      async search({ type }) {
+        if (type === 'food') {
+          return [{ type: 'food', name: 'Local Hotpot', address: 'Food Street' }];
+        }
+
+        if (type === 'hotel') {
+          return [{ type: 'hotel', name: 'Central Stay', address: 'Center' }];
+        }
+
+        return [
+          {
+            type: 'spot',
+            name: 'City Government Office',
+            address: 'Office Road',
+            tags: ['政府机构及社会团体', '政府机关']
+          },
+          {
+            type: 'spot',
+            name: 'No. 7 School',
+            address: 'School Road',
+            tags: ['科教文化服务', '学校']
+          },
+          {
+            type: 'spot',
+            name: 'People Park',
+            address: 'Park Road',
+            tags: ['风景名胜', '公园广场']
+          },
+          {
+            type: 'spot',
+            name: 'Local Museum',
+            address: 'Museum Road',
+            tags: ['科教文化服务', '博物馆']
+          }
+        ];
+      }
+    }
+  });
+
+  try {
+    const result = await candidateService.prepare({
+      destinations: [{ name: 'Chengdu', city: 'Chengdu' }],
+      days: 1
+    });
+
+    assert.deepEqual(
+      result.spots.map((item) => item.name),
+      ['People Park', 'Local Museum']
+    );
+    assert.equal(result.foods.length, 1);
+    assert.equal(result.hotels.length, 1);
+  } finally {
+    process.env.SKIP_EXTERNAL_POI = previousSkipExternalPoi;
+  }
+});
+
 testWithServer('validator rejects ai output that removes existing product fields', async ({ server }) => {
   const aiModule = await import('../src/ai/generator.js');
   const originalEnhance = aiModule.aiGenerator.enhanceTripSkeleton;
@@ -1280,8 +1435,8 @@ testWithServer('discover destination can be converted directly into a trip', asy
   });
 
   assert.equal(res.statusCode, 200);
-  assert.equal(res.json().title, '成都市2日游');
-  assert.equal(res.json().itinerary.length, 2);
+  assert.equal(res.json().data.title, '成都市2日游');
+  assert.equal(res.json().data.itinerary.length, 2);
 });
 
 testWithServer('app errors expose product error codes in the response body', async ({ server }) => {

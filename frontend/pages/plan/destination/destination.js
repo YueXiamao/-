@@ -2,6 +2,8 @@ import destinationsApi from '../../../services/destinations.js';
 import { debounce } from '../../../utils/index.js';
 import { getCityBackground } from '../../../constants/index.js';
 
+const MUNICIPALITY_CODES = new Set(['110000', '120000', '310000', '500000']);
+
 Page({
   data: {
     searchValue: '',
@@ -17,6 +19,7 @@ Page({
 
     selectedProvince: null,
     selectedCity: null,
+    selectedProvinceRequiresDistrict: false,
 
     step: 1,
     loading: false,
@@ -62,9 +65,11 @@ Page({
 
   onProvinceTap(e) {
     const { code, name } = e.currentTarget.dataset;
+    const requiresDistrict = MUNICIPALITY_CODES.has(String(code));
     this.setData({
       selectedProvince: { code, name },
       selectedCity: null,
+      selectedProvinceRequiresDistrict: requiresDistrict,
       districts: [],
       pageBackground: getCityBackground([name]),
       step: 2
@@ -74,6 +79,17 @@ Page({
 
   onCityTap(e) {
     const { code, name } = e.currentTarget.dataset;
+    if (!this.data.selectedProvinceRequiresDistrict) {
+      this.addDestination({
+        name,
+        code,
+        city: name,
+        province: this.data.selectedProvince.name,
+        level: 'city'
+      });
+      return;
+    }
+
     this.setData({
       selectedCity: { code, name },
       districts: [],
@@ -171,7 +187,12 @@ Page({
     if (step === 3) {
       this.setData({ step: 2, selectedCity: null, districts: [] });
     } else if (step === 2) {
-      this.setData({ step: 1, selectedProvince: null, cities: [] });
+      this.setData({
+        step: 1,
+        selectedProvince: null,
+        selectedProvinceRequiresDistrict: false,
+        cities: []
+      });
     }
   },
 

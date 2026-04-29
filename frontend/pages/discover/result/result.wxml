@@ -1,12 +1,17 @@
-<!-- pages/discover/result/result.wxml -->
-<view class="page page-bg">
-
-  <!-- Loading: skeleton -->
+<view class="page page-bg discover-result-page">
   <view wx:if="{{loading}}" class="skeleton-wrap">
+    <view class="discover-hero-skeleton surface-card">
+      <view class="skeleton-line long"></view>
+      <view class="skeleton-line medium"></view>
+      <view class="skeleton-row">
+        <view class="skeleton-chip"></view>
+        <view class="skeleton-chip"></view>
+        <view class="skeleton-chip"></view>
+      </view>
+    </view>
     <view class="skeleton-card" wx:for="{{[1,2,3]}}" wx:key="i">
       <view class="skeleton-line long"></view>
       <view class="skeleton-line medium"></view>
-      <view class="skeleton-line short none"></view>
       <view class="skeleton-row">
         <view class="skeleton-chip"></view>
         <view class="skeleton-chip"></view>
@@ -15,177 +20,142 @@
     </view>
   </view>
 
-  <!-- Error -->
-  <view wx:elif="{{isOffline || error}}" class="state-block" style="padding-top:200rpx">
+  <view wx:elif="{{isOffline || error}}" class="state-block state-block-rich">
     <view class="state-mark error">
-      <text style="font-size:28rpx;font-weight:800;color:var(--color-danger)">!</text>
+      <view class="offline-icon"></view>
     </view>
-    <text class="state-title">{{isOffline ? '后端服务未启动' : '加载失败了'}}</text>
-    <text class="state-text">{{isOffline ? '请在电脑端启动 backend 服务' : error}}</text>
+    <text class="state-title">{{isOffline ? '推荐服务暂时没连上' : '推荐结果加载失败'}}</text>
+    <text class="state-text">{{isOffline ? '请先启动本地 backend 服务，再重新获取目的地推荐。' : error}}</text>
     <view class="state-action">
       <button class="btn btn-secondary" bindtap="onRetry">重新加载</button>
-      <button class="btn btn-ghost" bindtap="onBack">重新选择</button>
+      <button class="btn btn-ghost" bindtap="onBack">返回修改条件</button>
     </view>
   </view>
 
-  <!-- Empty -->
-  <view wx:elif="{{!recommendations || recommendations.length === 0}}" class="state-block" style="padding-top:200rpx">
+  <view wx:elif="{{!recommendations || recommendations.length === 0}}" class="state-block state-block-rich">
     <view class="state-mark empty">
-      <text style="font-size:32rpx;font-weight:800;color:var(--color-text-hint)">?</text>
+      <view class="empty-search-icon"></view>
     </view>
-    <text class="state-title">暂未找到合适的目的地</text>
-    <text class="state-text">试试调整你的条件或换个位置</text>
+    <text class="state-title">这次还没筛出合适目的地</text>
+    <text class="state-text">可以换一个位置、预算区间或偏好组合，再试一次。</text>
     <view class="state-action">
-      <button class="btn btn-secondary" bindtap="onBack">重新选择</button>
+      <button class="btn btn-secondary" bindtap="onBack">返回修改条件</button>
     </view>
   </view>
 
-  <!-- Results -->
   <block wx:else>
-    <!-- Page header -->
-    <view class="page-hero">
-      <text class="page-kicker">随机玩</text>
-      <text class="page-title">为你找到 {{recommendations.length}} 个好去处</text>
-      <text class="page-subtitle">根据你的位置和偏好精选推荐，点击卡片查看详情</text>
+    <view class="page-hero discover-hero">
+      <text class="page-kicker">随机玩推荐</text>
+      <text class="discover-title">这几处更值得你现在出发</text>
+      <text class="page-subtitle">先看目的地，再决定要不要一键生成行程。</text>
+
+      <view class="discover-summary surface-card">
+        <view class="discover-summary-main">
+          <text class="discover-summary-number">{{recommendations.length}}</text>
+          <text class="discover-summary-unit">个可选方向</text>
+        </view>
+        <view class="discover-summary-meta">
+          <view class="summary-meta-chip">
+            <text class="summary-meta-label">倾向</text>
+            <text class="summary-meta-value">当下适合出发</text>
+          </view>
+          <view class="summary-meta-chip">
+            <text class="summary-meta-label">动作</text>
+            <text class="summary-meta-value">展开看细节</text>
+          </view>
+        </view>
+      </view>
     </view>
 
-    <!-- Cards -->
-    <view class="page-content" style="padding-top:0">
-      <view
-        wx:for="{{recommendations}}"
-        wx:for-item="rec"
-        wx:key="rank"
-        class="rec-card"
-      >
-        <!-- Rank badge -->
-        <view class="rank-badge rank-{{rec.rank <= 3 ? rec.rank : 'n' }}">
-          <text wx:if="{{rec.rank === 1}}">TOP 1</text>
-          <text wx:elif="{{rec.rank === 2}}">TOP 2</text>
-          <text wx:elif="{{rec.rank === 3}}">TOP 3</text>
-          <text wx:else>#{{rec.rank}}</text>
+    <view class="page-content discover-list">
+      <view wx:for="{{recommendations}}" wx:for-item="rec" wx:key="rank" class="rec-card">
+        <view class="rec-cover rec-cover-{{rec.rank <= 3 ? rec.rank : 'n'}}">
+          <view class="rec-rank">
+            <text>{{rec.rank <= 3 ? '优先推荐' : '备选'}}</text>
+          </view>
+          <text class="rec-rank-number">TOP {{rec.rank}}</text>
         </view>
 
-        <!-- Destination header -->
-        <view style="margin-bottom:16rpx">
-          <view style="display:flex;align-items:baseline;justify-content:space-between;gap:12rpx;margin-bottom:8rpx">
-            <text class="rec-name">{{rec.destination.name}}</text>
-            <text class="badge-ghost" style="font-size:var(--font-xs);font-weight:600;padding:4rpx 12rpx;border-radius:var(--r-full);flex-shrink:0">{{rec.destination.province}}</text>
+        <view class="rec-content">
+          <view class="rec-head">
+            <view class="rec-title-group">
+              <text class="rec-name">{{rec.destination.name}}</text>
+              <text class="rec-location">{{rec.destination.province}}{{rec.destination.city ? ' · ' + rec.destination.city : ''}}</text>
+            </view>
           </view>
-          <view style="display:flex;flex-wrap:wrap;gap:8rpx">
-            <view class="meta-chip" wx:if="{{rec.destination.distance}}">
+
+          <view class="meta-grid rec-meta-grid">
+            <view wx:if="{{rec.destination.distance}}" class="meta-chip">
               <text class="meta-chip-label">距离</text>
               <text class="meta-chip-value">{{rec.destination.distance}}</text>
             </view>
-            <view class="meta-chip" wx:if="{{rec.destination.avg_budget}}">
+            <view wx:if="{{rec.destination.avg_budget}}" class="meta-chip">
               <text class="meta-chip-label">人均</text>
               <text class="meta-chip-value">{{rec.destination.avg_budget}}</text>
             </view>
-          </view>
-        </view>
-
-        <!-- Tags -->
-        <view wx:if="{{rec.destination.tags && rec.destination.tags.length > 0}}"
-          style="display:flex;flex-wrap:wrap;gap:8rpx;margin-bottom:16rpx">
-          <text wx:for="{{rec.destination.tags}}" wx:for-item="tag" wx:key="tag"
-            style="font-size:var(--font-xs);font-weight:600;padding:5rpx 14rpx;border-radius:var(--r-full);background:rgba(24,24,27,0.06);color:var(--color-text-secondary)">
-            {{tag}}
-          </text>
-        </view>
-
-        <!-- Reason -->
-        <view wx:if="{{rec.destination.summary}}"
-          style="font-size:var(--font-sm);color:var(--color-text-secondary);line-height:1.6;margin-bottom:20rpx">
-          {{rec.destination.summary}}
-        </view>
-
-        <!-- Trip preview chips -->
-        <view wx:if="{{rec.trip_preview}}"
-          style="display:flex;flex-wrap:wrap;gap:8rpx;margin-bottom:20rpx">
-          <view wx:if="{{rec.trip_preview.days}}" class="meta-chip">
-            <text class="meta-chip-value" style="color:var(--color-primary)">{{rec.trip_preview.days}}天行程</text>
-          </view>
-          <view wx:if="{{rec.trip_preview.spot_count}}" class="meta-chip">
-            <text class="meta-chip-value">{{rec.trip_preview.spot_count}}个景点</text>
-          </view>
-          <view wx:if="{{rec.trip_preview.food_count}}" class="meta-chip">
-            <text class="meta-chip-value">{{rec.trip_preview.food_count}}餐美食</text>
-          </view>
-          <view wx:if="{{rec.trip_preview.budget_range}}" class="meta-chip">
-            <text class="meta-chip-value" style="color:var(--color-secondary)">{{rec.trip_preview.budget_range}}</text>
-          </view>
-        </view>
-
-        <!-- Detail expanded -->
-        <view wx:if="{{expandedIndex === index && expandedRec}}"
-          style="border-top:1rpx solid var(--color-border);padding-top:20rpx;margin-top:4rpx">
-
-          <!-- Summary -->
-          <view wx:if="{{expandedRec.destination.summary}}"
-            style="margin-bottom:20rpx">
-            <text style="display:block;font-size:var(--font-kicker);font-weight:700;color:var(--color-text-secondary);margin-bottom:8rpx;letter-spacing:0.5rpx">推荐依据</text>
-            <text style="font-size:var(--font-sm);color:var(--color-text-secondary);line-height:1.6">{{expandedRec.destination.summary}}</text>
-          </view>
-
-          <!-- Tags -->
-          <view wx:if="{{expandedRec.destination.tags && expandedRec.destination.tags.length > 0}}"
-            style="margin-bottom:20rpx">
-            <text style="display:block;font-size:var(--font-kicker);font-weight:700;color:var(--color-text-secondary);margin-bottom:8rpx;letter-spacing:0.5rpx">适合人群</text>
-            <view style="display:flex;flex-wrap:wrap;gap:8rpx">
-              <text wx:for="{{expandedRec.destination.tags}}" wx:key="tag"
-                class="badge-ghost" style="font-size:var(--font-xs);font-weight:600;padding:5rpx 14rpx;border-radius:var(--r-full)">
-                {{item}}
-              </text>
+            <view wx:if="{{rec.trip_preview && rec.trip_preview.days}}" class="meta-chip">
+              <text class="meta-chip-label">建议</text>
+              <text class="meta-chip-value">{{rec.trip_preview.days}} 天</text>
             </view>
           </view>
 
-          <!-- Days info -->
-          <view wx:if="{{expandedRec.trip_preview && expandedRec.trip_preview.days_info}}"
-            style="margin-bottom:20rpx">
-            <text style="display:block;font-size:var(--font-kicker);font-weight:700;color:var(--color-text-secondary);margin-bottom:12rpx;letter-spacing:0.5rpx">行程安排</text>
-            <view style="display:flex;flex-direction:column;gap:12rpx">
-              <view wx:for="{{expandedRec.trip_preview.days_info}}" wx:key="day"
-                style="display:flex;gap:12rpx;align-items:flex-start">
-                <view style="width:64rpx;flex-shrink:0;padding-top:4rpx">
-                  <view class="badge-green" style="font-size:var(--font-xs);font-weight:700;padding:4rpx 10rpx;border-radius:var(--r-sm);white-space:nowrap;text-align:center;display:inline-block">{{item.label}}</view>
+          <view wx:if="{{rec.destination.tags && rec.destination.tags.length > 0}}" class="rec-tag-list">
+            <text wx:for="{{rec.destination.tags}}" wx:key="tag" class="rec-tag">{{item}}</text>
+          </view>
+
+          <text wx:if="{{rec.destination.summary}}" class="rec-summary">{{rec.destination.summary}}</text>
+
+          <view wx:if="{{rec.trip_preview}}" class="trip-preview">
+            <view wx:if="{{rec.trip_preview.spot_count}}" class="trip-preview-item">
+              <text class="trip-preview-number">{{rec.trip_preview.spot_count}}</text>
+              <text class="trip-preview-label">景点</text>
+            </view>
+            <view wx:if="{{rec.trip_preview.food_count}}" class="trip-preview-item">
+              <text class="trip-preview-number">{{rec.trip_preview.food_count}}</text>
+              <text class="trip-preview-label">餐饮</text>
+            </view>
+            <view wx:if="{{rec.trip_preview.budget_range}}" class="trip-preview-item trip-preview-budget">
+              <text class="trip-preview-number">{{rec.trip_preview.budget_range}}</text>
+              <text class="trip-preview-label">预算</text>
+            </view>
+          </view>
+
+          <view wx:if="{{expandedIndex === index && expandedRec}}" class="rec-detail">
+            <view wx:if="{{expandedRec.destination.summary}}" class="detail-block">
+              <text class="detail-label">为什么推荐这里</text>
+              <text class="detail-copy">{{expandedRec.destination.summary}}</text>
+            </view>
+
+            <view wx:if="{{expandedRec.trip_preview && expandedRec.trip_preview.days_info}}" class="detail-block">
+              <text class="detail-label">建议节奏</text>
+              <view class="detail-day-list">
+                <view wx:for="{{expandedRec.trip_preview.days_info}}" wx:key="day" class="detail-day-item">
+                  <text class="detail-day-badge">{{item.label}}</text>
+                  <text class="detail-day-copy">{{item.summary}}</text>
                 </view>
-                <text style="font-size:var(--font-sm);color:var(--color-text-secondary);line-height:1.5;flex:1">{{item.summary}}</text>
               </view>
             </view>
+
+            <view class="detail-note">
+              <text class="detail-note-copy">实际营业、天气和交通会影响临场安排，生成行程后建议再确认一次。</text>
+            </view>
           </view>
 
-          <!-- Disclaimer -->
-          <view style="display:flex;gap:10rpx;align-items:flex-start;padding:16rpx;background:rgba(24,24,27,0.04);border-radius:var(--r-md);margin-top:8rpx">
-            <text style="font-size:20rpx;font-weight:700;color:var(--color-text-secondary);flex-shrink:0;margin-top:2rpx">NOTICE</text>
-            <text style="font-size:var(--font-xs);color:var(--color-text-secondary);line-height:1.55">以上为参考行程，具体景点可能受天气、交通等因素调整，建议出行前查看实时信息。</text>
+          <view class="rec-actions">
+            <button class="btn btn-secondary" data-index="{{index}}" bindtap="onViewDetail">
+              {{expandedIndex === index ? '收起' : '看细节'}}
+            </button>
+            <button
+              class="btn btn-primary"
+              data-name="{{rec.destination.name}}"
+              data-city="{{rec.destination.city}}"
+              data-province="{{rec.destination.province}}"
+              bindtap="onGenerateTrip">
+              生成行程
+            </button>
           </view>
         </view>
-
-        <!-- Action buttons -->
-        <view style="display:flex;gap:12rpx;margin-top:4rpx">
-          <button
-            class="btn btn-secondary"
-            data-index="{{index}}"
-            bindtap="onViewDetail"
-            style="flex:1">
-            {{expandedIndex === index ? '收起详情' : '查看详情'}}
-          </button>
-          <button
-            class="btn btn-primary"
-            data-name="{{rec.destination.name}}"
-            data-city="{{rec.destination.city}}"
-            data-province="{{rec.destination.province}}"
-            bindtap="onGenerateTrip"
-            style="flex:1">
-            生成行程
-          </button>
-        </view>
-      </view>
-
-      <!-- Bottom tip -->
-      <view style="padding:16rpx 0;text-align:center">
-        <text style="font-size:var(--font-xs);color:var(--color-text-hint)">点击「生成行程」开始规划你的旅行</text>
       </view>
     </view>
   </block>
-
 </view>

@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F8F8F8"/>
+    </linearGradient>
+    <linearGradient id="greenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1DB87A"/>
+      <stop offset="100%" stop-color="#0D7A52"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F5A623"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="192" fill="url(#bgGrad)"/>
+
+  <!-- Outer decorative ring -->
+  <circle cx="512" cy="512" r="420" fill="none" stroke="#D0EFE0" stroke-width="5"/>
+
+  <!-- Orbit dots (24 dots around the compass) -->
+  <g opacity="0.9">
+    <circle cx="512" cy="102" r="8" fill="#0D9A6E"/>
+    <circle cx="586" cy="109" r="6" fill="#1DB87A"/>
+    <circle cx="658" cy="130" r="7" fill="#E8810A"/>
+    <circle cx="724" cy="164" r="5" fill="#D97706"/>
+    <circle cx="782" cy="212" r="8" fill="#0D9A6E"/>
+    <circle cx="830" cy="270" r="6" fill="#1DB87A"/>
+    <circle cx="865" cy="338" r="7" fill="#E8810A"/>
+    <circle cx="888" cy="412" r="5" fill="#D97706"/>
+    <circle cx="897" cy="490" r="8" fill="#0D9A6E"/>
+    <circle cx="892" cy="568" r="6" fill="#1DB87A"/>
+    <circle cx="873" cy="642" r="7" fill="#E8810A"/>
+    <circle cx="842" cy="710" r="5" fill="#D97706"/>
+    <circle cx="798" cy="770" r="8" fill="#0D9A6E"/>
+    <circle cx="742" cy="818" r="6" fill="#1DB87A"/>
+    <circle cx="676" cy="854" r="7" fill="#E8810A"/>
+    <circle cx="602" cy="876" r="5" fill="#D97706"/>
+    <circle cx="522" cy="886" r="8" fill="#0D9A6E"/>
+    <circle cx="442" cy="878" r="6" fill="#1DB87A"/>
+    <circle cx="366" cy="858" r="7" fill="#E8810A"/>
+    <circle cx="296" cy="824" r="5" fill="#D97706"/>
+    <circle cx="234" cy="776" r="8" fill="#0D9A6E"/>
+    <circle cx="182" cy="718" r="6" fill="#1DB87A"/>
+    <circle cx="144" cy="650" r="7" fill="#E8810A"/>
+    <circle cx="118" cy="574" r="5" fill="#D97706"/>
+    <circle cx="106" cy="492" r="8" fill="#0D9A6E"/>
+    <circle cx="110" cy="408" r="6" fill="#1DB87A"/>
+    <circle cx="130" cy="328" r="7" fill="#E8810A"/>
+    <circle cx="164" cy="252" r="5" fill="#D97706"/>
+    <circle cx="212" cy="186" r="8" fill="#0D9A6E"/>
+    <circle cx="270" cy="130" r="6" fill="#1DB87A"/>
+    <circle cx="338" cy="90" r="7" fill="#E8810A"/>
+    <circle cx="412" cy="64" r="5" fill="#D97706"/>
+  </g>
+
+  <!-- Route path lines -->
+  <path d="M 290 512 Q 380 350 512 300 Q 644 250 734 380"
+        fill="none" stroke="#0D9A6E" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 280 530 Q 400 420 512 380 Q 624 340 720 440"
+        fill="none" stroke="#E8810A" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <path d="M 300 490 Q 370 370 512 310 Q 650 250 730 360"
+        fill="none" stroke="#1DB87A" stroke-width="4" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Main compass circle (shadow) -->
+  <circle cx="516" cy="520" r="188" fill="#00000020"/>
+
+  <!-- Main compass body -->
+  <circle cx="512" cy="512" r="185" fill="url(#greenGrad)" filter="url(#shadow)"/>
+
+  <!-- Inner white ring -->
+  <circle cx="512" cy="512" r="145" fill="none" stroke="#FFFFFF" stroke-width="7" opacity="0.85"/>
+
+  <!-- Compass cardinal dots -->
+  <!-- North -->
+  <circle cx="512" cy="408" r="14" fill="#E8810A"/>
+  <!-- East -->
+  <circle cx="616" cy="512" r="10" fill="#FFFFFF" opacity="0.9"/>
+  <!-- South -->
+  <circle cx="512" cy="616" r="10" fill="#FFFFFF" opacity="0.9"/>
+  <!-- West -->
+  <circle cx="408" cy="512" r="10" fill="#FFFFFF" opacity="0.9"/>
+
+  <!-- Compass needle: North (amber) -->
+  <polygon points="512,330 490,512 512,535 534,512" fill="url(#amberGrad)"/>
+
+  <!-- Compass needle: South (white) -->
+  <polygon points="512,694 490,512 512,535 534,512" fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Center pivot -->
+  <circle cx="512" cy="512" r="16" fill="#E8810A"/>
+  <circle cx="512" cy="512" r="8" fill="#FFFFFF"/>
+
+  <!-- Small route dots -->
+  <circle cx="340" cy="440" r="7" fill="#0D9A6E" opacity="0.8"/>
+  <circle cx="420" cy="360" r="7" fill="#0D9A6E" opacity="0.8"/>
+  <circle cx="512" cy="300" r="9" fill="#E8810A" opacity="0.9"/>
+
+  <!-- Location pin ring (subtle pulse ring) -->
+  <circle cx="512" cy="480" r="90" fill="none" stroke="#D0EFE0" stroke-width="3" stroke-dasharray="8 12" opacity="0.7"/>
+
+  <!-- Pin tip -->
+  <polygon points="512,455 495,490 529,490" fill="#E8810A"/>
+  <circle cx="512" cy="455" r="12" fill="#E8810A"/>
+  <circle cx="512" cy="455" r="6" fill="#FFFFFF"/>
+</svg>

@@ -1,94 +1,90 @@
-<view class="page page-bg" style="background-image: linear-gradient(180deg, rgba(255,255,255,0.70), rgba(243,246,241,0.96) 360rpx, #F3F6F1 100%), url('{{pageBackground}}');">
+<view class="page page-bg params-page" style="background-image: linear-gradient(180deg, rgba(255,249,241,0.55), rgba(245,241,232,0.96) 420rpx, #f5f1e8 100%), url('{{pageBackground}}');">
   <view class="page-hero">
     <text class="page-kicker">行程参数</text>
-    <text class="page-title">把偏好说清楚</text>
-    <text class="page-subtitle">日期、天数和游玩方式会一起决定每天的节奏，让行程看起来更像真的会去执行。</text>
-    <view class="page-badges">
-      <text class="page-badge badge-green">{{destinations.length}} 个目的地</text>
-      <text class="page-badge badge-amber">{{days}} 天草案</text>
-    </view>
-  </view>
+    <text class="page-title">把这次想要的感觉说清楚</text>
+    <text class="page-subtitle">日期、天数和玩法会决定整段旅程的节奏。</text>
 
-  <view class="dest-summary glass-card">
-    <view class="summary-head">
-      <text class="dest-summary-label">这次想去</text>
-      <text class="dest-summary-hint">可以先生成，再回头微调</text>
-    </view>
-    <view class="dest-tags">
-      <text class="dest-tag" wx:for="{{destinations}}" wx:key="name">{{item.name}}</text>
-    </view>
-  </view>
-
-  <view class="quick-grid">
-    <view class="form-card quick-card">
-      <text class="form-label">出发日期</text>
-      <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
-        <view class="picker-row">
-          <text class="picker-value {{startDate ? 'has-value' : ''}}">{{startDate || '请选择出发日期'}}</text>
-          <text class="picker-arrow">›</text>
+    <view class="param-hero-card glass-card">
+      <view class="param-hero-cover" style="background-image: url('{{pageBackground}}');"></view>
+      <view class="param-hero-content">
+        <view class="page-badges">
+          <text class="page-badge badge-green">{{destinations.length}} 个目的地</text>
+          <text class="page-badge badge-amber">{{days}} 天草案</text>
         </view>
-      </picker>
-      <text class="form-helper">默认从明天开始，也可以自行改到别的日期。</text>
-    </view>
-
-    <view class="form-card quick-card">
-      <text class="form-label">游玩天数</text>
-      <view class="days-row">
-        <view class="days-btn" bindtap="onDaysChange" data-delta="-1">−</view>
-        <view class="days-center">
-          <text class="days-num">{{days}}</text>
-          <text class="days-unit">天</text>
+        <view class="dest-tags">
+          <text class="dest-tag" wx:for="{{destinations}}" wx:key="name">{{item.name}}</text>
         </view>
-        <view class="days-btn" bindtap="onDaysChange" data-delta="1">＋</view>
       </view>
-      <text class="form-helper">短途周末到多天出行都可以先做草案。</text>
     </view>
   </view>
 
-  <view class="form-card preference-card">
-    <view class="form-head">
-      <text class="form-label">游玩方式</text>
-      <text class="form-label-hint">可多选</text>
-    </view>
-    <text class="section-desc">偏好越清楚，路线、吃住和节奏就越贴近真实出行方式。</text>
+  <view class="page-content params-content">
+    <view class="quick-grid">
+      <view class="form-card quick-card">
+        <text class="form-label">出发日期</text>
+        <picker mode="date" value="{{startDate}}" start="{{today}}" bindchange="onDateChange">
+          <view class="picker-row">
+            <text class="picker-value {{startDate ? 'has-value' : ''}}">{{startDate || '选择日期'}}</text>
+            <view class="picker-arrow"></view>
+          </view>
+        </picker>
+        <text class="form-helper">默认从明天开始，也可以改成别的日期。</text>
+      </view>
 
-    <view class="pref-grid">
-      <view
-        class="pref-item {{item.selected ? 'pref-on' : ''}}"
-        wx:for="{{preferenceOptions}}"
-        wx:key="value"
-        bindtap="onPreferenceTap"
-        data-value="{{item.value}}"
-      >
-        <view class="pref-icon-wrap">
+      <view class="form-card quick-card">
+        <text class="form-label">玩几天</text>
+        <view class="days-row">
+          <view class="days-btn" bindtap="onDaysChange" data-delta="-1"><view class="days-minus"></view></view>
+          <view class="days-center">
+            <text class="days-num">{{days}}</text>
+            <text class="days-unit">天</text>
+          </view>
+          <view class="days-btn" bindtap="onDaysChange" data-delta="1"><view class="days-plus"></view></view>
+        </view>
+        <text class="form-helper">先拉一个可执行的草案，后面还可以细调。</text>
+      </view>
+    </view>
+
+    <view class="form-card preference-card">
+      <view class="form-head">
+        <text class="form-label">这次想怎么逛</text>
+        <text class="form-label-hint">可多选</text>
+      </view>
+      <text class="section-desc">选几种更想要的感觉，系统会按这个去排节奏。</text>
+      <view class="pref-grid">
+        <view
+          class="pref-item {{item.selected ? 'selected' : ''}}"
+          wx:for="{{preferenceOptions}}"
+          wx:key="value"
+          bindtap="onPreferenceTap"
+          data-value="{{item.value}}"
+        >
           <image class="pref-icon" src="{{item.icon}}" mode="aspectFill" />
-        </view>
-        <text class="pref-name">{{item.label}}</text>
-        <view class="pref-check" wx:if="{{item.selected}}">
-          <text class="pref-check-icon">✓</text>
+          <text class="pref-name">{{item.label}}</text>
+          <view class="pref-check" wx:if="{{item.selected}}">
+            <view class="pref-check-mark"></view>
+          </view>
         </view>
       </view>
     </view>
-  </view>
 
-  <view class="form-card">
-    <view class="form-head">
-      <text class="form-label">补充说明</text>
-      <text class="form-label-hint">选填</text>
+    <view class="form-card">
+      <view class="form-head">
+        <text class="form-label">额外要求</text>
+        <text class="form-label-hint">可不填</text>
+      </view>
+      <textarea
+        class="notes-input"
+        placeholder="比如想看日出、不吃辣、带长辈、想泡温泉、希望步行少一点"
+        value="{{extraNotes}}"
+        bindinput="onNotesInput"
+        maxlength="200"
+      />
+      <text class="notes-count">{{extraNotes.length || 0}}/200</text>
     </view>
-    <textarea
-      class="notes-input"
-      placeholder="例如：想看日出、不吃辣、带长辈、想泡温泉、希望步行少一点"
-      value="{{extraNotes}}"
-      bindinput="onNotesInput"
-      maxlength="200"
-    />
-    <text class="notes-count">{{extraNotes.length || 0}}/200</text>
   </view>
 
   <view class="bottom-bar">
-    <button class="btn-primary" bindtap="onGenerate">
-      <text>生成行程</text>
-    </button>
+    <button class="btn btn-primary" bindtap="onGenerate">生成行程</button>
   </view>
 </view>

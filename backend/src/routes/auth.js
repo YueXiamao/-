@@ -26,6 +26,10 @@ export default async function authRoutes(fastify) {
         },
         timeout: 5000
       });
+      if (wxResp.data?.errcode) {
+        throw Errors.UNAUTHORIZED(`WeChat code2Session failed: ${wxResp.data.errcode} ${wxResp.data.errmsg || ''}`.trim());
+      }
+
       openid = wxResp.data.openid;
       if (!openid) {
         throw Errors.UNAUTHORIZED('微信登录失败: ' + (wxResp.data.errmsg || '未返回 openid'));
