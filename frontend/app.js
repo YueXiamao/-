@@ -1,22 +1,19 @@
+import { ensureLogin } from './services/auth.js';
+
 App({
   onLaunch() {
-    this.hydrateOpenid();
+    ensureLogin(wx).then(({ openid }) => {
+      if (openid) {
+        this.globalData.openid = openid;
+        console.log('[Auth] 登录成功 openid:', openid);
+      }
+    }).catch(err => {
+      console.warn('[Auth] 静默登录失败:', err?.message);
+    });
   },
 
   globalData: {
     userInfo: null,
-    openid: null
+    openid: null,
   },
-
-  hydrateOpenid() {
-    const openid = wx.getStorageSync('openid');
-    if (openid) {
-      this.globalData.openid = openid;
-    }
-  },
-
-  setOpenid(openid) {
-    this.globalData.openid = openid;
-    wx.setStorageSync('openid', openid);
-  }
 });
