@@ -30,8 +30,8 @@ export default {
     return api.patch(`/api/trip/${tripId}/item/${itemId}/reorder`, { direction });
   },
 
-  replaceItem(tripId, itemId) {
-    return api.post(`/api/trip/${tripId}/item/${itemId}/replace`);
+  replaceItem(tripId, itemId, { intent = 'any' } = {}) {
+    return api.post(`/api/trip/${tripId}/item/${itemId}/replace`, { intent });
   },
 
   deleteItem(tripId, itemId) {
@@ -44,5 +44,9 @@ export default {
 
   export(tripId) {
     return api.get(`/api/trip/${tripId}/export`);
+  },
+
+  feedback(tripId, { type }) {
+    return api.post(`/api/trip/${tripId}/feedback`, { type });
   }
 };

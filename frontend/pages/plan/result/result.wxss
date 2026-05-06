@@ -260,6 +260,38 @@
   background: var(--color-primary);
 }
 
+.action-feedback-icon,
+.action-feedback-icon::before,
+.action-feedback-icon::after {
+  content: '';
+  position: absolute;
+}
+
+.action-feedback-icon {
+  top: 11rpx;
+  left: 11rpx;
+  width: 22rpx;
+  height: 22rpx;
+}
+
+.action-feedback-icon::before {
+  top: 0;
+  left: 0;
+  width: 22rpx;
+  height: 22rpx;
+  border: 3rpx solid var(--color-primary);
+  border-radius: 50%;
+}
+
+.action-feedback-icon::after {
+  top: 9rpx;
+  left: 9rpx;
+  width: 4rpx;
+  height: 4rpx;
+  background: var(--color-primary);
+  border-radius: 50%;
+}
+
 .action-strip-label {
   font-size: var(--font-sm);
   font-weight: 800;
@@ -635,5 +667,69 @@
 
 .empty-day-text {
   font-size: var(--font-sm);
+  color: var(--color-text-hint);
+}
+
+/* ── Day meta strip (pace + commute + freshness) ── */
+.day-meta-strip {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 12rpx 0 16rpx;
+  flex-wrap: wrap;
+}
+
+.day-pace-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  border-radius: var(--r-full);
+  font-size: var(--font-xs);
+  font-weight: 700;
+}
+
+.day-pace-leisure {
+  background: #E8F5EE;
+  color: #0D9A6E;
+}
+
+.day-pace-moderate {
+  background: #FEF3E2;
+  color: #D97706;
+}
+
+.day-pace-intense {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.day-pace-text {
+  font-size: var(--font-xs);
+  font-weight: 700;
+}
+
+.day-commute {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--r-full);
+}
+
+.day-commute-text {
+  font-size: var(--font-xs);
+  color: var(--color-text-secondary);
+}
+
+.day-freshness {
+  display: inline-flex;
+  align-items: center;
+  padding: 4rpx 14rpx;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: var(--r-full);
+}
+
+.day-freshness-text {
+  font-size: var(--font-xs);
   color: var(--color-text-hint);
 }

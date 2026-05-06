@@ -71,6 +71,10 @@
           <view class="action-strip-icon action-copy-icon"></view>
           <text class="action-strip-label">复制</text>
         </view>
+        <view class="action-strip-item" bindtap="onFeedback">
+          <view class="action-strip-icon action-feedback-icon"></view>
+          <text class="action-strip-label">反馈</text>
+        </view>
         <button class="action-strip-item action-strip-button" open-type="share">
           <view class="action-strip-icon action-share-icon"></view>
           <text class="action-strip-label">分享</text>
@@ -94,6 +98,18 @@
         </view>
 
         <view wx:if="{{currentDay === dayIndex}}" class="day-card-body">
+          <view wx:if="{{item.pace_label || item.commute_minutes}}" class="day-meta-strip">
+            <view wx:if="{{item.pace_label}}" class="day-pace-badge day-pace-{{item.pace_label}}">
+              <text class="day-pace-text">{{item.pace_label}}</text>
+            </view>
+            <view wx:if="{{item.commute_minutes}}" class="day-commute">
+              <text class="day-commute-text">通勤约 {{item.commute_minutes}} 分钟</text>
+            </view>
+            <view wx:if="{{item.data_freshness}}" class="day-freshness">
+              <text class="day-freshness-text">{{item.data_freshness}}</text>
+            </view>
+          </view>
+
           <view wx:if="{{item.summary}}" class="day-overview">
             <text class="day-overview-copy">{{item.summary}}</text>
           </view>
@@ -114,7 +130,16 @@
                   <view class="route-head">
                     <text class="route-name">{{tripItem.name}}</text>
                     <view class="route-quick-actions">
-                      <text catchtap="onItemReplace" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-accent">换</text>
+                      <picker
+                        class="route-action route-action-accent"
+                        mode="selector"
+                        range="{{replaceIntents}}"
+                        range-key="label"
+                        bindchange="onIntentReplace"
+                        data-day-index="{{dayIndex}}"
+                        data-item-index="{{itemIndex}}">
+                        <text>换</text>
+                      </picker>
                       <text catchtap="onAddNote" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-note">备注</text>
                       <text catchtap="onItemDelete" data-day-index="{{dayIndex}}" data-item-index="{{itemIndex}}" class="route-action route-action-danger">删</text>
                     </view>

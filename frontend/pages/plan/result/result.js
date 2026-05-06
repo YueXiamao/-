@@ -21,7 +21,14 @@ Page({
     error: null,
     pageBackground: getCityBackground(),
     draggingItem: null,
-    dragOverItem: null
+    dragOverItem: null,
+    replaceIntents: [
+      { label: '换近一点', intent: 'nearer' },
+      { label: '换便宜', intent: 'cheaper' },
+      { label: '换室内', intent: 'indoor' },
+      { label: '换亲子', intent: 'family' },
+      { label: '随便换一个', intent: 'any' },
+    ],
   },
 
   onLoad(options = {}) {
@@ -325,11 +332,52 @@ Page({
     }
   },
 
-  async onItemReplace(e) {
+  async onIntentReplace(e) {
+    const { intent } = this.data.replaceIntents[e.detail.value];
     const context = this.getItemContext(e.currentTarget.dataset);
     if (!context) return;
 
     const { item, itemIndex, dayIndex, day } = context;
+    if (!item.id || !this.data.tripId) {
+      wx.showToast({ title: '请先保存行程后再替换', icon: 'none' });
+      return;
+    }
+
+    try {
+      wx.showLoading({ title: '正在更换...' });
+      const result = await tripApi.replaceItem(this.data.tripId, item.id, { intent });
+      wx.hideLoading();
+
+      const nextItems = [...day.items];
+      nextItems[itemIndex] = { ...nextItems[itemIndex], ...(result?.item || {}) };
+      this.updateDayItems(dayIndex, nextItems);
+      wx.showToast({ title: intent === 'any' ? '已换一个' : `已换${intent === 'nearer' ? '近一点' : intent === 'cheaper' ? '便宜的' : intent === 'indoor' ? '室内的' : intent === 'family' ? '亲子的' : '一个'}`, icon: 'success' });
+      track(EVENT_TYPES.TRIP_ITEM_REPLACE, {
+        targetType: 'trip_item', targetId: item.id,
+        payload: { tripId: this.data.tripId, itemType: item.type, intent }
+      });
+    } catch (error) {
+      wx.hideLoading();
+      wx.showToast({ title: '暂时没有更合适的替换项', icon: 'none' });
+    }
+  },
+
+  async onItemReplace(e) {
+    // Legacy: generic replace without intent
+    const fakeEvent = {
+      ...e,
+      currentTarget: {
+        ...e.currentTarget,
+        dataset: { ...e.currentTarget.dataset }
+      }
+    };
+    fakeEvent.currentTarget.dataset.intent = 'any';
+    // Delegate to onIntentReplace with 'any' intent
+    const { dayIndex, itemIndex } = fakeEvent.currentTarget.dataset;
+    const context = this.getItemContext(fakeEvent.currentTarget.dataset);
+    if (!context) return;
+
+    const { item, day } = context;
     if (!item.id || !this.data.tripId) {
       wx.showToast({ title: '请先保存行程后再替换', icon: 'none' });
       return;
@@ -341,10 +389,7 @@ Page({
       wx.hideLoading();
 
       const nextItems = [...day.items];
-      nextItems[itemIndex] = {
-        ...nextItems[itemIndex],
-        ...(result?.item || {})
-      };
+      nextItems[itemIndex] = { ...nextItems[itemIndex], ...(result?.item || {}) };
       this.updateDayItems(dayIndex, nextItems);
       wx.showToast({ title: '已换一个', icon: 'success' });
       track(EVENT_TYPES.TRIP_ITEM_REPLACE, {
@@ -447,6 +492,29 @@ Page({
       wx.hideLoading();
       wx.showToast({ title: '保存失败', icon: 'none' });
     }
+  },
+
+  async onFeedback() {
+    if (!this.data.trip) return;
+    wx.showActionSheet({
+      itemList: ['不准', '太赶', '预算不符', '景点不喜欢', '其他'],
+      success: async (res) => {
+        const feedbackMap = {
+          0: '不准',
+          1: '太赶',
+          2: '预算不符',
+          3: '景点不喜欢',
+          4: '其他'
+        };
+        const feedback = feedbackMap[res.tapIndex];
+        try {
+          await tripApi.feedback(this.data.tripId || this.data.trip?.trip_id, { type: feedback });
+          wx.showToast({ title: '感谢反馈', icon: 'success' });
+        } catch {
+          wx.showToast({ title: '反馈失败，请稍后', icon: 'none' });
+        }
+      }
+    });
   },
 
   async onCopy() {
