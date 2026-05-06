@@ -1,8 +1,8 @@
-import { ensureLogin } from './services/auth.js';
+import authApi from './services/auth.js';
 
 App({
   onLaunch() {
-    ensureLogin(wx).then(({ openid }) => {
+    authApi.ensureLogin(wx).then(({ openid }) => {
       if (openid) {
         this.globalData.openid = openid;
         console.log('[Auth] 登录成功 openid:', openid);
