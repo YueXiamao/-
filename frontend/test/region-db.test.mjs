@@ -48,15 +48,23 @@ test('region database builds table indexes for province city and district lookup
   assert.deepEqual(db.tables.districtsByCity.c1.map((item) => item.code), ['d1']);
 });
 
-test('region store persists a versioned local database and reuses it', () => {
+test('region store persists a versioned local database when enabled', () => {
   const storage = createMemoryStorage();
-  const store = createRegionStore({ records: sampleRecords, storage });
+  const store = createRegionStore({ records: sampleRecords, storage, persist: true });
 
   assert.deepEqual(store.getProvinces().map((item) => item.code), ['p1']);
 
   const persisted = storage.dump()[REGION_STORAGE_KEY];
   assert.equal(persisted.version, REGION_DB_VERSION);
   assert.deepEqual(persisted.tables.citiesByProvince.p1.map((item) => item.code), ['c1']);
+});
+
+test('region store avoids synchronous storage writes unless persistence is enabled', () => {
+  const storage = createMemoryStorage();
+  const store = createRegionStore({ records: sampleRecords, storage });
+
+  assert.deepEqual(store.getProvinces().map((item) => item.code), ['p1']);
+  assert.equal(storage.dump()[REGION_STORAGE_KEY], undefined);
 });
 
 test('region store rebuilds when a stored database version is stale', () => {

@@ -6,34 +6,78 @@ const EVENT_QUEUE_KEY = 'analytics_event_queue';
 const MAX_QUEUE_SIZE = 50;
 const FLUSH_THRESHOLD = 10;
 
-let _queue = [];
+function createDefaultStorage() {
+  return typeof wx !== 'undefined' ? wx : null;
+}
 
-function loadQueue() {
-  try {
-    _queue = wx.getStorageSync(EVENT_QUEUE_KEY) || [];
-  } catch {
-    _queue = [];
+export function createAnalyticsService({
+  apiClient = api,
+  storage = createDefaultStorage(),
+  flushThreshold = FLUSH_THRESHOLD,
+  maxQueueSize = MAX_QUEUE_SIZE
+} = {}) {
+  let queue = [];
+  let flushPromise = null;
+
+  function loadQueue() {
+    try {
+      queue = storage?.getStorageSync?.(EVENT_QUEUE_KEY) || [];
+    } catch {
+      queue = [];
+    }
   }
-}
 
-function saveQueue() {
-  try {
-    wx.setStorageSync(EVENT_QUEUE_KEY, _queue);
-  } catch {}
-}
+  function saveQueue() {
+    try {
+      storage?.setStorageSync?.(EVENT_QUEUE_KEY, queue);
+    } catch {}
+  }
 
-async function flushAsync() {
-  loadQueue();
-  if (_queue.length === 0) return;
-  const events = [..._queue];
-  _queue = [];
-  saveQueue();
-  try {
-    await api.post('/api/analytics/event', { events }, { silent: true });
-  } catch (_) {
-    _queue = [...events.slice(-MAX_QUEUE_SIZE), ..._queue].slice(-MAX_QUEUE_SIZE);
+  async function flushAsync() {
+    if (flushPromise) return flushPromise;
+
+    flushPromise = (async () => {
+      loadQueue();
+      if (queue.length === 0) return;
+
+      const events = [...queue];
+      queue = [];
+      saveQueue();
+
+      try {
+        await apiClient.post('/api/analytics/event', { events }, { silent: true });
+      } catch (_) {
+        queue = [...events.slice(-maxQueueSize), ...queue].slice(-maxQueueSize);
+        saveQueue();
+      }
+    })();
+
+    try {
+      await flushPromise;
+    } finally {
+      flushPromise = null;
+    }
+  }
+
+  function enqueue(eventType, payload = {}) {
+    loadQueue();
+    queue.push({ eventType, payload, ts: Date.now() });
+    if (queue.length > maxQueueSize) {
+      queue = queue.slice(-maxQueueSize);
+    }
     saveQueue();
+    if (queue.length >= flushThreshold) {
+      flushAsync();
+    }
   }
+
+  function track(eventType, payload = {}) {
+    enqueue(eventType, payload);
+  }
+
+  track.flush = flushAsync;
+
+  return { track, flush: flushAsync };
 }
 
 export const EVENT_TYPES = {
@@ -51,22 +95,7 @@ export const EVENT_TYPES = {
   FEEDBACK_NOT_INTERESTED: 'feedback_not_interested',
 };
 
-function enqueue(eventType, payload = {}) {
-  loadQueue();
-  _queue.push({ eventType, payload, ts: Date.now() });
-  if (_queue.length > MAX_QUEUE_SIZE) {
-    _queue = _queue.slice(-MAX_QUEUE_SIZE);
-  }
-  saveQueue();
-  if (_queue.length >= FLUSH_THRESHOLD) {
-    flushAsync();
-  }
-}
-
-export function track(eventType, payload = {}) {
-  enqueue(eventType, payload);
-  flushAsync();
-}
+export const { track } = createAnalyticsService();
 
 track.tripGenerateSuccess = (tripId, city) =>
   track('trip_generate_success', { target_type: 'trip', target_id: tripId, city });

@@ -11,6 +11,15 @@ export function resolveApiBaseUrl(wxApi = globalThis.wx) {
   return isDesktopDevtools ? API_DEVTOOLS_URL : API_TEST_URL;
 }
 
+function resolveApiBaseUrlCandidates(wxApi = globalThis.wx) {
+  const primary = resolveApiBaseUrl(wxApi);
+  const candidates = [primary];
+  if (primary !== API_TEST_URL) {
+    candidates.push(API_TEST_URL);
+  }
+  return candidates;
+}
+
 function parseRequestError(err = {}) {
   const message = String(err.errMsg || '');
   if (message.includes('timeout') || message.includes('超时')) {
@@ -37,9 +46,12 @@ class ApiService {
   }
 
   request(path, data = {}, method = 'GET', header = {}, options = {}) {
+    const baseUrls = options.baseUrls || resolveApiBaseUrlCandidates(this.wxApi);
+    const currentBaseUrl = baseUrls[0];
+
     return new Promise((resolve, reject) => {
       const openid = this.getOpenid();
-      this.baseUrl = resolveApiBaseUrl(this.wxApi);
+      this.baseUrl = currentBaseUrl;
 
       this.wxApi.request({
         url: this.baseUrl + path,
@@ -101,6 +113,16 @@ class ApiService {
         },
         fail: (err) => {
           const parsed = parseRequestError(err);
+          if (
+            baseUrls.length > 1 &&
+            (parsed.type === 'timeout' || parsed.type === 'offline')
+          ) {
+            this.request(path, data, method, header, {
+              ...options,
+              baseUrls: baseUrls.slice(1)
+            }).then(resolve).catch(reject);
+            return;
+          }
           if (!options.silent) {
             this.wxApi.showToast({ title: parsed.message, icon: 'none' });
           }

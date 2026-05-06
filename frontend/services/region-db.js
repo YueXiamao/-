@@ -157,14 +157,18 @@ function writeStoredDatabase(storage, db) {
   }
 }
 
-export function createRegionStore({ records = REGION_DATA, storage = getDefaultStorage() } = {}) {
+export function createRegionStore({
+  records = REGION_DATA,
+  storage = getDefaultStorage(),
+  persist = false
+} = {}) {
   let memoryDb = null;
 
   function loadDatabase() {
     if (memoryDb) return memoryDb;
 
-    memoryDb = readStoredDatabase(storage) || createRegionDatabase(records);
-    writeStoredDatabase(storage, memoryDb);
+    memoryDb = (persist ? readStoredDatabase(storage) : null) || createRegionDatabase(records);
+    if (persist) writeStoredDatabase(storage, memoryDb);
     return memoryDb;
   }
 

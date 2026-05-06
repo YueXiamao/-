@@ -28,6 +28,51 @@ test('api base url uses loopback ip in desktop devtools development', async () =
   assert.equal(baseUrl, 'http://127.0.0.1:3000');
 });
 
+test('api service falls back to LAN url after desktop loopback timeout', async () => {
+  const { ApiService } = await import('../services/api.js');
+  const attemptedUrls = [];
+  const toastTitles = [];
+
+  const wxApi = {
+    getAccountInfoSync() {
+      return { miniProgram: { envVersion: 'develop' } };
+    },
+    getSystemInfoSync() {
+      return { platform: 'windows' };
+    },
+    getStorageSync() {
+      return '';
+    },
+    request(options) {
+      attemptedUrls.push(options.url);
+      if (attemptedUrls.length === 1) {
+        options.fail({ errMsg: 'request:fail timeout' });
+        return;
+      }
+      options.success({
+        statusCode: 200,
+        data: {
+          code: 0,
+          data: { ok: true }
+        }
+      });
+    },
+    showToast({ title }) {
+      toastTitles.push(title);
+    }
+  };
+
+  const api = new ApiService(wxApi);
+  const result = await api.get('/health');
+
+  assert.deepEqual(result, { ok: true });
+  assert.deepEqual(attemptedUrls, [
+    'http://127.0.0.1:3000/health',
+    'http://192.168.20.141:3000/health'
+  ]);
+  assert.deepEqual(toastTitles, []);
+});
+
 test('api base url uses LAN ip on mobile development builds', async () => {
   const { resolveApiBaseUrl } = await import('../services/api.js');
 

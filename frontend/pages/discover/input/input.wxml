@@ -42,6 +42,7 @@
           <text class="loc-btn-txt">手动选择</text>
         </view>
       </view>
+      <text class="loc-notice">仅用于识别当前出发城市、推荐附近目的地；拒绝授权时也可手动选择城市继续使用。</text>
     </view>
 
     <view class="quick-grid">

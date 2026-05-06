@@ -232,6 +232,14 @@
   color: inherit;
 }
 
+.loc-notice {
+  display: block;
+  margin-top: 12rpx;
+  font-size: var(--font-xs);
+  line-height: 1.55;
+  color: var(--color-text-hint);
+}
+
 .days-row {
   display: flex;
   align-items: center;

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>wx.getLocation 审核辅助截图</title>
+  <style>
+    :root {
+      --bg: #f5f1e8;
+      --surface: #ffffff;
+      --text: #1f2f2a;
+      --muted: rgba(31, 47, 42, 0.62);
+      --green: #14866f;
+      --green-soft: rgba(20, 134, 111, 0.12);
+      --orange: #f08a2e;
+      --line: rgba(24, 37, 33, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, rgba(255,248,239,0.9), rgba(245,241,232,0.98)), var(--bg);
+      color: var(--text);
+    }
+    .board { width: 1600px; margin: 0 auto; padding: 48px; }
+    .hero { margin-bottom: 28px; }
+    .eyebrow { font-size: 14px; font-weight: 700; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    h1 { margin: 10px 0 0; font-size: 40px; line-height: 1.08; }
+    .sub { margin-top: 12px; font-size: 18px; line-height: 1.6; color: var(--muted); max-width: 980px; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+    .card { background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.75); border-radius: 28px; padding: 24px; box-shadow: 0 18px 48px rgba(29, 43, 36, 0.08); }
+    .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .card-title { font-size: 22px; font-weight: 800; }
+    .card-tag { min-height: 34px; padding: 0 14px; display: inline-flex; align-items: center; border-radius: 999px; background: var(--green-soft); color: var(--green); font-size: 14px; font-weight: 700; }
+    .phone { width: 100%; max-width: 420px; border-radius: 34px; overflow: hidden; background: var(--surface); border: 10px solid #182521; box-shadow: 0 20px 40px rgba(24, 37, 33, 0.14); }
+    .screen { min-height: 780px; background: linear-gradient(180deg, rgba(255,249,240,0.9), rgba(245,241,232,0.98)), var(--bg); padding: 22px; }
+    .screen-cover { height: 150px; border-radius: 24px; background: linear-gradient(135deg, #e8f7f1, #fce8cf); margin-bottom: 18px; position: relative; overflow: hidden; }
+    .screen-cover::before, .screen-cover::after { content: ""; position: absolute; border-radius: 999px; }
+    .screen-cover::before { width: 220px; height: 220px; background: rgba(20,134,111,0.12); right: -30px; top: -70px; }
+    .screen-cover::after { width: 180px; height: 180px; background: rgba(240,138,46,0.16); left: -40px; bottom: -60px; }
+    .title { font-size: 14px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+    .headline { font-size: 30px; font-weight: 800; line-height: 1.14; margin-bottom: 10px; }
+    .copy { font-size: 15px; line-height: 1.55; color: var(--muted); }
+    .block { margin-top: 16px; padding: 16px; background: rgba(255,255,255,0.86); border-radius: 22px; border: 1px solid var(--line); }
+    .btn-row, .chip-row, .mini-grid { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .btn { min-height: 44px; padding: 0 16px; border-radius: 16px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+    .btn.green { background: var(--green); color: white; }
+    .btn.gray { background: rgba(24,37,33,0.05); color: var(--text); }
+    .chip { min-height: 34px; padding: 0 12px; border-radius: 999px; display: inline-flex; align-items: center; font-size: 13px; font-weight: 700; background: rgba(24,37,33,0.05); color: var(--muted); }
+    .mini-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+    .stat { padding: 14px; border-radius: 18px; background: rgba(24,37,33,0.04); }
+    .stat strong { display: block; font-size: 18px; margin-top: 6px; }
+    .tip { margin-top: 16px; padding: 14px 16px; border-radius: 18px; background: rgba(20,134,111,0.08); color: var(--green); font-size: 14px; line-height: 1.55; font-weight: 700; }
+    .caption { margin-top: 18px; padding-top: 16px; border-top: 1px dashed var(--line); font-size: 15px; line-height: 1.7; color: var(--muted); }
+    .scene { display: flex; gap: 26px; align-items: flex-start; }
+  </style>
+</head>
+<body>
+  <div class="board">
+    <div class="hero">
+      <div class="eyebrow">审核辅助截图</div>
+      <h1>`wx.getLocation` 申请素材</h1>
+      <div class="sub">这组图片用于向审核员说明：定位由用户主动触发，仅用于识别当前出发城市、推荐附近旅行目的地，以及生成更贴合出发地的行程方案。</div>
+    </div>
+    <div class="grid">
+      <section class="card">
+        <div class="card-head"><div class="card-title">1. 首页进入“随机玩”</div><div class="card-tag">入口截图</div></div>
+        <div class="scene">
+          <div class="phone"><div class="screen"><div class="title">旅行助手</div><div class="headline">下一段出发从这里开始</div><div class="copy">知道去哪就直接排路线，没想法就先找灵感。</div><div class="screen-cover"></div><div class="block"><div class="headline" style="font-size:26px;">随机玩</div><div class="copy">位置、预算、偏好</div><div class="chip-row"><div class="chip">先筛目的地</div><div class="chip">再生成行程</div><div class="chip">适合临时起意</div></div><div class="btn-row"><div class="btn green">进入随机玩</div></div></div></div></div>
+          <div class="caption">审核重点：用户需先从首页主动进入“随机玩”功能，定位能力不是小程序启动即默认获取。</div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">2. 用户主动点击“微信定位”</div><div class="card-tag">触发截图</div></div>
+        <div class="scene">
+          <div class="phone"><div class="screen"><div class="title">随机玩</div><div class="headline">先圈定范围，再挑目的地</div><div class="copy">你给位置、预算和偏好，我来先筛出更值得出发的方向。</div><div class="block"><div style="font-size:18px;font-weight:800;">从哪里出发</div><div class="copy" style="margin-top:10px;">选择一个出发位置</div><div class="btn-row"><div class="btn green">微信定位</div><div class="btn gray">手动选择</div></div><div class="tip">仅用于识别当前出发城市、推荐附近目的地；拒绝授权时也可手动选择城市继续使用。</div></div></div></div>
+          <div class="caption">审核重点：定位由用户主动点击“微信定位”后才触发；同时保留“手动选择城市”作为非定位替代方案。</div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">3. 定位结果用于识别当前出发城市</div><div class="card-tag">结果截图</div></div>
+        <div class="scene">
+          <div class="phone"><div class="screen"><div class="title">随机玩</div><div class="headline">已识别当前位置</div><div class="block"><div style="display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:18px;font-weight:800;">浙江省 杭州市</div><div class="copy" style="margin-top:6px;">当前出发城市</div></div><div class="chip" style="background:var(--green-soft);color:var(--green);">GPS</div></div><div class="mini-grid"><div class="stat"><div class="copy">天数</div><strong>2 天</strong></div><div class="stat"><div class="copy">预算</div><strong>500-1000</strong></div><div class="stat"><div class="copy">偏好</div><strong>美食</strong></div></div></div></div></div>
+          <div class="caption">审核重点：地理位置不是泛化使用，而是先转化为“当前出发城市”，作为后续附近目的地推荐和行程生成的依据。</div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="card-head"><div class="card-title">4. 基于出发地展示附近推荐并生成行程</div><div class="card-tag">业务闭环</div></div>
+        <div class="scene">
+          <div class="phone"><div class="screen"><div class="title">随机玩推荐</div><div class="headline">这几处更值得你现在出发</div><div class="block"><div style="font-size:24px;font-weight:800;">莫干山</div><div class="copy" style="margin-top:6px;">浙江省 · 湖州市</div><div class="chip-row"><div class="chip">距离 2h</div><div class="chip">人均 780</div><div class="chip">建议 2 天</div></div><div class="copy" style="margin-top:14px;">适合周末短逃，适合从杭州当日出发。</div><div class="btn-row"><div class="btn gray">看细节</div><div class="btn green">生成行程</div></div></div></div></div>
+          <div class="caption">审核重点：定位结果最终直接影响附近目的地推荐、距离展示以及“生成行程”业务闭环，属于旅行规划核心能力。</div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+<script>
+  (function () {
+    const screen = new URLSearchParams(window.location.search).get('screen');
+    if (!screen) return;
+    const cards = Array.from(document.querySelectorAll('.card'));
+    cards.forEach((card, index) => {
+      if (String(index + 1) !== screen) {
+        card.style.display = 'none';
+      }
+    });
+    const hero = document.querySelector('.hero');
+    if (hero) {
+      hero.style.marginBottom = '20px';
+    }
+    const board = document.querySelector('.board');
+    board.style.width = '1180px';
+    const scene = document.querySelector('.scene');
+    if (scene) {
+      scene.style.gap = '20px';
+    }
+    const phone = document.querySelector('.phone');
+    if (phone) {
+      phone.style.maxWidth = '560px';
+      phone.style.borderWidth = '8px';
+    }
+    const caption = document.querySelector('.caption');
+    if (caption) {
+      caption.style.maxWidth = '420px';
+    }
+  })();
+</script>
+</html>

@@ -37,13 +37,10 @@
   },
   "permission": {
     "scope.userLocation": {
-      "desc": "你的位置信息将用于随机玩功能的目的地推荐"
+      "desc": "用于识别当前出发城市，推荐附近旅行目的地并生成更贴合出发地的行程方案"
     }
   },
   "requiredPrivateInfos": ["getLocation"],
-  "style": "v2",
-  "componentPlaceholder": {
-    "region-picker": "view",
-    "tag-selector": "view"
-  }
+  "lazyCodeLoading": "requiredComponents",
+  "style": "v2"
 }

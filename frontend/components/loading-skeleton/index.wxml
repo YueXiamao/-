@@ -1,8 +1,0 @@
-<!-- components/loading-skeleton/index.wxml -->
-<view class="skeleton-container">
-  <view class="skeleton-card" wx:if="{{type === 'card'}}" wx:for="{{count}}" wx:key="index">
-    <view class="skeleton-title"></view>
-    <view class="skeleton-line"></view>
-    <view class="skeleton-line short"></view>
-  </view>
-</view>
