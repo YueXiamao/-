@@ -16,7 +16,7 @@
   height: 144rpx;
   background:
     linear-gradient(135deg, rgba(20, 134, 111, 0.14), rgba(79, 132, 244, 0.08)),
-    url('/assets/backgrounds/city-default.png');
+    #e8f5f0;
   background-size: cover;
   background-position: center;
 }
