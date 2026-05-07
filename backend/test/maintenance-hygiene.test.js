@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -24,4 +25,12 @@ test('backend root does not keep ad-hoc debug scripts alongside production code'
   ));
 
   assert.deepEqual(remaining, []);
+});
+
+test('backend npm lifecycle scripts are pinned to the project Node 20 launcher', () => {
+  const packageJson = JSON.parse(readFileSync(join(backendRoot, 'package.json'), 'utf8'));
+
+  assert.equal(packageJson.scripts.start, 'node scripts/run-with-node20.cjs src/index.js');
+  assert.equal(packageJson.scripts.dev, 'node scripts/run-with-node20.cjs --watch src/index.js');
+  assert.equal(packageJson.scripts.test, 'node scripts/run-with-node20.cjs --test');
 });

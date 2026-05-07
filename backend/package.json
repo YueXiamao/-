@@ -8,9 +8,9 @@
     "node": ">=20 <21"
   },
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js",
-    "test": "node --test",
+    "dev": "node scripts/run-with-node20.cjs --watch src/index.js",
+    "start": "node scripts/run-with-node20.cjs src/index.js",
+    "test": "node scripts/run-with-node20.cjs --test",
     "deploy": "npm run build && scf deploy",
     "db:migrate": "node scripts/migrate.js"
   },

@@ -52,7 +52,7 @@ export const API_BASE_URL = 'https://api.travel.com';
 export const API_DEVTOOLS_URL = 'http://127.0.0.1:3002';
 // For real-device debugging, keep this value aligned with the WLAN IPv4 address
 // of the computer running backend.
-export const API_TEST_URL = 'http://192.168.3.37:3002';
+export const API_TEST_URL = 'http://192.168.20.141:3002';
 
 export const ITEM_TYPES = {
   SPOT: 'spot',
