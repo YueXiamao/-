@@ -25,8 +25,8 @@ export default async function locationRoutes(fastify) {
       const result = await locationService.reverseGeocode(lat, lng);
       return ok(result);
     } catch (err) {
-      fastify.log.error('逆地理编码失败:', err.message);
-      return fail(20001, '位置识别失败，请手动选择');
+      fastify.log.error('[regeo] 逆地理编码失败:', err.message);
+      return fail(20001, '位置识别失败，请手动选择: ' + err.message);
     }
   });
 }

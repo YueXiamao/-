@@ -1,5 +1,6 @@
 // 位置服务：逆地理编码（经纬度 → 省市区）
-import axios from 'axios';
+// 使用原生 https 避免 WSL 全局代理影响
+import https from 'https';
 
 class LocationService {
   async reverseGeocode(lat, lng) {
@@ -10,28 +11,40 @@ class LocationService {
       throw new Error('高德地图 API Key 未配置');
     }
 
-    const url = 'https://restapi.amap.com/v3/geocode/regeo';
-    const params = {
+    const location = `${lng},${lat}`;
+    const params = new URLSearchParams({
       key,
-      location: `${lng},${lat}`,
+      location,
       extensions: 'base',
       output: 'JSON',
-    };
+    });
 
-    const resp = await axios.get(url, { params, timeout: 8000 });
+    const url = `https://restapi.amap.com/v3/geocode/regeo?${params}`;
 
-    if (resp.status !== 200 || resp.data?.status !== '1') {
-      throw new Error(resp.data?.info || '逆地理编码失败');
+    const data = await new Promise((resolve, reject) => {
+      https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (res) => {
+        let body = '';
+        res.on('data', chunk => body += chunk);
+        res.on('end', () => resolve(body));
+      }).on('error', reject).setTimeout(8000, function() {
+        this.destroy();
+        reject(new Error('请求超时'));
+      });
+    });
+
+    const resp = JSON.parse(data);
+
+    if (resp.status !== '1') {
+      throw new Error(resp.info || '逆地理编码失败');
     }
 
-    const comp = resp.data.regeocode?.addressComponent || {};
-    // 直辖市city字段可能为空数组或空字符串，用province兜底
+    const comp = resp.regeocode?.addressComponent || {};
     const rawCity = Array.isArray(comp.city) ? comp.city[0] || comp.province : (comp.city || comp.province);
     return {
       province: comp.province || '',
       city: rawCity,
       district: comp.district || '',
-      formatted_address: resp.data.regeocode?.formatted_address || '',
+      formatted_address: resp.regeocode?.formatted_address || '',
     };
   }
 }
