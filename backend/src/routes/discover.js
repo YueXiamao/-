@@ -13,6 +13,7 @@ export default async function discoverRoutes(fastify) {
 
   const handler = async (request) => {
     const { current_location, days, budget, preferences } = request.body || {};
+    const openid = request.headers['x-openid'] || '';
 
     if (!preferences || !Array.isArray(preferences)) {
       throw Errors.VALIDATION_ERROR('缺少 preferences 参数，必须是数组');
@@ -23,6 +24,7 @@ export default async function discoverRoutes(fastify) {
       days: parseInt(days) || 2,
       budget: budget || '1000-2000',
       preferences,
+      openid,  // 用于偏好学习加权
     });
 
     return ok({ recommendations }, 'success');

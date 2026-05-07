@@ -124,26 +124,49 @@ function getFallbackRecommendations({ current_location, days = 2, budget = '1000
  * @param {string[]} params.preferences - 偏好列表
  * @returns {Promise<object[]>} Top 3 推荐
  */
-export async function getRecommendations({ current_location, days = 2, budget = '1000-2000', preferences = [] } = {}) {
-  // 数据库无数据时用 fallback
+export async function getRecommendations({ current_location, days = 2, budget = '1000-2000', preferences = [], openid = '' } = {}) {
   let allDests = [];
   try {
     const rows = await query('SELECT * FROM destinations LIMIT 50');
     if (rows && rows.length > 0) allDests = rows;
-  } catch (_) {
-    // 表可能不存在
-  }
+  } catch (_) {}
 
   let recommendations;
   if (!allDests.length) {
     recommendations = getFallbackRecommendations({ current_location, days, budget, preferences });
   } else {
-    // 打乱顺序后取前6
     const shuffled = allDests.sort(() => Math.random() - 0.5).slice(0, 6);
-    const scored = shuffled.map((dest) => ({
-      ...dest,
-      _score: calcScore(dest, preferences, budget, current_location?.latitude, current_location?.longitude),
-    }));
+    const scored = shuffled.map((dest) => {
+      const baseScore = calcScore(dest, preferences, budget, current_location?.latitude, current_location?.longitude);
+      return {
+        ...dest,
+        _score: baseScore,
+        _destObj: {
+          name: dest.name,
+          province: dest.province || '',
+          tags: dest.tags ? dest.tags.split(',').filter(Boolean) : [],
+          pace_label: dest.pace_label || 'moderate',
+          avg_cost: dest.avg_budget || 0
+        }
+      };
+    });
+
+    // 有历史偏好时，根据用户偏好调整分数
+    if (openid) {
+      try {
+        const { preferenceLearningService } = await import('./preferenceLearning.js');
+        for (const item of scored) {
+          const { adjustedScore, reasons } = preferenceLearningService.applyPreferenceWeight(
+            item._score, item._destObj, openid
+          );
+          item._score = adjustedScore;
+          if (reasons.length > 0) {
+            item._prefReasons = reasons;
+          }
+        }
+      } catch (_) {}
+    }
+
     scored.sort((a, b) => b._score - a._score);
 
     recommendations = await Promise.all(

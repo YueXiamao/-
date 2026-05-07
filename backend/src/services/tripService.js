@@ -330,12 +330,15 @@ class TripService {
     );
 
     this.touchTrip(trip.id);
+
+    // 从替换操作中学习用户偏好（异步，不阻塞响应）
+    this.inferPreferenceFromReplace(openid, currentItem, replacement, { intent });
+
     return {
       success: true,
-      item: this.db.prepare('SELECT * FROM trip_item WHERE id = ?').get(itemId)
+      item: nextItem
     };
   }
-
   deleteTripItem(openid, tripId, itemId) {
     const trip = this.getOwnedTrip(openid, tripId);
 
@@ -476,6 +479,19 @@ class TripService {
     }
 
     return nextItem;
+  }
+
+  // 从行程项替换中学习用户偏好（调用 preferenceLearningService）
+  inferPreferenceFromReplace(openid, oldItem, newItem, { intent } = {}) {
+    if (!openid) return;
+    try {
+      // 延迟导入避免循环依赖
+      import('../services/preferenceLearning.js').then(({ preferenceLearningService }) => {
+        preferenceLearningService.inferFromReplace(openid, oldItem, newItem, { intent });
+      });
+    } catch (err) {
+      console.warn('[TripService] inferPreferenceFromReplace failed:', err.message);
+    }
   }
 }
 

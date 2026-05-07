@@ -1,4 +1,5 @@
 import { tripService } from '../services/tripService.js';
+import { preferenceLearningService } from '../services/preferenceLearning.js';
 import { Errors } from '../middleware/errorHandler.js';
 
 export default async function tripRoutes(fastify) {
@@ -90,7 +91,14 @@ export default async function tripRoutes(fastify) {
 
   fastify.post('/:tripId/feedback', async (req) => {
     const openid = req.headers['x-openid'] || '';
-    const { type } = req.body || {};
-    return tripService.recordFeedback(openid, req.params.tripId, type);
+    const { type, payload } = req.body || {};
+    const result = tripService.recordFeedback(openid, req.params.tripId, type);
+
+    // 从负反馈中学习用户偏好（异步，不阻塞响应）
+    if (result.success && openid) {
+      preferenceLearningService.inferFromFeedback(openid, type, payload || {});
+    }
+
+    return result;
   });
 }
