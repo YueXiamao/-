@@ -87,6 +87,14 @@ function compareWithPopularRank(rankMap) {
 }
 
 function sortTables(tables) {
+  // districtsByCode: 索引所有区县 code → 区县记录（含 parentCode=所属城市code）
+  tables.districtsByCode = {};
+  for (const [cityCode, districts] of Object.entries(tables.districtsByCity)) {
+    for (const d of districts) {
+      tables.districtsByCode[d.code] = d;
+    }
+  }
+
   tables.provinces.sort(compareWithPopularRank(popularProvinceRank));
 
   for (const provinceCode of Object.keys(tables.citiesByProvince)) {
@@ -133,7 +141,8 @@ function isValidDatabase(db) {
   return db?.version === REGION_DB_VERSION
     && Array.isArray(db?.tables?.provinces)
     && db.tables.citiesByProvince
-    && db.tables.districtsByCity;
+    && db.tables.districtsByCity
+    && db.tables.districtsByCode;
 }
 
 function readStoredDatabase(storage) {
@@ -167,7 +176,19 @@ export function createRegionStore({
   function loadDatabase() {
     if (memoryDb) return memoryDb;
 
-    memoryDb = (persist ? readStoredDatabase(storage) : null) || createRegionDatabase(records);
+    const fromStorage = persist ? readStoredDatabase(storage) : null;
+    memoryDb = fromStorage || createRegionDatabase(records);
+
+    // 从 storage 恢复时 districtsByCode 索引可能缺失，补建
+    if (fromStorage && !memoryDb.tables.districtsByCode) {
+      memoryDb.tables.districtsByCode = {};
+      for (const [cityCode, districts] of Object.entries(memoryDb.tables.districtsByCity)) {
+        for (const d of districts) {
+          memoryDb.tables.districtsByCode[d.code] = d;
+        }
+      }
+    }
+
     if (persist) writeStoredDatabase(storage, memoryDb);
     return memoryDb;
   }
@@ -189,6 +210,28 @@ export function createRegionStore({
       return [...(loadDatabase().tables.districtsByCity[normalizeCode(cityCode)] || [])];
     },
 
+    // 根据城市 code 反查所属省份
+    getProvincesByCityCode(cityCode) {
+      const db = loadDatabase();
+      const code = normalizeCode(cityCode);
+      const entry = Object.entries(db.tables.citiesByProvince)
+        .find(([, cities]) => cities.some(c => c.code === code));
+      if (!entry) return null;
+      return db.tables.provinces.find(p => p.code === entry[0]) || null;
+    },
+
+    // 根据区县 code 反查所属城市（用于搜索结果补充 province/city）
+    getCityByDistrictCode(districtCode) {
+      const db = loadDatabase();
+      const district = db.tables.districtsByCode?.[normalizeCode(districtCode)];
+      if (!district) return null;
+      for (const cities of Object.values(db.tables.citiesByProvince)) {
+        const city = cities.find(c => c.code === district.parentCode);
+        if (city) return city;
+      }
+      return null;
+    },
+
     reset() {
       memoryDb = null;
     }
@@ -207,6 +250,14 @@ export function getLocalCities(provinceCode) {
 
 export function getLocalDistricts(cityCode) {
   return defaultRegionStore.getDistricts(cityCode);
+}
+
+export function getLocalCityByDistrictCode(districtCode) {
+  return defaultRegionStore.getCityByDistrictCode(districtCode);
+}
+
+export function getLocalProvinceByCityCode(cityCode) {
+  return defaultRegionStore.getProvincesByCityCode(cityCode);
 }
 
 export default defaultRegionStore;
