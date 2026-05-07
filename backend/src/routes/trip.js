@@ -3,7 +3,38 @@ import { Errors } from '../middleware/errorHandler.js';
 
 export default async function tripRoutes(fastify) {
   fastify.post('/generate', async (req) => {
-    return tripService.generate(req.body || {});
+    // Total timeout: if generation takes >20s, return fallback immediately
+    const timeoutMs = 20000;
+    const timeoutErr = new Error(`generation timeout after ${timeoutMs}ms`);
+    timeoutErr.code = 'GENERATION_TIMEOUT';
+
+    const race = Promise.race([
+      tripService.generate(req.body || {}),
+      new Promise((_, reject) => setTimeout(() => reject(timeoutErr), timeoutMs))
+    ]);
+
+    try {
+      return await race;
+    } catch (err) {
+      if (err.code === 'GENERATION_TIMEOUT') {
+        console.warn('[trip/generate] timeout, using fallback template');
+        const { FallbackTemplateProvider } = await import(
+          '../services/trip-generation/fallbackTemplateProvider.js'
+        );
+        const req2 = req.body || {};
+        const provider = new FallbackTemplateProvider();
+        return provider.provide(
+          {
+            destinations: req2.destinations || [],
+            days: req2.days || 2,
+            start_date: req2.start_date || new Date().toISOString().slice(0, 10),
+            preferences: req2.preferences || []
+          },
+          { reason: `generation_timeout_after_${timeoutMs}ms` }
+        );
+      }
+      throw err;
+    }
   });
 
   fastify.post('/save', async (req) => {
@@ -48,11 +79,18 @@ export default async function tripRoutes(fastify) {
 
   fastify.post('/:tripId/item/:itemId/replace', async (req) => {
     const openid = req.headers['x-openid'] || '';
-    return tripService.replaceTripItem(openid, req.params.tripId, req.params.itemId);
+    const { intent } = req.body || {};
+    return tripService.replaceTripItem(openid, req.params.tripId, req.params.itemId, { intent });
   });
 
   fastify.delete('/:tripId/item/:itemId', async (req) => {
     const openid = req.headers['x-openid'] || '';
     return tripService.deleteTripItem(openid, req.params.tripId, req.params.itemId);
+  });
+
+  fastify.post('/:tripId/feedback', async (req) => {
+    const openid = req.headers['x-openid'] || '';
+    const { type } = req.body || {};
+    return tripService.recordFeedback(openid, req.params.tripId, type);
   });
 }

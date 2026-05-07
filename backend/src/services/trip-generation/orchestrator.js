@@ -53,7 +53,7 @@ export class TripGenerationOrchestrator {
     fallbackTemplateProvider,
     aiEnhancer,
     resultValidator,
-    enhancementTimeoutMs = 18000
+    enhancementTimeoutMs = 8000
   }) {
     this.tripService = tripService;
     this.candidateService = candidateService;
@@ -66,17 +66,36 @@ export class TripGenerationOrchestrator {
 
   async generate(input) {
     const request = normalizeGenerateTripRequest(input);
-    const candidates = await this.candidateService.prepare(request);
     let generation = null;
     let templateReason = null;
 
-    try {
-      generation = normalizeGeneration(await this.skeletonBuilder.build(request, candidates));
-      if (!this.isValidItinerary(generation.itinerary, request.days).valid) {
-        templateReason = 'invalid_rule_based_itinerary';
+    // Candidates + skeleton build must not exceed 15s total
+    const [candidates] = await Promise.all([
+      Promise.race([
+        this.candidateService.prepare(request),
+        timeoutAfter(12000, 'candidates_timeout')
+      ])
+    ]);
+
+    if (!candidates || candidates.skipped) {
+      templateReason = 'candidates_failed';
+    } else {
+      try {
+        const buildResult = await Promise.race([
+          this.skeletonBuilder.build(request, candidates),
+          timeoutAfter(10000, 'skeleton_timeout')
+        ]);
+        if (buildResult?.skipped) {
+          templateReason = 'skeleton_builder_failed';
+        } else {
+          generation = normalizeGeneration(buildResult);
+          if (!this.isValidItinerary(generation.itinerary, request.days).valid) {
+            templateReason = 'invalid_rule_based_itinerary';
+          }
+        }
+      } catch (error) {
+        templateReason = 'skeleton_builder_failed';
       }
-    } catch (error) {
-      templateReason = 'skeleton_builder_failed';
     }
 
     if (!templateReason) {

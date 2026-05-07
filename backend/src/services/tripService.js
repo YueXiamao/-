@@ -250,7 +250,7 @@ class TripService {
     return { success: true, moved: true, direction };
   }
 
-  async replaceTripItem(openid, tripId, itemId) {
+  async replaceTripItem(openid, tripId, itemId, { intent } = {}) {
     const trip = this.getOwnedTrip(openid, tripId);
 
     const currentItem = this.db.prepare(`
@@ -266,6 +266,15 @@ class TripService {
     const primaryDestination = destinations[0] || {};
     const searchCity = primaryDestination.city || primaryDestination.name || '';
     const searchKeyword = primaryDestination.name || currentItem.name;
+
+    const intentFilterMap = {
+      nearer: ['近', '方便', '市中心'],
+      cheaper: ['便宜', '实惠', '经济'],
+      indoor: ['室', '馆', '内', '博物馆', '展览'],
+      family: ['亲子', '儿童', '家庭', '适合小朋友']
+    };
+
+    const intentKeywords = intent && intent !== 'any' ? (intentFilterMap[intent] || []) : [];
 
     const localCandidates = searchCity
       ? this.normalizeReplacementCandidates(this.db.prepare(`
@@ -286,9 +295,17 @@ class TripService {
       })
     );
 
-    const replacement = [...localCandidates, ...remoteCandidates].find((candidate) => (
-      candidate.name && candidate.name !== currentItem.name
-    ));
+    const allCandidates = [...localCandidates, ...remoteCandidates].filter((c) => c.name && c.name !== currentItem.name);
+
+    let replacement;
+    if (intentKeywords.length > 0) {
+      replacement = allCandidates.find((c) => {
+        const text = `${c.name}${c.address}${c.tags?.join?.('') || ''}`.toLowerCase();
+        return intentKeywords.some((kw) => text.includes(kw.toLowerCase()));
+      }) || allCandidates[0];
+    } else {
+      replacement = allCandidates[0];
+    }
 
     if (!replacement) {
       throw Errors.NOT_FOUND('暂未找到可替换的候选项');
@@ -376,6 +393,19 @@ class TripService {
 
   touchTrip(tripId) {
     this.db.prepare('UPDATE trip SET updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(tripId);
+  }
+
+  recordFeedback(openid, tripId, type) {
+    if (!openid || !tripId) return { success: false };
+    try {
+      this.db.prepare(`
+        INSERT INTO feedback (trip_id, openid, feedback_type, created_at)
+        VALUES (?, ?, ?, datetime('now'))
+      `).run(tripId, openid, type || 'unknown');
+      return { success: true };
+    } catch {
+      return { success: false };
+    }
   }
 
   parseJsonArray(value) {

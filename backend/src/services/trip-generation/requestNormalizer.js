@@ -79,7 +79,7 @@ export function normalizeGenerateTripRequest(input = {}) {
     : [];
   const extra_notes = normalizeText(input.extra_notes);
 
-  if (destinations.length === 0 || !start_date || !days || preferences.length === 0) {
+  if (destinations.length === 0 || !start_date || !days) {
     throw Errors.VALIDATION_ERROR('missing required parameters');
   }
 
